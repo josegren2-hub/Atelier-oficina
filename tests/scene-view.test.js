@@ -51,3 +51,9 @@ test('scene retains agenda targets outside batching and hides perimeter in isola
  assert.match(scene,/new Set\(\[\.\.\.facades,\.\.\.structures\]\)/);
  assert.doesNotMatch(scene,/selected===b.id\?1.12/);
 });
+
+test('entrance canopy hides with exterior structure in isolated floor',()=>{
+ const source=readFileSync(new URL('../src/scene.js',import.meta.url),'utf8');
+ assert.match(source,/box\(structure,-8,3\.7,9\.4,4\.5,\.15,1\.4,M\.steel\)/);
+ assert.doesNotMatch(source,/box\(g,-8,3\.7,9\.4,4\.5,\.15,1\.4,M\.steel\)/);
+});

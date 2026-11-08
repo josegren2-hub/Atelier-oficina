@@ -74,8 +74,8 @@ export function mountCommandCenter({getSnapshot=()=>({}),onChoose=()=>{}}={}) {
   function renderAgenda(){
     const tabs=el('div',undefined,'cc-filters');for(const [id,name] of [['ted','Ted'],['julian','Julián']]){const b=button(`Agenda de ${name}`,()=>{agendaId=id;render();});b.setAttribute('aria-pressed',String(id===agendaId));tabs.append(b);}content.append(tabs);
     const name=agendaId==='julian'?'Julián':'Ted';content.append(el('h3',`Agenda de ${name}`));
-    const agenda=model.agenda[agendaId];const connected=agenda?.connected===true&&Array.isArray(agenda.events);
-    content.append(el('p',connected?`Fuente: ${str(agenda.source)||model.source||'sin identificar'} · ${model.mode==='demo'?'Ejemplo simulado':'Solo lectura'}`:'Fuente no conectada · No se ha consultado ningún calendario.','cc-explainer'));
+    const agenda=model.agenda[agendaId];const simulated=model.mode==='demo'&&agenda?.simulated===true;const connected=(simulated||agenda?.connected===true)&&Array.isArray(agenda.events);
+    content.append(el('p',simulated?'Ejemplo local ficticio · fuente real desconectada · fechas de demostración':connected?`Fuente: ${str(agenda.source)||model.source||'sin identificar'} · ${model.mode==='demo'?'Ejemplo simulado':'Solo lectura'}`:'Fuente no conectada · No se ha consultado ningún calendario.','cc-explainer'));
     const events=connected?agenda.events.filter(e=>e&&str(e.id)&&str(e.title)&&Number.isFinite(Date.parse(e.start))).slice().sort((a,b)=>Date.parse(a.start)-Date.parse(b.start)):[];
     if(!events.length)empty(connected?'Sin eventos recibidos':'Agenda aún no disponible',connected?'La fuente no ha entregado eventos en esta vista.':'Conecta una fuente autorizada para mostrar compromisos reales. Esta pantalla no crea, cambia ni elimina citas.');
     for(const event of events){const card=el('article',undefined,'cc-card');card.append(el('h4',event.title),el('p',dateText(event.start)),el('small',`ID: ${event.id}${str(event.location)?` · ${event.location}`:''}`));content.append(card);}

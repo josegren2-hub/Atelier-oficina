@@ -11,13 +11,14 @@ export const PLUSH_ROSTER=Object.freeze({
 
 export const AVATAR_MAP = Object.freeze({ted:'ted',ceo:'tommy',apps:'charly',libro:'rodrigo',rulo:'rulo',director:'joss',luca:'luca',mateo:'mateo',tadeo:'tadeo','tr-editor':'naim','tr-cm':'dany',luna:'luna',vale:'valery',emiliano:'emiliano',julian:'julian',ines:'ines'});
 export const DEMO_CLIPS = Object.freeze(['idle','wave','work']);
+export const ACTIVITY_CLIPS=Object.freeze(['idle','walk','work','rest','read','wave']);
 function release(root) {
  const geometries=new Set(),materials=new Set();
  root.traverse(o=>{if(o.isMesh){geometries.add(o.geometry);for(const m of (Array.isArray(o.material)?o.material:[o.material]))materials.add(m);}});
  geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());root.removeFromParent();
 }
 export function createAvatarModels({onLoaded=()=>{},visualHeight=.9}={}) {
- const records=new Map();
+ const records=new Map(),activities=new Map();
  const stats={total:16,loaded:0,pending:0,failed:0,errors:[],source:'local',activity:'disconnected'};
  function notify(record,error=null){onLoaded({id:record.bot.id,modelId:record.modelId,loaded:!error,error,stats});}
  function install(record,body,clips=[]) {
@@ -42,14 +43,35 @@ export function createAvatarModels({onLoaded=()=>{},visualHeight=.9}={}) {
   install(record,createPlushModel({...PLUSH_ROSTER[record.modelId],modelId:record.modelId}));
   return Promise.resolve(parentGroup);
  }
+ function setActivity(id,state=null) {
+  if(!Object.hasOwn(AVATAR_MAP,id))throw new RangeError('Unknown avatar ID');
+  if(state===null){activities.delete(id);return;}
+  if(!state||!ACTIVITY_CLIPS.includes(state.clip))throw new RangeError('Unknown avatar activity');
+  if(state.phase!==undefined&&!Number.isFinite(state.phase))throw new TypeError('Activity phase must be finite');
+  activities.set(id,{clip:state.clip,seated:state.seated===true,phase:state.phase??0});
+ }
+ function clearActivities(){activities.clear();}
+ // Geometry support in the dedicated visual group's coordinates, excluding limbs/halo.
+ // Scene may align this surface with a chair without changing the bot's route/root.
+ function getSeatSupport(id) {
+  const record=[...records.values()].find(r=>r.bot.id===id&&r.ready);
+  if(!record)return null;
+  const torso=record.body.getObjectByName('Rounded stuffed body')??record.body.getObjectByName('Soft extruded silhouette')??record.body.getObjectByName('Round stuffed body');
+  if(!torso)return null;
+  record.parent.updateWorldMatrix(true,true);
+  torso.geometry.computeBoundingBox();
+  const localMatrix=new THREE.Matrix4().copy(record.parent.matrixWorld).invert().multiply(torso.matrixWorld);
+  const bounds=torso.geometry.boundingBox.clone().applyMatrix4(localMatrix);
+  return {bottomY:bounds.min.y,topY:bounds.max.y,backZ:bounds.min.z,frontZ:bounds.max.z,width:bounds.max.x-bounds.min.x};
+ }
  function update(time=0,demo=false,reducedMotion=false) {
   const t=Number.isFinite(time)?time:0;
   const clip=demo===true?'idle':DEMO_CLIPS.includes(demo)?demo:null;
   for(const record of records.values()) {
    if(!record.ready)continue;
-   animatePlushModel(record.body,{time:t,clip,reducedMotion});
+   animatePlushModel(record.body,{time:t,clip,...activities.get(record.bot.id),reducedMotion});
   }
  }
- function dispose(){for(const r of records.values()){r.mixer?.stopAllAction();if(r.frame)release(r.frame);}records.clear();stats.loaded=0;stats.pending=0;}
- return {attach,update,stats,dispose};
+ function dispose(){for(const r of records.values()){r.mixer?.stopAllAction();if(r.frame)release(r.frame);}records.clear();activities.clear();stats.loaded=0;stats.pending=0;}
+ return {attach,update,setActivity,clearActivities,getSeatSupport,stats,dispose};
 }

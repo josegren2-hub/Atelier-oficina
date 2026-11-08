@@ -6,6 +6,7 @@ import {createFurnishings} from './furnishings.js';
 import {fitVolumes,fitOrthographic} from './camera-fit.js';
 import {floorPose,viewVolumes,viewDirection,VIEW_MODES,findAvatarSpot,LIGHTING,visualStatus} from './view-layout.js';
 import {createAvatarModels} from './avatar-models.js';
+import {createMovement,segmentClear,planRoute,BODY_RADIUS,PERSONAL_SPACE} from './movement.js';
 
 export function createOffice(container,onBot,onAssets=()=>{},onAgenda=()=>{},onFloor=()=>{}){
  const scene=new THREE.Scene();
@@ -22,6 +23,7 @@ export function createOffice(container,onBot,onAssets=()=>{},onAgenda=()=>{},onF
  for(let x=-14;x<16;x+=4){box(site,x,-.15,14,.05,.02,5,M.ivory);}
  for(let i=0;i<4;i++){const car=group(site,-12+i*5,14);const paint=mat('car'+i,[0xa8b7b6,0x33433f,0xd8d1c1,0x576e76][i],.18,.65);const profile=new THREE.Shape();profile.moveTo(-1.75,.22);profile.lineTo(-1.73,.48);profile.quadraticCurveTo(-1.5,.65,-1.05,.65);profile.lineTo(-.65,.99);profile.quadraticCurveTo(.1,1.13,.65,1.02);profile.lineTo(1.15,.66);profile.quadraticCurveTo(1.65,.65,1.75,.44);profile.lineTo(1.7,.22);profile.closePath();const body=new THREE.Mesh(new THREE.ExtrudeGeometry(profile,{depth:1.64,bevelEnabled:true,bevelSegments:3,steps:1,bevelSize:.05,bevelThickness:.05}),paint);body.geometry.translate(0,0,-.82);body.rotation.y=Math.PI/2;body.castShadow=true;car.add(body);box(car,0,.93,-.05,1.44,.12,1.1,M.dark,true);const windshield=box(car,0,.8,.88,1.4,.42,.035,M.screen);windshield.rotation.x=.75;const rear=box(car,0,.8,-.95,1.4,.35,.035,M.screen);rear.rotation.x=-.75;for(const x of [-.87,.87]){box(car,x,.8,-.05,.015,.25,.95,M.screen);box(car,x,.78,-.08,.025,.3,.045,M.steel);}for(const x of [-.88,.88])for(const z of [-1.12,1.12]){const tire=cyl(car,x,.24,z,.28,.16,M.dark);tire.rotation.z=Math.PI/2;const hub=cyl(car,x*1.015,.24,z,.16,.17,M.steel);hub.rotation.z=Math.PI/2;}for(const x of [-.6,.6])box(car,x,.45,1.72,.32,.08,.02,M.glow,true);}
  for(let i=0;i<8;i++)box(site,11+i*.4,-.15,18,.2,.02,2,M.ivory);box(site,8,.6,12,.55,1.4,.35,M.steel,true);box(site,8,.85,12.19,.35,.55,.02,M.screen);box(site,-11.5,.6,10.3,2,.9,.4,M.steel,true);label(site,'ATELIER',-11.5,.8,10.51,1.7);
+ const movement=createMovement();
  const floorGroups=[],facades=[],structures=[],interiorLights=[],botModels=[];const avatars=createAvatarModels({visualHeight:1.35,onLoaded:({stats})=>onAssets({...stats})});
  function botLabel(bot){const c=document.createElement('canvas');c.width=384;c.height=96;const ctx=c.getContext('2d');ctx.fillStyle='#17283dec';ctx.beginPath();ctx.roundRect(0,0,384,96,22);ctx.fill();ctx.fillStyle='#fff4df';ctx.font='500 42px system-ui';ctx.textAlign='center';ctx.fillText(bot.name,192,62);const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true}));sprite.scale.set(1.8,.45,1);sprite.position.y=1.65;sprite.userData.bot=bot;return sprite;}
  // Dedicated groups stay outside instancing so screen picking retains its target.
@@ -35,7 +37,8 @@ export function createOffice(container,onBot,onAssets=()=>{},onAgenda=()=>{},onF
    const b=new THREE.Box3().setFromObject(o).applyMatrix4(inverse);
    // Exclude floor finishes, ceiling fittings and decorative flat shadows.
    if(b.max.y<=.32||b.min.y>=1.95)return;
-   bounds.push({minX:b.min.x,maxX:b.max.x,minZ:b.min.z,maxZ:b.max.z});
+   let ancestor=o,seat=null;while(ancestor&&ancestor!==g){if(ancestor.userData.motionSeat){seat=ancestor.userData.motionSeat;break;}ancestor=ancestor.parent;}
+   bounds.push({minX:b.min.x,maxX:b.max.x,minZ:b.min.z,maxZ:b.max.z,seat});
   });return bounds;
  }
  // Floor programs follow the approved building distribution. Coordinates are design positions, not real activity.
@@ -50,7 +53,8 @@ export function createOffice(container,onBot,onAssets=()=>{},onAgenda=()=>{},onF
   for(const z of [-8.85,8.85]){box(structure,0,4.45,z,26,.23,.2,M.steel);box(structure,0,.45,z,26,.08,.07,M.gold);}
   for(const x of [-12.85,12.85])box(structure,x,4.45,0,.2,.23,18,M.steel);
   const facade=new THREE.Group();g.add(facade);facades.push(facade);
-  if(n===0){box(g,-8,3.7,9.4,4.5,.15,1.4,M.steel);for(const x of [-9.7,-8,-6.3])box(facade,x,1.8,8.93,.055,3.2,.1,M.gold);box(facade,-8,3.4,8.93,3.4,.055,.1,M.gold);for(const x of [-8.15,-7.85])box(facade,x,1.55,9,.035,.6,.045,M.gold);}
+  // Entrance canopy belongs to exterior structure, not the isolated interior.
+  if(n===0){box(structure,-8,3.7,9.4,4.5,.15,1.4,M.steel);for(const x of [-9.7,-8,-6.3])box(facade,x,1.8,8.93,.055,3.2,.1,M.gold);box(facade,-8,3.4,8.93,3.4,.055,.1,M.gold);for(const x of [-8.15,-7.85])box(facade,x,1.55,9,.035,.6,.045,M.gold);}
   for(let x=-11.3;x<12.8;x+=3.2){box(facade,x,2.35,8.9,3.14,4.05,.025,M.glass);box(facade,x-1.6,2.35,8.9,.05,4.2,.07,M.steel);}
   for(const x of [-12.9,12.9])for(let z=-7.3;z<9;z+=3.6){box(facade,x,2.35,z,.025,4.05,3.54,M.glass);box(facade,x,2.35,z-1.8,.07,4.2,.05,M.steel);}
   // Rear material wall, warm oak ribs, floating wayfinding.
@@ -123,16 +127,38 @@ export function createOffice(container,onBot,onAssets=()=>{},onAgenda=()=>{},onF
    pendant(g,-5,-1.5,1.4,3.6);pendant(g,3.5,4.8,1.2,3.6);
    roundTable(g,-7,5,1.1,2);plant(g,-10.5,4.8,1.25);plant(g,7,0,1.3);
   }
-  const obstacles=floorObstacles(g),occupied=[];
+  // Pull office chairs clear of table edges for these wide plush avatars. Only
+  // the assigned chair allows intentional seated contact; every other mesh blocks.
+  const seats=[];g.updateMatrixWorld(true);
+  g.traverse(o=>{if(!o.isGroup||!o.children.some(c=>c.isMesh&&Math.abs(c.position.y-.75)<.001&&Math.abs(c.scale.x-.7)<.001))return;
+   const round=n===0&&o.position.x>0&&o.position.z<0||n===1&&o.position.x>0&&o.position.z<0||n===2&&o.position.x>0&&o.position.z<0||n===4&&o.position.z>0;const pull=round?.35:.65;o.position.x+=Math.sin(o.rotation.y)*pull;o.position.z+=Math.cos(o.rotation.y)*pull;
+   o.userData.motionSeat=`${n}-seat-${seats.length}`;seats.push({node:o,id:o.userData.motionSeat});
+  });g.updateMatrixWorld(true);
+  for(const s of seats){const p=g.worldToLocal(s.node.getWorldPosition(new THREE.Vector3()));s.position=[p.x,p.z];s.angle=s.node.rotation.y;const cushion=s.node.children.find(c=>c.isMesh&&Math.abs(c.position.y-.75)<.001&&Math.abs(c.scale.x-.7)<.001);s.height=new THREE.Box3().setFromObject(cushion).applyMatrix4(g.matrixWorld.clone().invert()).max.y;delete s.node;}
+  const obstacles=floorObstacles(g),occupied=[],assigned=[];
   for(const bot of bots.filter(b=>b.floor===n)){
-   const spot=findAvatarSpot(positions[bot.id],obstacles,occupied);
+   // A station and its nearby staging point are selected together so enclosed
+   // rooms do not strand a character on the wrong side of a wall.
+   let spot=null,assignedSeat=null;
+   const candidates=seats.filter(s=>segmentClear(s.position,s.position,obstacles,BODY_RADIUS,s.id)).sort((a,b)=>Math.hypot(a.position[0]-positions[bot.id][0],a.position[1]-positions[bot.id][1])-Math.hypot(b.position[0]-positions[bot.id][0],b.position[1]-positions[bot.id][1]));
+   for(const seat of candidates){
+    if(assigned.some(s=>Math.hypot(s.position[0]-seat.position[0],s.position[1]-seat.position[1])<PERSONAL_SPACE))continue;
+    for(let radius=1.5;radius<=3.6&&!spot;radius+=.3)for(let angle=0;angle<Math.PI*2&&!spot;angle+=Math.PI/12){
+     const candidate=[seat.position[0]+Math.sin(angle)*radius,seat.position[1]+Math.cos(angle)*radius];
+     if(!segmentClear(candidate,candidate,obstacles)||occupied.some(p=>Math.hypot(candidate[0]-p[0],candidate[1]-p[1])<PERSONAL_SPACE)||assigned.some(s=>Math.hypot(candidate[0]-s.position[0],candidate[1]-s.position[1])<PERSONAL_SPACE)||occupied.some(p=>Math.hypot(seat.position[0]-p[0],seat.position[1]-p[1])<PERSONAL_SPACE))continue;
+     if(planRoute(candidate,seat.position,obstacles,seat.id)){spot=candidate;assignedSeat=seat.id;assigned.push(seat);}
+    }
+    if(spot)break;
+   }
+   if(!spot)spot=findAvatarSpot(positions[bot.id],obstacles,occupied);
    if(!spot){console.warn(`Sin posición segura para ${bot.id}`);continue;}
    occupied.push(spot);const[x,z]=spot,bg=group(g,x,z);bg.position.y=.3;bg.userData.bot=bot;
    const visual=new THREE.Group();bg.add(visual);sphere(visual,0,.45,0,.25,mat('loading',0x83929a));
    const name=botLabel(bot);bg.add(name);
    const indicator=sphere(bg,1.02,1.65,0,.085,new THREE.MeshBasicMaterial({color:0x8995a3}));indicator.userData.status='unknown';
    const selection=new THREE.Mesh(new THREE.RingGeometry(.7,.77,48),new THREE.MeshBasicMaterial({color:bot.color,side:THREE.DoubleSide}));selection.rotation.x=-Math.PI/2;selection.position.y=.015;selection.visible=false;bg.add(selection);
-   avatars.attach(bot,visual);botModels.push({group:bg,base:.3,id:bot.id,floor:n,label:name,indicator,selection});
+   movement.add({id:bot.id,floor:n,position:spot,obstacles,seats,assignedSeat});
+   avatars.attach(bot,visual);botModels.push({group:bg,visual,base:.3,id:bot.id,floor:n,label:name,indicator,selection});
   }
 
  }
@@ -167,12 +193,14 @@ export function createOffice(container,onBot,onAssets=()=>{},onAgenda=()=>{},onF
  }
  function setStatuses(records=[]){
   const entries=Array.isArray(records)?records:(records.bots??[]);
+  movement.setStatuses(entries);if(records.mode!=='demo'){animateBots=false;movement.setUnknown();}
   const colors={unknown:0x8995a3,working:0x62bf95,review:0xe6b759,idle:0x85b6da,error:0xdb7272};
   for(const b of botModels){const r=entries.find(r=>(r.botId??r.id)===b.id),status=visualStatus(r,{mode:Array.isArray(records)?undefined:records.mode});b.indicator.userData.status=status;b.indicator.material.color.set(colors[status]);}
  }
  setNight(false);
- function tick(){requestAnimationFrame(tick);if(document.hidden)return;const t=performance.now()/1000;floorGroups.forEach((g,i)=>{const p=floorPose(i,mode,floor>=0);for(const axis of ['x','y','z'])g.position[axis]=reduced?p[axis]:THREE.MathUtils.lerp(g.position[axis],p[axis],.08);});if(moving){camera.position.lerp(desired,reduced?1:.07);controls.target.lerp(target,reduced?1:.07);if(camera.position.distanceTo(desired)<.05)moving=false;}for(const b of botModels){b.group.position.y=b.base;b.selection.visible=selected===b.id;b.label.visible=floor>=0||mode!=='exterior'||selected===b.id;}avatars.update(t,animateBots?'idle':false,reduced);controls.update();renderer.render(scene,camera);}
+ let lastFrame=performance.now()/1000;
+ function tick(){requestAnimationFrame(tick);const t=performance.now()/1000,dt=t-lastFrame;lastFrame=t;if(document.hidden)return;movement.update(dt,{reducedMotion:reduced});floorGroups.forEach((g,i)=>{const p=floorPose(i,mode,floor>=0);for(const axis of ['x','y','z'])g.position[axis]=reduced?p[axis]:THREE.MathUtils.lerp(g.position[axis],p[axis],.08);});if(moving){camera.position.lerp(desired,reduced?1:.07);controls.target.lerp(target,reduced?1:.07);if(camera.position.distanceTo(desired)<.05)moving=false;}for(const b of botModels){const action=movement.getActivity(b.id);if(action){b.group.position.x=action.position[0];b.group.position.z=action.position[1];b.group.rotation.y=action.angle;avatars.setActivity?.(b.id,{clip:action.clip,seated:action.seated});const support=avatars.getSeatSupport?.(b.id),seatOffset=action.seated&&support?Math.max(0,action.seatHeight-b.base-support.bottomY):0;b.visual.position.y=THREE.MathUtils.lerp(b.visual.position.y,seatOffset,reduced?1:Math.min(1,Math.max(0,Number.isFinite(dt)?dt:0)*7));}b.group.position.y=b.base;b.label.position.y=1.75+b.visual.position.y+(b.id==='ted'?.2:0);b.indicator.position.y=b.label.position.y;b.selection.visible=selected===b.id;b.label.visible=floor>=0||mode!=='exterior'||selected===b.id;}avatars.update(t,animateBots?'idle':false,reduced||!animateBots);controls.update();renderer.render(scene,camera);}
  const resize=()=>{camera.aspect=container.clientWidth/container.clientHeight;camera.updateProjectionMatrix();renderer.setSize(container.clientWidth,container.clientHeight);fitCamera();};new ResizeObserver(resize).observe(container);resize();const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();let down=null;
  renderer.domElement.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY];moving=false;});renderer.domElement.addEventListener('pointerup',e=>{const start=down;down=null;if(!start||Math.hypot(e.clientX-start[0],e.clientY-start[1])>6)return;const rect=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);ray.setFromCamera(pointer,camera);const roots=floorGroups.filter(g=>g.visible);if(roof.visible)roots.push(roof);const hits=ray.intersectObjects(roots,true);const first=hits.find(hit=>{let visible=true,node=hit.object;while(node){if(!node.visible){visible=false;break;}node=node.parent;}return visible&&(!hit.object.material?.transparent||hit.object.isSprite&&hit.object.userData.bot);});if(first){let node=first.object;while(node&&!node.userData.bot&&!node.userData.agenda&&!Number.isInteger(node.userData.floorId))node=node.parent;if(node?.userData.agenda)onAgenda(node.userData.agenda);else if(node?.userData.bot)onBot(node.userData.bot.id);else if(Number.isInteger(node?.userData.floorId))onFloor(node.userData.floorId);}});renderer.domElement.addEventListener('pointercancel',()=>down=null);controls.addEventListener('start',()=>moving=false);tick();
- return {setView,setMode,setExploded(v){setMode(v?'stacked':'exterior');},setWalls(v){walls=Boolean(v);facades.forEach(g=>g.visible=walls&&floor<0);},setNight,setStatuses,select(id){selected=id;},setDemo(v){animateBots=v;},rotate(d){moving=false;const o=camera.position.clone().sub(controls.target).applyAxisAngle(new THREE.Vector3(0,1,0),d);camera.position.copy(controls.target).add(o);},zoom(s){moving=false;if(camera.isOrthographicCamera){camera.zoom=THREE.MathUtils.clamp(camera.zoom/s,.35,8);camera.updateProjectionMatrix();return;}const o=camera.position.clone().sub(controls.target);o.setLength(THREE.MathUtils.clamp(o.length()*s,12,700));camera.position.copy(controls.target).add(o);},reset(){setView(floor);},get renderer(){return renderer;}};
+ return {setView,setMode,setExploded(v){setMode(v?'stacked':'exterior');},setWalls(v){walls=Boolean(v);facades.forEach(g=>g.visible=walls&&floor<0);},setNight,setStatuses,select(id){selected=id;},setDemo(v){animateBots=Boolean(v);movement.setDemo(v);},getActivity(id){return movement.getActivity(id);},getMovementStats(){return movement.getStats();},rotate(d){moving=false;const o=camera.position.clone().sub(controls.target).applyAxisAngle(new THREE.Vector3(0,1,0),d);camera.position.copy(controls.target).add(o);},zoom(s){moving=false;if(camera.isOrthographicCamera){camera.zoom=THREE.MathUtils.clamp(camera.zoom/s,.35,8);camera.updateProjectionMatrix();return;}const o=camera.position.clone().sub(controls.target);o.setLength(THREE.MathUtils.clamp(o.length()*s,12,700));camera.position.copy(controls.target).add(o);},reset(){setView(floor);},get renderer(){return renderer;}};
 }

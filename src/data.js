@@ -26,5 +26,22 @@ const entries=[
 ];
 export const bots=entries.map(([id,name,role,floor,color],index)=>({id,name,role,floor,color,shape:index%4}));
 export function disconnectedSnapshot(){return {mode:'disconnected',source:null,lastSignal:null,bots:bots.map(b=>({...b,status:'unknown',task:null,lastSignal:null}))};}
-export function demoSnapshot(){return {...disconnectedSnapshot(),mode:'demo',bots:bots.map((b,i)=>({...b,status:['working','review','idle'][i%3],task:['Preparando un borrador de ejemplo','Esperando revisión de ejemplo','Disponible en la simulación'][i%3],lastSignal:null}))};}
+export function demoSnapshot(preset='mixed'){
+ const demoBots=bots.map((b,i)=>({...b,status:preset==='working'?'working':preset==='idle'?'idle':['working','review','idle'][i%3],task:'Ejemplo visual ficticio',lastSignal:null}));
+ const definitions=[
+  ['example-1','Preparar un borrador de ejemplo','pending','ted'],
+  ['example-2','Revisar una maqueta ficticia','in_progress','apps'],
+  ['example-3','Borrador de ejemplo pendiente de autorización','authorization','julian'],
+  ['example-4','Comprobar un recurso de demostración','urgent','luca'],
+  ['example-5','Retomar una idea de prueba','postponed','libro'],
+  ['example-6','Ejemplo de entrega terminada','completed','mateo']
+ ];
+ const tasks=definitions.map(([id,title,status,botId])=>({id,title:`Ejemplo: ${title}`,status,botId,description:'SIMULACIÓN: este registro no corresponde a trabajo real.',urgent:status==='urgent'}));
+ return {...disconnectedSnapshot(),mode:'demo',source:'Ejemplos ficticios locales',bots:demoBots,tasks,
+  notifications:[{id:'sample-note-1',title:'Ejemplo: un borrador requiere revisión',body:'Aviso ficticio para mostrar cómo se vería una autorización. No hay solicitud real.',createdAt:'2030-01-15T09:00:00Z'},
+   {id:'sample-note-2',title:'Ejemplo: una tarea terminó',body:'Notificación simulada. No se ejecutó ningún trabajo.',createdAt:'2030-01-15T09:15:00Z'}],
+  agenda:{ted:{connected:false,simulated:true,source:'Agenda ficticia de demostración',events:[{id:'sample-ted-1',title:'Ejemplo: revisión de prioridades',start:'2030-01-15T10:00:00Z'},{id:'sample-ted-2',title:'Ejemplo: espacio de concentración',start:'2030-01-15T12:00:00Z'}]},
+   julian:{connected:false,simulated:true,source:'Agenda ficticia de demostración',events:[{id:'sample-julian-1',title:'Ejemplo: preparar una explicación',start:'2030-01-15T11:00:00Z'},{id:'sample-julian-2',title:'Ejemplo: revisar un documento ficticio',start:'2030-01-15T13:00:00Z'}]}}
+ };
+}
 export const statusLabels={unknown:'Sin señal',working:'Trabajando · demo',review:'En revisión · demo',idle:'Disponible · demo',error:'Error de fuente'};

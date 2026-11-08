@@ -50,3 +50,10 @@
 #viewport #canvas-container,#viewport.spread-view #canvas-container{min-height:0;min-width:0;contain:strict}
 #canvas-container>canvas{position:absolute;inset:0;width:100%!important;height:100%!important}
 @media(max-width:760px){#app{height:auto;display:block}#app>main{height:auto;min-height:0}#viewport,#viewport.spread-view{height:500px;min-height:0!important;grid-template-rows:auto auto minmax(0,1fr) auto auto}}
+#demo-actions{border:1px solid #b58e4f;background:#372f22;border-radius:10px;padding:12px;margin:14px 0;font-size:11px;color:#f2dfba}#demo-actions[hidden]{display:none}#demo-actions strong{letter-spacing:.04em}#demo-actions p{line-height:1.5}#demo-actions>div{display:flex;flex-wrap:wrap;gap:6px}#demo-actions button{font-size:10px;padding:8px;border-color:#987743;background:#473b27;color:#fff0d1}
+/* Demo disclosure has its own row and cannot obstruct geometry picking. */
+#viewport #demo-banner{position:relative;inset:auto;grid-row:6;margin:0;padding:5px 10px;border-radius:0;font-size:9px;line-height:13px;pointer-events:none}
+#viewport #demo-banner[hidden]{display:none}
+#viewport,#viewport.spread-view{grid-template-rows:auto auto minmax(0,1fr) auto auto auto}
+/* Review 0.12.1: retain disclosure while keeping desktop header on one row. */
+@media(min-width:761px){#app>header{gap:8px;padding:8px 12px;min-height:60px;flex-wrap:nowrap}#app>header .brand{font-size:22px;gap:7px;flex-shrink:0}#app>header .brand span{font-size:10px;letter-spacing:1px}#app>header .brand small{font-size:7px;letter-spacing:.5px}#app>header .source{font-size:10px;margin-left:auto;max-width:170px;min-width:110px}#app>header .source small{font-size:8px;margin-top:4px}#app>header>button{font-size:10px;padding:8px;flex-shrink:0}#app>header .release-info{flex:0 1 160px;min-width:110px;font-size:9px;gap:4px}#app>header .release-info button{font-size:9px;padding:5px}#viewport .scene-title{min-height:64px;padding:8px 20px}#viewport .scene-title h2{margin-top:2px}#viewport .spread-picker{padding-top:4px;padding-bottom:4px}}

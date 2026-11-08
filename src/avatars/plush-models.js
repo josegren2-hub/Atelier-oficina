@@ -59,7 +59,7 @@ export function createPlushModel(config) {
  if(!PLUSH_TEMPLATES[spec.template-1])throw new RangeError('Unknown plush template');
  root.userData.plushProvenance={source:'approved-template-16',implementation:'local-procedural-3d',template:spec.template,shape:spec.shape,color:spec.color,accessory:spec.accessory,modelId:spec.modelId};
  const cloth=fabric(spec.color),dark=new THREE.MeshStandardMaterial({color:'#25222b',roughness:.75}),trim=fabric(spec.trim??'#302738'),cream=fabric('#fff0d8'),skin=fabric('#ffdbbf'),cheek=fabric('#f6a39c');
- const sphere=new THREE.SphereGeometry(1,32,24),eyes=[],arms=[];
+ const sphere=new THREE.SphereGeometry(1,32,24),eyes=[],arms=[],feet=[];
  function mesh(name,geometry,material,parent=root){const obj=new THREE.Mesh(geometry,material);obj.name=name;obj.castShadow=true;obj.receiveShadow=true;parent.add(obj);return obj;}
  function ball(name,pos,size,mat=cloth,parent=root){const obj=mesh(name,sphere,mat,parent);obj.position.set(...pos);obj.scale.set(...size);return obj;}
  function tube(name,points,radius,mat=dark,parent=root){return mesh(name,new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p))),32,radius,8,false),mat,parent);}
@@ -68,7 +68,19 @@ export function createPlushModel(config) {
  else if(spec.shape==='cube'||spec.shape==='capsule')torso=mesh('Rounded stuffed body',new RoundedBoxGeometry(spec.shape==='cube'?.92:.77,1,.56,8,spec.shape==='cube'?.18:.31),cloth);
  else {const geometry=new THREE.ExtrudeGeometry(outline(spec.shape,spec.lobes),{depth:.25,bevelEnabled:true,bevelThickness:.125,bevelSize:.085,bevelSegments:8,curveSegments:32,steps:1});geometry.translate(0,0,-.125);geometry.computeVertexNormals();torso=mesh('Soft extruded silhouette',geometry,cloth);}
  const capsule=spec.shape==='capsule',faceZ=spec.shape==='sphere'?.335:capsule?.345:.262;
- if(capsule){ball('Inset face',[0,.12,.257],[.292,.22,.095],skin);for(const s of[-1,1]){ball('Tiny foot',[s*.15,-.49,.06],[.12,.075,.14]);const arm=new THREE.Group();arm.position.set(s*.385,-.18,0);root.add(arm);ball('Tiny plush hand',[0,-.02,.02],[.088,.13,.11],cloth,arm);arms.push(arm);}}
+ if(capsule)ball('Inset face',[0,.12,.257],[.292,.22,.095],skin);
+ // Short articulated limbs supplement the approved silhouette, never move the host.
+ torso.updateMatrixWorld(true);
+ const torsoBounds=new THREE.Box3().setFromObject(torso),floorY=torsoBounds.min.y;
+ for(const side of[-1,1]){
+  const foot=new THREE.Group();foot.name=side<0?'Left plush foot pivot':'Right plush foot pivot';
+  foot.position.set(side*.15,floorY+.055,.045);foot.userData.rest=foot.position.toArray();root.add(foot);
+  ball('Tiny foot',[0,-.055,.045],[.10,.065,.135],cloth,foot);feet.push(foot);
+  const arm=new THREE.Group();arm.name=side<0?'Left plush arm pivot':'Right plush arm pivot';
+  arm.position.set(side*(capsule?.385:.37),floorY+.31,.10);arm.userData.rest=arm.position.toArray();root.add(arm);
+  ball('Tiny plush hand',[0,-.07,.025],[.078,.125,.095],cloth,arm);arms.push(arm);
+ }
+
  const faceY=capsule?.12:.035;
  for(const s of[-1,1]){
   if(spec.sleeping||(spec.wink&&s<0)){tube('Closed embroidered eye',[[s*.145-.054,faceY+.025,faceZ],[s*.145,faceY-.005,faceZ+.004],[s*.145+.054,faceY+.025,faceZ]],.012);}
@@ -103,13 +115,29 @@ export function createPlushModel(config) {
   for(const side of[-1,1]){const rim=mesh('Ted gold headphone trim',new THREE.TorusGeometry(.133,.009,8,40),gold);rim.rotation.y=Math.PI/2;rim.position.set(side*.55,.055,0);}
   const halo=mesh('Ted decorative halo · not activity',new THREE.TorusGeometry(.48,.008,8,64),gold);halo.rotation.x=Math.PI/2;halo.position.y=-.557;halo.scale.y=.7;
  }
- root.userData.plushRig={eyes,arms};return root;
+ root.userData.plushRig={eyes,arms,feet};return root;
 }
 
-export function animatePlushModel(root,{time=0,clip=null,reducedMotion=false}={}) {
- const active=!!clip&&!reducedMotion,t=active&&Number.isFinite(time)?time:0;
- root.position.set(0,0,0);root.rotation.set(0,0,active?Math.sin(t*1.7)*.014:0);root.scale.set(1,active?1+Math.sin(t*2)*.005:1,1);
+export function animatePlushModel(root,{time=0,clip=null,seated=false,phase=0,reducedMotion=false}={}) {
+ const active=!!clip&&!reducedMotion;
+ const t=active?(Number.isFinite(time)?time:0)+(Number.isFinite(phase)?phase:0):0;
+ const walking=clip==='walk'&&!seated,working=clip==='work',reading=clip==='read',resting=clip==='rest';
+ // Pose stays legible with reduced motion; only time-dependent movement is removed.
+ root.position.set(0,0,0);
+ root.rotation.set(working?.045:reading?.025:resting?-.035:0,0,active?Math.sin(t*(walking?6:1.7))*(walking?.022:.012):0);
+ root.scale.set(1,active?1+Math.sin(t*2)*.004:1,1);
  const rig=root.userData.plushRig;
  for(const eye of rig?.eyes??[])eye.scale.y=active&&t%5.2<.11?.006:.042;
- (rig?.arms??[]).forEach((arm,i)=>{arm.rotation.set(clip==='work'&&active?-.12+Math.sin(t*3+i)*.04:0,0,clip==='wave'&&active&&i===0?-.55+Math.sin(t*3)*.1:0);});
+ (rig?.feet??[]).forEach((foot,i)=>{
+  foot.position.fromArray(foot.userData.rest);foot.rotation.set(0,0,0);
+  if(seated){foot.position.y+=.065;foot.position.z+=.20;foot.rotation.x=-.85;}
+  else if(walking&&active){foot.rotation.x=Math.sin(t*6+i*Math.PI)*.48;foot.position.y+=Math.max(0,Math.sin(t*6+i*Math.PI))*.028;}
+ });
+ (rig?.arms??[]).forEach((arm,i)=>{
+  const side=i?1:-1;arm.position.fromArray(arm.userData.rest);arm.rotation.set(0,0,0);
+  if(working||reading){arm.position.x=side*(reading?.19:.24);arm.position.z=.30;arm.position.y+=.10;arm.rotation.x=reading?-1.05:-1.25;arm.rotation.z=side*(reading?.32:.08);if(active&&working)arm.rotation.x+=Math.sin(t*6+i*Math.PI)*.10;}
+  else if(clip==='wave'&&i===0){arm.position.z=.19;arm.rotation.z=-2.15+(active?Math.sin(t*4)*.18:0);}
+  else if(walking&&active){arm.rotation.x=-Math.sin(t*6+i*Math.PI)*.32;}
+  else if(resting){arm.rotation.z=-side*.20;arm.rotation.x=-.12;}
+ });
 }

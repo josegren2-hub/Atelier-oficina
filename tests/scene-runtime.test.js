@@ -5,15 +5,17 @@ import * as THREE from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {bots,floors} from '../src/data.js';
 import {fitVolumes,fitOrthographic} from '../src/camera-fit.js';
+import {createMovement,segmentClear,planRoute,BODY_RADIUS,PERSONAL_SPACE,pointSegmentDistance} from '../src/movement.js';
 import * as layout from '../src/view-layout.js';
 
 // Exercise the real furniture, batching and scene graph with just GPU/DOM/loaders
 // stubbed. Browser screenshot/picking checks remain a separate integration step.
 for(const [width,height]of [[1000,600],[390,600]])test(`real scene ${width}×${height}: safe avatars, floor clicks and screen targets after batching`,()=>{
- const saved=new Map();let frameCallback;
+ const saved=new Map();let frameCallback,frameTime=0;
  const set=(key,value)=>{saved.set(key,Object.getOwnPropertyDescriptor(globalThis,key));Object.defineProperty(globalThis,key,{value,configurable:true,writable:true});};
  const context=new Proxy({}, {get:(o,k)=>k==='createRadialGradient'?()=>({addColorStop(){}}):()=>{},set:()=>true});
- set('document',{hidden:false,createElement:()=>({getContext:()=>context})});set('devicePixelRatio',1);set('matchMedia',()=>({matches:true}));set('requestAnimationFrame',callback=>frameCallback=callback);set('ResizeObserver',class{observe(){}});
+ set('performance',{now:()=>frameTime});
+ set('document',{hidden:false,createElement:()=>({getContext:()=>context})});set('devicePixelRatio',1);set('matchMedia',q=>({matches:q.includes('max-width')}));set('requestAnimationFrame',callback=>frameCallback=callback);set('ResizeObserver',class{observe(){}});
  let scene,renderedCamera;const listeners={};
  class Renderer {constructor(){this.shadowMap={};this.domElement={addEventListener:(k,v)=>listeners[k]=v,getBoundingClientRect:()=>({left:0,top:0,width,height})};}setPixelRatio(){}setSize(){}render(s,c){renderedCamera=c;}}
  class Controls {constructor(camera){this.object=camera;this.target=new THREE.Vector3();}update(){}addEventListener(){}}
@@ -21,7 +23,7 @@ for(const [width,height]of [[1000,600],[390,600]])test(`real scene ${width}×${h
  const furnishingsText=readFileSync(new URL('../src/furnishings.js',import.meta.url),'utf8').replace(/^import .*;\n/gm,'').replace('export function','function').replaceAll('import.meta.env.BASE_URL',"'/'");
  const createFurnishings=new Function('THREE','RoundedBoxGeometry','GLTFLoader',`${furnishingsText};return createFurnishings;`)(THREE,RoundedBoxGeometry,class{load(){}});
  const source=readFileSync(new URL('../src/scene.js',import.meta.url),'utf8').replace(/^import .*;\n/gm,'').replace('export function','function');
- const deps={THREE:engine,OrbitControls:Controls,RoomEnvironment:class{dispose(){}},bots,floors,createFurnishings,fitVolumes,fitOrthographic,...layout,createAvatarModels:()=>({attach(){},update(){}})};
+ const deps={createMovement,segmentClear,planRoute,BODY_RADIUS,PERSONAL_SPACE,pointSegmentDistance,THREE:engine,OrbitControls:Controls,RoomEnvironment:class{dispose(){}},bots,floors,createFurnishings,fitVolumes,fitOrthographic,...layout,createAvatarModels:()=>({attach(){},update(){},getSeatSupport(){return {bottomY:.25};}})};
  try{
   const createOffice=new Function(...Object.keys(deps),`${source};return createOffice;`)(...Object.values(deps));
   const opened=[],floorClicks=[],botClicks=[];
@@ -50,7 +52,31 @@ for(const [width,height]of [[1000,600],[390,600]])test(`real scene ${width}×${h
   }
   office.setStatuses({mode:'demo',bots:bots.map(b=>({id:b.id,status:'working'}))});
   for(const host of hosts)assert.equal(host.children.find(c=>c.userData.status).userData.status,'working');
-  office.setStatuses({mode:'disconnected',bots:[]});
+  const verifyFrames=count=>{
+   let previous=office.getMovementStats().agents;const walked=new Set(),travelled=new Map();
+   for(let i=0;i<count;i++){
+    frameTime+=50;frameCallback();const current=office.getMovementStats().agents;
+    for(let j=0;j<current.length;j++){
+     const a=current[j],old=previous[j];
+     assert.ok(segmentClear(old.position,a.position,a.obstacles,BODY_RADIUS,a.seat?.id),`${a.id}: swept obstacle safety`);
+     assert.ok(Math.hypot(a.position[0]-old.position[0],a.position[1]-old.position[1])<=.043,'bounded velocity, no teleport');
+     if(a.moving)walked.add(a.id);travelled.set(a.id,(travelled.get(a.id)??0)+Math.hypot(a.position[0]-old.position[0],a.position[1]-old.position[1]));
+     for(let k=j+1;k<current.length;k++){const b=current[k];if(a.floor!==b.floor)continue;const before=[old.position[0]-previous[k].position[0],old.position[1]-previous[k].position[1]],after=[a.position[0]-b.position[0],a.position[1]-b.position[1]];assert.ok(pointSegmentDistance([0,0],before,after)>=PERSONAL_SPACE-1e-8,`${a.id}/${b.id}: swept personal space`);}
+    }
+    previous=current;
+   }
+   walked.travelled=travelled;return walked;
+  };
+  office.setDemo(true);assert.equal(verifyFrames(1000).size,16,'all 16 walk to their own seats');
+  const seated=office.getMovementStats().agents;for(const a of seated){const host=hosts.find(h=>h.userData.bot.id===a.id),visual=host.children.find(o=>o.isGroup);assert.ok(Math.abs(host.position.y+visual.position.y+.25-a.seat.height)<.001,`${a.id}: torso supported by seat cushion`);}assert.equal(seated.filter(a=>a.seated&&a.clip==='work'&&a.completedSeats===1).length,16,'all 16 finish and remain seated');
+  office.setStatuses({mode:'demo',bots:bots.map(b=>({id:b.id,status:'idle'}))});
+  assert.equal(verifyFrames(1000).size,16,'all 16 leave their seats for idle activities');
+  const cycling=verifyFrames(1200);for(const [id,total]of cycling.travelled)assert.ok(total>.5,`${id}: sustained idle displacement > .5`);assert.equal(cycling.size,16,'all 16 continue genuinely walking during the idle cycle');
+  office.setStatuses({mode:'demo',bots:bots.map(b=>({id:b.id,status:'working'}))});verifyFrames(1000);
+  assert.equal(office.getMovementStats().agents.filter(a=>a.seated).length,16,'all 16 can resume work after idle');
+  const frozen=office.getMovementStats().agents.map(a=>a.position);office.setDemo(false);verifyFrames(20);
+  assert.deepEqual(office.getMovementStats().agents.map(a=>a.position),frozen,'demo exit preserves positions');
+  office.setDemo(true);office.setStatuses({mode:'disconnected',bots:[]});verifyFrames(20);assert.deepEqual(office.getMovementStats().agents.map(a=>a.position),frozen,'source disconnect stops any active demo');
   for(const host of hosts)assert.equal(host.children.find(c=>c.userData.status).userData.status,'unknown');
   office.setNight(true);assert.equal(scene.background.getHex(),layout.LIGHTING.night.background);
   office.setNight(false);assert.equal(scene.background.getHex(),layout.LIGHTING.day.background);

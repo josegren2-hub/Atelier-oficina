@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readSnapshot,validateSnapshot} from '../src/adapter.js';
+import {assertLiveEnvelope,SOURCE_CONTRACT} from '../src/source-contract.js';
+const now=Date.now();
+const payload=()=>({schemaVersion:1,source:'Synthetic test provider',mode:'live',provenance:{kind:'runtime-observation'},bots:[{id:'example',status:'working',lastSignal:new Date(now).toISOString()}]});
+test('real connection is opt-in and makes zero requests by default',async()=>{let calls=0;await assert.rejects(readSnapshot({fetcher:async()=>{calls++;}}),/deshabilitada/);assert.equal(calls,0);assert.equal(SOURCE_CONTRACT.enabled,false);});
+test('public legacy snapshot and demo cannot become live',()=>{for(const p of [{actualizado:new Date().toISOString(),bots:[]},{...payload(),mode:'demo'},{...payload(),provenance:{kind:'public-export'}},{...payload(),simulated:true}])assert.throws(()=>assertLiveEnvelope(p));});
+test('opt-in reads only same-origin fixed endpoint without cache or redirect',async()=>{const result=await readSnapshot({enabled:true,knownIds:['example'],fetcher:async(url,options)=>{assert.equal(url,'/api/office/snapshot');assert.equal(options.cache,'no-store');assert.equal(options.redirect,'error');return{ok:true,json:async()=>payload()};}});assert.equal(result.mode,'live');});
+test('opt-in does not accept legacy response just because HTTP succeeds',async()=>{await assert.rejects(readSnapshot({enabled:true,knownIds:['example'],fetcher:async()=>({ok:true,json:async()=>({actualizado:new Date().toISOString(),bots:[]})})}));});
+test('stale status cannot preserve current task text',()=>{const p=payload();p.bots[0].task='Synthetic task';p.bots[0].lastSignal=new Date(now-180000).toISOString();const b=validateSnapshot(p,['example'],now).bots[0];assert.equal(b.status,'unknown');assert.equal(b.task,null);});
