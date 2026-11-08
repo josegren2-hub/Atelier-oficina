@@ -26,3 +26,27 @@
 #viewport .spread-picker{top:87px;z-index:5}
 #viewport.spread-view #canvas-container{top:136px}
 @media(max-width:760px){#viewport .scene-title{padding:12px 16px;height:84px}#viewport .scene-title h2{font-size:19px;line-height:24px}#viewport .scene-title span{font-size:8px;letter-spacing:1px}#viewport.spread-view #canvas-container{top:174px}}
+/* 0.11: flow layout, never paint navigation or actions over the title/canvas. */
+#app>main{grid-template-rows:auto minmax(0,1fr)}
+#app .navigation{height:auto;min-height:125px;align-content:center;overflow:hidden}
+#viewport{display:grid;grid-template-rows:auto auto minmax(240px,1fr) auto auto;align-content:stretch}
+#viewport .scene-title{position:relative;inset:auto;height:auto;min-height:76px;padding:12px 20px;grid-row:1;z-index:auto;overflow:visible}
+#viewport .scene-title h2{margin:5px 0 0;line-height:1.3}
+#viewport .spread-picker{position:relative;inset:auto;margin:0;padding:8px 16px;grid-row:2;z-index:auto;background:#263448}
+#viewport .spread-picker[hidden]{display:none}
+#viewport #canvas-container,#viewport.spread-view #canvas-container{position:relative;inset:auto;grid-row:3;min-height:240px;overflow:hidden}
+#viewport .controls{position:relative;inset:auto;transform:none;justify-content:center;padding:8px;grid-row:4;background:#152131;z-index:auto}
+#viewport .gesture{position:relative;inset:auto;margin:0;padding:5px 12px 9px;grid-row:5;font-size:9px;line-height:14px;background:#152131;z-index:auto}
+#viewport::after{display:none}
+.release-info{display:flex;align-items:center;gap:6px;color:#b8c8d8;font-size:10px;flex-wrap:wrap}.release-info button{font-size:10px;padding:6px;min-height:30px}
+#version-result{font-size:10px;line-height:1.4;color:#d7e4ef}#version-result:empty{display:none}
+@media(max-width:760px){#app .navigation{min-height:0;overflow:visible}#viewport,#viewport.spread-view{height:640px;min-height:510px!important;max-height:none}#viewport .scene-title{min-height:76px;padding:12px 16px}#viewport .spread-picker{padding:5px 12px 10px}#viewport #canvas-container,#viewport.spread-view #canvas-container{inset:auto;min-height:240px}.release-info{font-size:9px}}
+#app{display:grid;grid-template-rows:auto minmax(550px,1fr);min-height:100dvh}
+#app>header{height:auto;min-height:60px;flex-wrap:wrap;padding:12px 20px;gap:10px 16px}
+#app>main{height:auto;min-height:550px}
+@media(max-width:760px){#app{display:block;min-height:0}#app>main{min-height:0}#app>header{padding:12px;gap:8px}.release-info{order:5;width:100%}}
+/* QA 0.11.1: finite grid tracks; canvas intrinsic pixels must not grow its track. */
+@media(min-width:761px){#app{height:100dvh;min-height:0;grid-template-rows:auto minmax(0,1fr)}#app>main{height:100%;min-height:0;grid-template-rows:auto minmax(0,1fr)}#viewport,#viewport.spread-view{height:100%;min-height:0!important;grid-template-rows:auto auto minmax(0,1fr) auto auto}}
+#viewport #canvas-container,#viewport.spread-view #canvas-container{min-height:0;min-width:0;contain:strict}
+#canvas-container>canvas{position:absolute;inset:0;width:100%!important;height:100%!important}
+@media(max-width:760px){#app{height:auto;display:block}#app>main{height:auto;min-height:0}#viewport,#viewport.spread-view{height:500px;min-height:0!important;grid-template-rows:auto auto minmax(0,1fr) auto auto}}

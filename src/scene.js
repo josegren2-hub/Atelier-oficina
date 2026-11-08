@@ -7,7 +7,7 @@ import {fitVolumes,fitOrthographic} from './camera-fit.js';
 import {floorPose,viewVolumes,viewDirection,VIEW_MODES,findAvatarSpot,LIGHTING,visualStatus} from './view-layout.js';
 import {createAvatarModels} from './avatar-models.js';
 
-export function createOffice(container,onBot,onAssets=()=>{},onAgenda=()=>{}){
+export function createOffice(container,onBot,onAssets=()=>{},onAgenda=()=>{},onFloor=()=>{}){
  const scene=new THREE.Scene();
  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.22;container.appendChild(renderer.domElement);
  const pmrem=new THREE.PMREMGenerator(renderer);const roomEnvironment=new RoomEnvironment();scene.environment=pmrem.fromScene(roomEnvironment,.04).texture;scene.environmentIntensity=.25;roomEnvironment.dispose();pmrem.dispose();
@@ -41,7 +41,7 @@ export function createOffice(container,onBot,onAssets=()=>{},onAgenda=()=>{}){
  // Floor programs follow the approved building distribution. Coordinates are design positions, not real activity.
  const positions={ted:[-5,1.8],ceo:[-7,-3.2],luna:[1,3.5],emiliano:[5,-3.4],julian:[5,-3.3],ines:[3,3],libro:[-8,-3], 'tr-editor':[-4,3],mateo:[-5,-2.4],'tr-cm':[-8,4],vale:[3,4],director:[4,-4.45],apps:[-8,-3.4],luca:[-3,-3.4],tadeo:[-2,5],rulo:[5,-2.6]};
  for(let n=0;n<floors.length;n++){
-  const g=new THREE.Group();g.position.y=n*4.6;scene.add(g);floorGroups.push(g);
+  const g=new THREE.Group();g.userData.floorId=n;g.position.y=n*4.6;scene.add(g);floorGroups.push(g);
   for(const x of [-6,5]){const warm=new THREE.PointLight(0xffc17c,65,14,2);warm.position.set(x,3.7,-2);g.add(warm);interiorLights.push(warm);}
   box(g,0,0,0,26,.28,18,M.steel);box(g,-1.5,.19,0,22.5,.1,17.6,M.oak);box(g,11,.19,0,3.6,.1,17.6,M.stone);
   const structure=new THREE.Group();g.add(structure);structures.push(structure);
@@ -136,7 +136,7 @@ export function createOffice(container,onBot,onAssets=()=>{},onAgenda=()=>{}){
   }
 
  }
- const roof=new THREE.Group();roof.position.y=floors.length*4.6;scene.add(roof);// Continuous graphite roof interrupted by three true glazed skylights, as in the approved concept.
+ const roof=new THREE.Group();roof.userData.floorId=floors.length-1;roof.position.y=floors.length*4.6;scene.add(roof);// Continuous graphite roof interrupted by three true glazed skylights, as in the approved concept.
  box(roof,0,0,-2.3,26.4,.22,13.8,M.steel);box(roof,0,.15,-2.3,25.8,.1,13.6,mat('roof',0x717874,.65));
  box(roof,0,0,8.3,26.4,.22,1.8,M.steel);
  for(const x of [-12.1,-4,4,12.1])box(roof,x,0,6,2.2,.22,3,M.steel);
@@ -157,7 +157,7 @@ export function createOffice(container,onBot,onAssets=()=>{},onAgenda=()=>{}){
   controls.target.copy(target);camera.position.copy(desired);camera.lookAt(target);controls.update();
   controls.enableDamping=damping;moving=false;
  }
- function setView(f=-1){floor=f;structures.forEach(g=>g.visible=f<0);facades.forEach(g=>g.visible=walls&&f<0);floorGroups.forEach((g,i)=>g.visible=f<0||i===f);roof.visible=f<0&&mode==='exterior';site.visible=f<0&&mode==='exterior';fitCamera();}
+ function setView(f=-1){floor=f;structures.forEach(g=>g.visible=f<0);facades.forEach(g=>g.visible=walls&&f<0);floorGroups.forEach((g,i)=>g.visible=f<0?(mode!=='spread'||i<4):i===f);roof.visible=f<0&&mode==='exterior';site.visible=f<0&&mode==='exterior';fitCamera();}
  function setMode(next){if(!VIEW_MODES.includes(next))throw new RangeError('Vista desconocida');mode=next;setView(-1);}
  function setNight(v){
   const p=LIGHTING[v?'night':'day'];scene.background=new THREE.Color(p.background);
@@ -173,6 +173,6 @@ export function createOffice(container,onBot,onAssets=()=>{},onAgenda=()=>{}){
  setNight(false);
  function tick(){requestAnimationFrame(tick);if(document.hidden)return;const t=performance.now()/1000;floorGroups.forEach((g,i)=>{const p=floorPose(i,mode,floor>=0);for(const axis of ['x','y','z'])g.position[axis]=reduced?p[axis]:THREE.MathUtils.lerp(g.position[axis],p[axis],.08);});if(moving){camera.position.lerp(desired,reduced?1:.07);controls.target.lerp(target,reduced?1:.07);if(camera.position.distanceTo(desired)<.05)moving=false;}for(const b of botModels){b.group.position.y=b.base;b.selection.visible=selected===b.id;b.label.visible=floor>=0||mode!=='exterior'||selected===b.id;}avatars.update(t,animateBots?'idle':false,reduced);controls.update();renderer.render(scene,camera);}
  const resize=()=>{camera.aspect=container.clientWidth/container.clientHeight;camera.updateProjectionMatrix();renderer.setSize(container.clientWidth,container.clientHeight);fitCamera();};new ResizeObserver(resize).observe(container);resize();const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();let down=null;
- renderer.domElement.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY];moving=false;});renderer.domElement.addEventListener('pointerup',e=>{if(!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>6)return;const rect=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);ray.setFromCamera(pointer,camera);const roots=floorGroups.filter(g=>g.visible);if(roof.visible)roots.push(roof);const hits=ray.intersectObjects(roots,true);const first=hits.find(hit=>{let visible=true,node=hit.object;while(node){if(!node.visible){visible=false;break;}node=node.parent;}return visible&&(!hit.object.material?.transparent||hit.object.isSprite&&hit.object.userData.bot);});if(first){let node=first.object;while(node&&!node.userData.bot&&!node.userData.agenda)node=node.parent;if(node?.userData.agenda)onAgenda(node.userData.agenda);else if(node?.userData.bot)onBot(node.userData.bot.id);}});controls.addEventListener('start',()=>moving=false);tick();
+ renderer.domElement.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY];moving=false;});renderer.domElement.addEventListener('pointerup',e=>{const start=down;down=null;if(!start||Math.hypot(e.clientX-start[0],e.clientY-start[1])>6)return;const rect=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);ray.setFromCamera(pointer,camera);const roots=floorGroups.filter(g=>g.visible);if(roof.visible)roots.push(roof);const hits=ray.intersectObjects(roots,true);const first=hits.find(hit=>{let visible=true,node=hit.object;while(node){if(!node.visible){visible=false;break;}node=node.parent;}return visible&&(!hit.object.material?.transparent||hit.object.isSprite&&hit.object.userData.bot);});if(first){let node=first.object;while(node&&!node.userData.bot&&!node.userData.agenda&&!Number.isInteger(node.userData.floorId))node=node.parent;if(node?.userData.agenda)onAgenda(node.userData.agenda);else if(node?.userData.bot)onBot(node.userData.bot.id);else if(Number.isInteger(node?.userData.floorId))onFloor(node.userData.floorId);}});renderer.domElement.addEventListener('pointercancel',()=>down=null);controls.addEventListener('start',()=>moving=false);tick();
  return {setView,setMode,setExploded(v){setMode(v?'stacked':'exterior');},setWalls(v){walls=Boolean(v);facades.forEach(g=>g.visible=walls&&floor<0);},setNight,setStatuses,select(id){selected=id;},setDemo(v){animateBots=v;},rotate(d){moving=false;const o=camera.position.clone().sub(controls.target).applyAxisAngle(new THREE.Vector3(0,1,0),d);camera.position.copy(controls.target).add(o);},zoom(s){moving=false;if(camera.isOrthographicCamera){camera.zoom=THREE.MathUtils.clamp(camera.zoom/s,.35,8);camera.updateProjectionMatrix();return;}const o=camera.position.clone().sub(controls.target);o.setLength(THREE.MathUtils.clamp(o.length()*s,12,700));camera.position.copy(controls.target).add(o);},reset(){setView(floor);},get renderer(){return renderer;}};
 }

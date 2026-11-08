@@ -9,3 +9,17 @@ test('caption has reserved opaque band outside 3D canvas',()=>{
  assert.match(css,/#viewport #canvas-container\{top:84px\}/);
  assert.match(css,/#viewport\.spread-view #canvas-container\{top:174px\}/);
 });
+
+test('final layout reserves in-flow rows and never absolute title overlap',()=>{
+ const css=fs.readFileSync(new URL('../src/style.css',import.meta.url),'utf8');
+ assert.match(css,/#viewport\{display:grid;grid-template-rows:auto auto minmax\(240px,1fr\) auto auto/);
+ assert.match(css,/#viewport \.scene-title\{position:relative;inset:auto/);
+ assert.match(css,/#viewport #canvas-container,#viewport\.spread-view #canvas-container\{position:relative;inset:auto/);
+ assert.match(main,/id=>command.openAgenda\(id\),id=>setFloor\(id\)/);
+});
+test('canvas intrinsic size cannot expand desktop grid tracks',()=>{
+ const css=fs.readFileSync(new URL('../src/style.css',import.meta.url),'utf8');
+ assert.match(css,/#app\{height:100dvh;min-height:0;grid-template-rows:auto minmax\(0,1fr\)/);
+ assert.match(css,/#canvas-container>canvas\{position:absolute;inset:0;width:100%!important;height:100%!important\}/);
+ assert.match(css,/min-height:0;min-width:0;contain:strict/);
+});

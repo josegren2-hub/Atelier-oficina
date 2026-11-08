@@ -1,20 +1,21 @@
 import {floors} from './data.js';
 export const VIEW_MODES=Object.freeze(['exterior','stacked','spread']);
-export const STACK_PITCH=9;
-export const ROW_PITCH=34;
-export const GRID_DEPTH_PITCH=28;
+export const STACK_PITCH=6;
+export const ROW_PITCH=31;
+export const GRID_DEPTH_PITCH=22;
 export function floorPose(index,mode='exterior',isolated=false){
  if(!Number.isInteger(index)||index<0||index>=floors.length)throw new RangeError('Planta desconocida');
  if(!VIEW_MODES.includes(mode))throw new RangeError('Vista desconocida');
  if(isolated)return {x:0,y:index*4.6,z:0};
- if(mode==='spread'){const rows=Math.ceil(floors.length/2),lastCentered=floors.length%2===1&&index===floors.length-1;return {x:lastCentered?0:(index%2-.5)*ROW_PITCH,y:0,z:(Math.floor(index/2)-(rows-1)/2)*GRID_DEPTH_PITCH};}
+ // The overview intentionally shows PB–03; penthouse 04 opens separately.
+ if(mode==='spread')return index<4?{x:(index%2-.5)*ROW_PITCH,y:0,z:(Math.floor(index/2)-.5)*GRID_DEPTH_PITCH}:{x:0,y:index*4.6,z:0};
  return {x:0,y:index*(mode==='stacked'?STACK_PITCH:4.6),z:0};
 }
 export function viewVolumes(mode='exterior',floor=-1){
  if(!VIEW_MODES.includes(mode))throw new RangeError('Vista desconocida');
  const volumes=[];
  if(floor<0&&mode==='exterior')volumes.push([[-19,-1,-15],[19,.2,20]]);
- for(let i=0;i<floors.length;i++){if(floor>=0&&i!==floor)continue;const p=floorPose(i,mode,floor>=0);volumes.push([[p.x-13,p.y,p.z-9],[p.x+16,p.y+4.5,p.z+9]]);}
+ for(let i=0;i<floors.length;i++){if(floor>=0&&i!==floor||floor<0&&mode==='spread'&&i>=4)continue;const p=floorPose(i,mode,floor>=0);volumes.push([[p.x-13,p.y,p.z-9],[p.x+16,p.y+4.5,p.z+9]]);}
  if(floor<0&&mode==='exterior')volumes.push([[-13,floors.length*4.6-.1,-9],[13,floors.length*4.6+1.1,9]]);
  return volumes;
 }

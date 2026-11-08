@@ -5,9 +5,9 @@ import {floors} from '../src/data.js';
 import {STACK_PITCH,floorPose,viewVolumes,findAvatarSpot,LIGHTING,visualStatus} from '../src/view-layout.js';
 
 test('stacked floors retain clearance without the oversized previous gap',()=>{
- assert.equal(STACK_PITCH,9);
- for(let i=1;i<floors.length;i++)assert.equal(floorPose(i,'stacked').y-floorPose(i-1,'stacked').y,9);
- assert.equal(viewVolumes('stacked').at(-1)[1][1],(floors.length-1)*9+4.5);
+ assert.equal(STACK_PITCH,6);
+ for(let i=1;i<floors.length;i++)assert.equal(floorPose(i,'stacked').y-floorPose(i-1,'stacked').y,6);
+ assert.equal(viewVolumes('stacked').at(-1)[1][1],(floors.length-1)*6+4.5);
  assert.equal(floorPose(3,'stacked',true).y,13.799999999999999);
 });
 test('placement rejects furniture, walls, floor edges and other avatars',()=>{
@@ -42,7 +42,7 @@ test('visual states need a source and unknown is the default',()=>{
 });
 test('scene retains agenda targets outside batching and hides perimeter in isolated view',()=>{
  const scene=readFileSync(new URL('../src/scene.js',import.meta.url),'utf8');
- assert.match(scene,/onAssets=\(\)=>\{\},onAgenda=\(\)=>\{\}/);
+ assert.match(scene,/onAssets=\(\)=>\{\},onAgenda=\(\)=>\{\},onFloor=\(\)=>\{\}/);
  assert.match(scene,/panel.userData.agenda=id;panel.userData.assetSlot=true/);
  assert.match(scene,/agendaScreen\(g,'ted'/);
  assert.match(scene,/agendaScreen\(g,'julian'/);
