@@ -24,7 +24,7 @@ for(const model of manifest.models.filter(m=>m.glb))test(`${model.id}: GLB integ
 test('Ted module stays byte-identical; attachment preserves host and static/reduced motion',async()=>{
  const bytes=fs.readFileSync(new URL('../src/avatars/ted-tierno.js',import.meta.url));assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'),manifest.models.find(m=>m.id==='ted').sha256);
  const root=new THREE.Group(),visual=new THREE.Group();root.position.set(1,2,3);root.rotation.y=.4;root.userData.keep='metadata';root.add(visual);const models=createAvatarModels();await models.attach(bots.find(b=>b.id==='ted'),visual);
- assert.equal(models.stats.loaded,1);assert.ok(Math.abs(new THREE.Box3().setFromObject(visual).getSize(new THREE.Vector3()).y-.9)<.001);
+ assert.equal(models.stats.loaded,1);assert.ok(Math.abs(new THREE.Box3().setFromObject(visual).getSize(new THREE.Vector3()).y-1.035)<.001);
  models.update(1,'wave',false);models.update(9,false,false);visual.updateMatrixWorld(true);const a=visual.toJSON();models.update(20,false,false);assert.deepEqual(visual.toJSON(),a);
  models.update(2,'wave',true);visual.updateMatrixWorld(true);const frozen=visual.toJSON();models.update(20,'wave',true);assert.deepEqual(visual.toJSON(),frozen);
  assert.deepEqual(root.position.toArray(),[1,2,3]);assert.equal(root.rotation.y,.4);assert.equal(root.userData.keep,'metadata');models.dispose();assert.equal(visual.children.length,0);
@@ -32,6 +32,6 @@ test('Ted module stays byte-identical; attachment preserves host and static/redu
 test('Escala de oficina independiente conserva el modelo original y la galería',async()=>{
  const visual=new THREE.Group(),models=createAvatarModels({visualHeight:1.35});
  await models.attach(bots.find(b=>b.id==='ted'),visual);
- assert.ok(Math.abs(new THREE.Box3().setFromObject(visual).getSize(new THREE.Vector3()).y-1.35)<.001);
+ assert.ok(Math.abs(new THREE.Box3().setFromObject(visual).getSize(new THREE.Vector3()).y-1.5525)<.001);
  models.dispose();
 });

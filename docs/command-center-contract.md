@@ -1,0 +1,14 @@
+# Read-only command center integration
+
+Import `mountCommandCenter` from `src/command-center.js` and import `src/command-center.css` in the app entry. Mount once with `{ getSnapshot: () => currentSnapshot, onChoose: botId => selectBot(botId) }`. `onChoose` only navigates to a selected assistant, never executes work. Returned methods: `open(section)`, `openAgenda('ted' | 'julian')`, `refresh()`, `close()`, `destroy()`. `element` is the native modal dialog. Sections: `tasks`, `notifications`, `stats`, `agenda`. Dialog handles Escape, modal focus containment, close button and focus return using native dialog behavior. Call `refresh()` after the app changes snapshots. “Actualizar vista” re-reads the synchronous local getter, not a network request.
+
+Existing disconnected and demo snapshots are supported without any change. Neither bot status nor the bot `task` string is converted to a task record. No tasks, events, notifications, timestamps or productivity measurements are synthesized. Demo mode is explicitly marked as simulation. Missing task datasets yield unavailable measurements, not zero. Explicit empty arrays represent an available but empty dataset.
+
+Future optional snapshot fields (must first be validated by a trusted adapter):
+
+- `tasks`: array of `{id: string, title: string, status: 'pending'|'in_progress'|'authorization'|'urgent'|'postponed'|'completed', botId?: string, description?: string, dueAt?: ISO timestamp, urgent?: boolean}`. Aliases: working, review, done, deferred, awaiting_approval. Duplicate IDs and unrecognized states are excluded and the excluded count is disclosed in statistics. Urgency is transversal, so totals across categories are not additive.
+- `notifications`: array of `{id: string, title: string, body?: string, createdAt?: ISO timestamp}`. Read-only feed; no fake assistant activity, read receipts or local UI actions inserted.
+- `agenda`: object keyed by `ted` or `julian`, each `{connected: boolean, source: string, events: [{id: string, title: string, start: ISO timestamp, location?: string}]}`. Connected calendars are still read-only; missing or disconnected sources show unavailable state. Events without valid timestamps are omitted, never assigned invented dates.
+- Existing `mode`, `source`, `lastSignal`, `bots` remain unchanged. Modes other than `live` and `demo` suppress all operational records, including stale agenda/task payloads.
+
+The existing adapter intentionally does not pass through these optional fields. This UI does not expand that network trust boundary, connect calendars, store credentials, request permissions or mutate remote data. A future integration must validate IDs, provenance, bounds, dates and access on the server/adapter and provide explicit source/timestamps before enabling live feeds. External text is rendered using textContent, not HTML. No approve/complete/reschedule controls are offered: authorizations are a viewing category, never an execution grant.

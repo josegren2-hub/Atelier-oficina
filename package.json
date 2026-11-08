@@ -1,6 +1,6 @@
 {
   "name": "nueva-oficina-grokbots",
-  "version": "0.7.0-review",
+  "version": "0.10.0-review",
   "private": true,
   "type": "module",
   "scripts": {

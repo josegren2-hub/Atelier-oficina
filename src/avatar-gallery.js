@@ -1,3 +1,4 @@
+if(new URLSearchParams(location.search).has('embedded')){document.documentElement.classList.add('embedded');document.querySelectorAll('a').forEach(a=>a.hidden=true);}
 import * as THREE from 'three';
 import {createAvatarModels} from './avatar-models.js';
 import {bots} from './data.js';
@@ -11,15 +12,15 @@ for(const bot of bots){const host=new THREE.Group(),visual=new THREE.Group();hos
 // Match canvas pixels to the grid's world-space aspect, not a fixed tall canvas.
 export function calculateGalleryLayout(width,count=16){
  const columns=width<600?2:4,rows=Math.ceil(count/columns);
- const worldWidth=columns*1.65,worldHeight=rows*1.45;
+ const worldWidth=columns*1.65,worldHeight=rows*1.65;
  return {width,height:width*worldHeight/worldWidth,columns,rows,worldWidth,worldHeight};
 }
 function resize(){
  const {width,height,columns,rows,worldWidth,worldHeight}=calculateGalleryLayout(canvas.clientWidth,hosts.length);
  canvas.style.height=`${height}px`;renderer.setSize(width,height,false);
  camera.left=-worldWidth/2;camera.right=worldWidth/2;camera.top=worldHeight/2;camera.bottom=-worldHeight/2;camera.updateProjectionMatrix();
- // Center the full avatar + name envelope (.9 high, label bottom -.4105).
- hosts.forEach((host,i)=>host.position.set((i%columns-(columns-1)/2)*1.65,((rows-1)/2-Math.floor(i/columns))*1.45-.245,0));
+ // Center the full avatar + name envelope (Ted1.035 high, label bottom-.4105).
+ hosts.forEach((host,i)=>host.position.set((i%columns-(columns-1)/2)*1.65,((rows-1)/2-Math.floor(i/columns))*1.65-.31,0));
 }
 let pose=false;document.querySelectorAll('[data-pose]').forEach(button=>button.addEventListener('click',()=>{pose=button.dataset.pose||false;document.querySelectorAll('[data-pose]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));}));
 const media=matchMedia('(prefers-reduced-motion: reduce)');window.addEventListener('resize',resize);resize();renderer.setAnimationLoop(ms=>{models.update(ms/1000,pose,media.matches);renderer.render(scene,camera);});

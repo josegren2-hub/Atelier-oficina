@@ -9,8 +9,8 @@ const layout=vm.runInNewContext(`${helper};calculateGalleryLayout`);
 for(const width of [360,390,430,599,600,1024,1440])test(`gallery ${width}px fits grid without added vertical camera margin`,()=>{
  const x=layout(width);assert.equal(x.columns,width<600?2:4);assert.equal(x.rows,width<600?8:4);
  assert.ok(Math.abs(width/x.height-x.worldWidth/x.worldHeight)<1e-12);
- assert.ok(x.height>0);if(width===390)assert.ok(x.height>1370&&x.height<1372);
- for(let row=0;row<x.rows;row++){const y=((x.rows-1)/2-row)*1.45-.245;assert.ok(y+.9<x.worldHeight/2);assert.ok(y-.4105>-x.worldHeight/2);}
+ assert.ok(x.height>0);if(width===390)assert.ok(x.height>1559&&x.height<1561);
+ for(let row=0;row<x.rows;row++){const y=((x.rows-1)/2-row)*1.65-.31;assert.ok(y+1.035<x.worldHeight/2);assert.ok(y-.4105>-x.worldHeight/2);}
 });
 test('gallery has no fixed 1100px/2200px height and retains demo controls',()=>{
  const html=fs.readFileSync(new URL('../avatars.html',import.meta.url),'utf8');assert.doesNotMatch(html,/height:(1100|2200)px/);

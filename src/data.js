@@ -1,14 +1,28 @@
+// Distribution supplied by equipo-bots-rob.docx; assignments do not imply live activity.
 export const floors = [
- {id:0,name:'Encuentro',description:'Recepción · coordinación · bienestar',color:'#c2b494'},
- {id:1,name:'Biblioteca',description:'Criterio · lectura · decisiones',color:'#aebd9c'},
- {id:2,name:'Atelier',description:'Editorial · imagen · comunidad',color:'#cba1a8'},
- {id:3,name:'Laboratorio',description:'Tecnología · medios · podcast',color:'#a0b9cd'}
+ {id:0,name:'Personal',description:'Acompañamiento · salud · redes personales',color:'#c2b494'},
+ {id:1,name:'Jurídico y Finanzas',description:'Asesoría jurídica y docente · finanzas y administración',color:'#aebd9c'},
+ {id:2,name:'Proyectos',description:'Libro · apps · estrategia · soporte · podcast · audiovisual',color:'#a0b9cd'},
+ {id:3,name:'Tinta Rosa',description:'Dirección · edición · web · comunidad',color:'#cba1a8'},
+ {id:4,name:'Penthouse · Ted',description:'Asistencia personal · coordinación general',color:'#d5c19b'}
 ];
 const entries=[
- ['ted','Ted','Asistente personal',0,'#7d91d2'],['ceo','Tommy','Estrategia / CEO digital',0,'#e7ac47'],['luna','Luna','Asistente',0,'#9cc9d9'],['emiliano','Emiliano','Entrenamiento / salud',0,'#87b66b'],
- ['julian','Julián','Jurídico',1,'#a9be63'],['ines','Inés','Finanzas',1,'#6cb5ad'],['libro','Rodrigo','Redacción / edición del libro',1,'#db9166'],['tr-editor','Naim','Editor jefe',1,'#30353e'],
- ['mateo','Mateo','Director de Tinta Rosa',2,'#da756d'],['tr-cm','Dany','Community manager',2,'#9dd3cc'],['vale','Valery','Redes personales',2,'#e76892'],['director','Joss','Director de video',2,'#53a7ad'],
- ['apps','Charly','Desarrollo móvil',3,'#609bd0'],['luca','Luca','Técnico digital',3,'#e19147'],['tadeo','Tadeo','Web y sitio',3,'#9ab9dc'],['rulo','Rulo','Productor de podcast',3,'#aa79ce']
+ ['ted','Ted','Asistente personal / coordinador general',4,'#f4d5a1'],
+ ['ceo','Tommy','Estrategia de ingresos digitales',2,'#2867d7'],
+ ['luna','Luna','Acompañamiento espiritual',0,'#ba85ea'],
+ ['emiliano','Emiliano','Salud / estilo de vida / entrenamiento',0,'#30aa76'],
+ ['julian','Julián','Jurídico y docente',1,'#edb82f'],
+ ['ines','Inés','Finanzas / contabilidad / administración',1,'#b792dd'],
+ ['libro','Rodrigo','Escritor / investigador / editor del libro',2,'#26b6dc'],
+ ['tr-editor','Naim','Editor jefe / verificador',3,'#b65c85'],
+ ['mateo','Mateo','Director de Tinta Rosa',3,'#d72d82'],
+ ['tr-cm','Dany','Comunidad / diseño / fotografía',3,'#f5accd'],
+ ['vale','Valery','Redes personales / opinión',0,'#f18a73'],
+ ['director','Joss','Director / productor audiovisual',2,'#f4e0b7'],
+ ['apps','Charly','Desarrollo de apps móviles',2,'#f59b27'],
+ ['luca','Luca','Soporte técnico / mantenimiento transversal',2,'#a5e4c3'],
+ ['tadeo','Tadeo','Diseño / desarrollo / coordinación web',3,'#ef79b5'],
+ ['rulo','Rulo','Productor / director de podcast',2,'#51bce5']
 ];
 export const bots=entries.map(([id,name,role,floor,color],index)=>({id,name,role,floor,color,shape:index%4}));
 export function disconnectedSnapshot(){return {mode:'disconnected',source:null,lastSignal:null,bots:bots.map(b=>({...b,status:'unknown',task:null,lastSignal:null}))};}
