@@ -41,9 +41,12 @@ export function mapOficinaEstado(payload, knownIds, now = Date.now()) {
     if (typeof row.frase === 'string' && row.frase.trim()) {
       task = row.frase.trim().slice(0, 500);
     }
-    byId.set(row.id, {id: row.id, status, task, lastSignal});
+    const waitingSince = (status === 'review' && typeof row.esperando_desde === 'string' && row.esperando_desde.trim())
+      ? row.esperando_desde.trim()
+      : null;
+    byId.set(row.id, {id: row.id, status, task, lastSignal, waitingSince});
   }
-  const bots = [...valid].map(id => byId.get(id) || {id, status: 'unknown', task: null, lastSignal});
+  const bots = [...valid].map(id => byId.get(id) || {id, status: 'unknown', task: null, lastSignal, waitingSince: null});
   return {
     schemaVersion: 1,
     mode: 'live',
@@ -69,7 +72,7 @@ export function validateSnapshot(payload, knownIds, now = Date.now()) {
     if (!Number.isFinite(date) || date > now + SOURCE_CONTRACT.maxFutureSkewMs) throw new Error('Fecha inválida o futura');
     if (record.task !== null && record.task !== undefined && (typeof record.task !== 'string' || record.task.length > 500)) throw new Error('Tarea inválida');
     const stale = now - date > SOURCE_CONTRACT.maxSignalAgeMs;
-    return {id: record.id, status: stale ? 'unknown' : record.status, task: stale ? null : record.task ?? null, lastSignal: new Date(date).toISOString(), stale};
+    return {id: record.id, status: stale ? 'unknown' : record.status, task: stale ? null : record.task ?? null, lastSignal: new Date(date).toISOString(), stale, waitingSince: stale ? null : (record.waitingSince || null)};
   });
   return {mode: 'live', source: payload.source.slice(0, 120), bots: records, lastSignal: records.length ? records.reduce((a, b) => a > b.lastSignal ? a : b.lastSignal, '') : null};
 }

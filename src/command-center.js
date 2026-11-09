@@ -16,12 +16,16 @@ export function commandCenterModel(snapshot = {}) {
     return [{id:task.id,title:task.title,status,botId:str(task.botId),description:str(task.description),dueAt:str(task.dueAt),urgent:task.urgent===true || status==='urgent'}];
   });
   const hasTasks = available && Array.isArray(snapshot.tasks);
+  const bots=Array.isArray(snapshot.bots)?snapshot.bots.filter(b=>b && str(b.id) && str(b.name)):[];
+  const waiting=available?bots.filter(b=>b.status==='review' && !b.stale).map(b=>({id:b.id,name:b.name,waitingSince:str(b.waitingSince),pendiente:str(b.pendiente),authorization:Array.isArray(b.authorization)?b.authorization.filter(Boolean):[]})):[];
   return {mode:snapshot.mode || 'disconnected',source:str(snapshot.source),lastSignal:str(snapshot.lastSignal),tasks,hasTasks,
     rejected:raw.length-tasks.length,
     counts:Object.fromEntries(Object.keys(taskStates).map(status=>[status,hasTasks?tasks.filter(task=>status==='urgent'?task.urgent:task.status===status).length:null])),
     notifications:available && Array.isArray(snapshot.notifications)?snapshot.notifications.filter(n=>n && str(n.id) && str(n.title)).map(n=>({id:n.id,title:n.title,body:str(n.body),createdAt:str(n.createdAt)})):[],
     hasNotifications:available && Array.isArray(snapshot.notifications),
-    bots:Array.isArray(snapshot.bots)?snapshot.bots.filter(b=>b && str(b.id) && str(b.name)):[],
+    bots,
+    waiting,
+    mandoUnlocked:snapshot.mandoUnlocked===true,
     agenda:available && snapshot.agenda && typeof snapshot.agenda === 'object'?snapshot.agenda:{}};
 }
 export function filterTasks(tasks, {status='all',query='',botId=''}={}) {
@@ -31,22 +35,23 @@ export function filterTasks(tasks, {status='all',query='',botId=''}={}) {
 export function mountCommandCenter({getSnapshot=()=>({}),onChoose=()=>{}}={}) {
   const dialog=document.createElement('dialog');
   dialog.className='cc-dialog'; dialog.setAttribute('aria-label','Centro de mando');
-  dialog.innerHTML=`<header class="cc-header"><div><p class="cc-eyebrow">OFICINA · CONSULTA</p><h2>Actividades</h2></div><button type="button" data-close aria-label="Cerrar centro de mando">Cerrar ×</button></header><nav class="cc-nav" aria-label="Secciones del centro de mando"><button type="button" data-section="tasks">Actividades</button><button type="button" data-section="notifications">Notificaciones</button><button type="button" data-section="stats">Estadísticas</button><button type="button" data-section="agenda">Agendas</button></nav><div class="cc-source" role="status"></div><main class="cc-content"></main><footer class="cc-footer"><span>Solo consulta · no modifica tareas ni calendarios</span><button type="button" data-refresh>Actualizar vista</button></footer>`;
+  dialog.innerHTML=`<header class="cc-header"><div><p class="cc-eyebrow">OFICINA · CONSULTA</p><h2>Actividades</h2></div><button type="button" data-close aria-label="Cerrar centro de mando">Cerrar ×</button></header><nav class="cc-nav" aria-label="Secciones del centro de mando"><button type="button" data-section="waiting">Te espera</button><button type="button" data-section="tasks">Actividades</button><button type="button" data-section="notifications">Notificaciones</button><button type="button" data-section="stats">Estadísticas</button><button type="button" data-section="agenda">Agendas</button></nav><div class="cc-source" role="status"></div><main class="cc-content"></main><footer class="cc-footer"><span>Solo consulta · no modifica tareas ni calendarios</span><button type="button" data-refresh>Actualizar vista</button></footer>`;
   document.body.append(dialog);
   const content=dialog.querySelector('.cc-content'),source=dialog.querySelector('.cc-source');
-  let section='tasks',status='all',query='',botId='',agendaId='ted',returnFocus=null,model=commandCenterModel(),readError=false,filtersOpen=false;
+  let section='waiting',status='all',query='',botId='',agendaId='ted',returnFocus=null,model=commandCenterModel(),readError=false,filtersOpen=false;
   function el(tag,text,cls) {const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;}
   function button(text,action,cls){const node=el('button',text,cls);node.type='button';node.addEventListener('click',action);return node;}
   function empty(title,description,parent=content){const block=el('div',undefined,'cc-empty');block.append(el('h3',title),el('p',description));parent.append(block);}
   function heading(title,description){const block=el('div',undefined,'cc-section-heading');block.append(el('h3',title));if(description)block.append(el('p',description,'cc-explainer'));content.append(block);}
   function summary(items){const block=el('dl',undefined,items.length===2?'cc-summary cc-summary-pair':'cc-summary');for(const [label,value] of items){const item=el('div');item.append(el('dt',label),el('dd',value===null?'—':String(value)));block.append(item);}content.append(block);}
   function render(){
-    dialog.querySelector('h2').textContent={tasks:'Actividades',notifications:'Notificaciones',stats:'Estadísticas',agenda:'Agendas'}[section];
+    dialog.querySelector('h2').textContent={waiting:'Te espera',tasks:'Actividades',notifications:'Notificaciones',stats:'Estadísticas',agenda:'Agendas'}[section];
     dialog.querySelectorAll('[data-section]').forEach(node=>node.setAttribute('aria-current',node.dataset.section===section?'page':'false'));
     source.dataset.mode=readError?'error':model.mode;
-    source.textContent=readError?'No se pudo leer la vista local. No se muestran datos anteriores.':model.mode==='demo'?'DEMO · SIMULACIÓN · Ejemplos ficticios. La fuente real sigue desconectada.':model.mode==='live'?`Fuente: ${model.source||'sin identificar'} · Última señal: ${dateText(model.lastSignal)}`:'Fuente no conectada · No hay actividad real verificable.';
+    source.textContent=readError?'No se pudo leer la vista local. No se muestran datos anteriores.':model.mode==='demo'?'DEMO · SIMULACIÓN · Ejemplos ficticios. La fuente real sigue desconectada.':model.mode==='live'?`Fuente: ${model.source||'sin identificar'} · Última señal: ${dateText(model.lastSignal)}${model.mandoUnlocked?' · Mando desbloqueado':''}`:'Fuente no conectada · No hay actividad real verificable.';
     content.replaceChildren();
     content.scrollTop=0;
+    if(section==='waiting') renderWaiting();
     if(section==='tasks') renderTasks();
     if(section==='notifications') {
       heading('Avisos recibidos','Información de la fuente, sin acciones ni respuestas pendientes en esta pantalla.');
@@ -64,6 +69,21 @@ export function mountCommandCenter({getSnapshot=()=>({}),onChoose=()=>{}}={}) {
       content.append(button('Ver actividades de este recuento',()=>{section='tasks';status='all';query='';botId='';filtersOpen=false;render();dialog.querySelector('[data-section="tasks"]').focus();}));
     }
     if(section==='agenda')renderAgenda();
+  }
+  function renderWaiting(){
+    heading('Te espera','Quién marca esperando en el estado en vivo. Se limpia en cuanto el vivo deja de marcar esperando (cualquier respuesta).');
+    summary([['Te esperan ahora',model.mode==='live'||model.mode==='demo'?model.waiting.length:null],['Mando',model.mandoUnlocked?'desbloqueado':'bloqueado']]);
+    if(!(model.mode==='live'||model.mode==='demo')){empty('Sin señal en vivo','Conecta el estado en vivo para ver quién te espera.');return;}
+    if(!model.waiting.length){empty('Nadie te espera ahora','Cuando un bot pase a esperando aparecerá aquí.');return;}
+    for(const w of model.waiting){
+      const card=el('article',undefined,'cc-card');
+      card.append(el('span','Te espera','cc-badge'),el('h3',w.name));
+      if(w.waitingSince)card.append(el('p',`Desde ${dateText(w.waitingSince)}`));
+      if(model.mandoUnlocked&&w.pendiente)card.append(el('p',w.pendiente));
+      if(model.mandoUnlocked&&w.authorization.length)card.append(el('small',`Autorización: ${w.authorization.join(' · ')}`));
+      card.append(button(`Ver a ${w.name}`,()=>{close();onChoose(w.id);}));
+      content.append(card);
+    }
   }
   function renderTasks(){
     heading('Resumen de actividades',model.hasTasks?'Estado actual de las tareas disponibles.':'Sin datos de tareas verificados todavía.');
@@ -121,7 +141,7 @@ export function mountCommandCenter({getSnapshot=()=>({}),onChoose=()=>{}}={}) {
   }
   function refresh(){try{model=commandCenterModel(getSnapshot()||{});readError=false;}catch{model=commandCenterModel();readError=true;}render();}
   function close(){if(dialog.open)dialog.close();}
-  function open(next='tasks'){section=['tasks','notifications','stats','agenda'].includes(next)?next:'tasks';refresh();if(!dialog.open){returnFocus=document.activeElement;dialog.showModal();}dialog.querySelector('[data-close]').focus();}
+  function open(next='waiting'){section=['waiting','tasks','notifications','stats','agenda'].includes(next)?next:'waiting';refresh();if(!dialog.open){returnFocus=document.activeElement;dialog.showModal();}dialog.querySelector('[data-close]').focus();}
   dialog.querySelector('[data-close]').addEventListener('click',close);
   dialog.querySelector('[data-refresh]').addEventListener('click',refresh);
   dialog.querySelectorAll('[data-section]').forEach(b=>b.addEventListener('click',()=>{section=b.dataset.section;render();}));

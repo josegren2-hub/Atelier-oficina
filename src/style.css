@@ -71,3 +71,19 @@ body:has(#detail[open]){overflow:hidden}
 .source.live i{background:#6fbf7a}
 .source.offline i{background:#d27a6a}
 .source.live #source-label{color:#d7efe0}
+
+/* Phase 2 · mando unlock (fits existing detail dialog styles) */
+.mando-status{font-size:10px;color:#aebecd;white-space:nowrap}
+.mando-status.unlocked{color:#9fd6b1}
+#mando-dialog{position:fixed;inset:0;margin:auto;padding:0;width:min(480px,calc(100vw - 32px));max-height:calc(100dvh - 32px);border:1px solid #819bb0;border-radius:18px;color:#eef4f8;background:#192b3b;box-shadow:0 26px 95px #000b;overflow:auto}
+#mando-dialog:not([open]){display:none}
+#mando-dialog[open]{display:block}
+#mando-dialog::backdrop{background:#07101dcc;backdrop-filter:blur(4px)}
+#mando-dialog .detail-top{display:flex;gap:16px;justify-content:space-between;align-items:start;padding:20px 22px 12px}
+#mando-dialog h2{font:26px/1.2 Georgia;margin:0;color:#fff2d6}
+#mando-dialog p{font-size:12px;line-height:1.5;color:#c7d7e3}
+.mando-form{display:flex;flex-direction:column;gap:10px;padding:0 22px 22px}
+.mando-form label{font-size:12px;color:#bcd0de}
+.mando-form input[type=password]{font:16px system-ui;padding:11px;border-radius:8px;border:1px solid #7c98ad;background:#111d29;color:#eee}
+#mando-error{min-height:1.2em;color:#f0a0a0;font-size:12px;margin:0}
+#mando-unlock[aria-pressed=true]{border-color:#9fd6b1;color:#cfeedd}

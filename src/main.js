@@ -8,6 +8,7 @@ import {createOffice} from './scene.js';
 import {mountCommandCenter} from './command-center.js';
 import {filterRoster,botProfile} from './roster.js';
 import {readNightPreference,saveNightPreference} from './theme-state.js';
+import {createMandoSession} from './mando-session.js';
 const $=s=>document.querySelector(s);
 mountReleaseNotice();
 let snapshot=disconnectedSnapshot(),floor=-1,rosterFloor=-1,viewMode='exterior',selected=null,office,detailReturn=null,liveTimer=null,wantLive=true;
@@ -15,8 +16,44 @@ let nightMode=readNightPreference();
 $('#night').checked=nightMode;
 document.documentElement.dataset.theme=nightMode?'night':'day';
 function el(tag,text,className){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(className)n.className=className;return n;}
+const mandoSession=createMandoSession({onChange:()=>{if(snapshot.mode==='live')applySnapshot(enrichSnapshot(snapshot),{demoMotion:false});else paintMando();}});
 const command=mountCommandCenter({getSnapshot:()=>snapshot,onChoose:id=>choose(id)});
 const nav=$('#floors'),detail=$('#detail');
+const mandoDialog=$('#mando-dialog');
+function paintMando(){
+ const unlocked=mandoSession.unlocked;
+ const btn=$('#mando-unlock');
+ const status=$('#mando-status');
+ if(btn){btn.textContent=unlocked?'Mando desbloqueado':'Desbloquear mando';btn.setAttribute('aria-pressed',String(unlocked));}
+ if(status){status.textContent=unlocked?'Mando desbloqueado · cifrado local':'Mando bloqueado';status.classList.toggle('unlocked',unlocked);}
+}
+function tasksFromMando(liveBots){
+ if(!mandoSession.unlocked||!mandoSession.mando)return null;
+ const tasks=[];
+ for(const bot of liveBots){
+  const m=mandoSession.botRecord(bot.id);
+  if(!m)continue;
+  if(bot.status==='working'&&(bot.task||m.tarea)){
+   tasks.push({id:`live-work-${bot.id}`,title:bot.task||m.tarea,status:'in_progress',botId:bot.id,description:bot.liveTask?.detail||'',dueAt:'',urgent:false});
+  }
+  if(bot.status==='review'){
+   const title=m.pendiente||bot.pendiente||`Te espera · ${bot.name}`;
+   tasks.push({id:`live-wait-${bot.id}`,title,status:'authorization',botId:bot.id,description:'Estado en vivo: te espera',dueAt:bot.waitingSince||'',urgent:false});
+   for(const item of (m.ok||[])){
+    if(!item)continue;
+    tasks.push({id:`live-auth-${bot.id}-${tasks.length}`,title:item,status:'authorization',botId:bot.id,description:'Pendiente de autorización',dueAt:'',urgent:false});
+   }
+  }else if(m.tarea&&bot.status!=='working'){
+   tasks.push({id:`live-task-${bot.id}`,title:m.tarea,status:'pending',botId:bot.id,description:'Tarea del mando',dueAt:'',urgent:false});
+  }
+ }
+ return tasks;
+}
+function enrichSnapshot(base){
+ const bots=base.bots.map(b=>mandoSession.enrichBot(b));
+ const tasks=tasksFromMando(bots);
+ return {...base,bots,mandoUnlocked:mandoSession.unlocked,tasks:tasks??base.tasks,notifications:base.notifications};
+}
 for(const f of floors){
  const title=`${f.id===0?'PB':f.id} · ${f.name}`;
  for(const selector of ['#floor-jump','#roster-floor']){const option=el('option',title);option.value=f.id;$(selector).append(option);}
@@ -24,7 +61,7 @@ for(const f of floors){
 $('#floor-jump').addEventListener('change',e=>setFloor(Number(e.target.value)));
 $('#roster-floor').addEventListener('change',e=>{rosterFloor=Number(e.target.value);renderRoster();});
 $('#command-open').addEventListener('click',()=>command.open());
-$('#pending-open').addEventListener('click',()=>command.open('tasks'));
+$('#pending-open').addEventListener('click',()=>command.open('waiting'));
 $('#notifications-open').addEventListener('click',()=>command.open('notifications'));
 $('#refresh-office').addEventListener('click',()=>{command.refresh();if(wantLive&&snapshot.mode!=='demo'){refreshLive({manual:true});}else{$('#refresh-feedback').textContent=snapshot.mode==='demo'?'Vista demo actualizada. Sin consulta a la fuente en vivo.':'Vista actualizada. Sin fuente en vivo activa.';}});
 function toggleAvatars(open){$('#avatar-dropdown').hidden=!open;$('#avatars-toggle').setAttribute('aria-expanded',String(open));if(open){const frame=$('#avatar-dropdown iframe');if(!frame.getAttribute('src'))frame.src=frame.dataset.src;$('#avatars-close').focus();}else $('#avatars-toggle').focus();}
@@ -113,12 +150,16 @@ function renderDetail(){
  const profile=botProfile(snapshot,b,office?.getActivity?.(selected));
  $('#detail-title').textContent=b.name;$('#detail-role').textContent=b.role;$('#detail-source').textContent=profile.source;
  const facts=$('#detail-facts');facts.replaceChildren();
- for(const [label,value,key] of [
+ const rows=[
   ['Planta',`${b.floor===0?'PB':`Piso ${b.floor}`} · ${floors[b.floor].name}`,'floor'],
   ['Estado',profile.status,'status'],['¿Está activo?',profile.active,'active'],
   ['Actividad ahora',profile.activity,'activity'],['Tarea actual',profile.currentTask,'current'],
-  ['Tarea anterior',profile.previousTask,'previous'],['Última señal real',profile.lastSignal,'signal']
- ]){const row=el('div',undefined,'detail-fact'),valueNode=el('dd',value);valueNode.dataset.profileField=key;row.append(el('dt',label),valueNode);facts.append(row);}
+ ];
+ if(profile.waitingNote)rows.push(['Te espera',profile.waitingNote,'waiting']);
+ if(profile.authorization)rows.push(['Autorización',profile.authorization,'authorization']);
+ if(profile.agente)rows.push(['Subagente',profile.agente,'agente']);
+ rows.push(['Tarea anterior',profile.previousTask,'previous'],['Última señal real',profile.lastSignal,'signal']);
+ for(const [label,value,key] of rows){const row=el('div',undefined,'detail-fact'),valueNode=el('dd',value);valueNode.dataset.profileField=key;row.append(el('dt',label),valueNode);facts.append(row);}
  $('#detail-agenda').hidden=!['ted','julian'].includes(b.id);
 }
 function render(){renderRoster();renderDetail();}
@@ -134,8 +175,8 @@ function mergeLive(result){
   lastSignal:result.lastSignal,
   bots:bots.map(base=>{
    const live=byId.get(base.id);
-   if(!live)return {...base,status:'unknown',task:null,previousTask:null,activity:null,lastSignal:null,stale:true};
-   return {...base,status:live.status,task:live.task,previousTask:null,activity:live.task,lastSignal:live.lastSignal,stale:live.stale};
+   if(!live)return {...base,status:'unknown',task:null,previousTask:null,activity:null,lastSignal:null,stale:true,waitingSince:null};
+   return {...base,status:live.status,task:live.task,previousTask:null,activity:live.task,lastSignal:live.lastSignal,stale:live.stale,waitingSince:live.waitingSince||null};
   }),
  };
 }
@@ -155,11 +196,12 @@ function paintSource(){
 }
 
 function applySnapshot(next,{demoMotion=false}={}){
- snapshot=next;
+ snapshot=next.mode==='live'?enrichSnapshot(next):{...next,mandoUnlocked:false};
  office?.setDemo(demoMotion);
  office?.setStatuses(snapshot);
  command.refresh();
  paintSource();
+ paintMando();
  render();
 }
 
@@ -202,6 +244,45 @@ try{
  office.setStatuses(snapshot);
 }catch(error){$('#fallback').hidden=false;console.error('WebGL no disponible:',error);}
 paintSource();
+paintMando();
+$('#mando-unlock')?.addEventListener('click',()=>{
+ if(mandoSession.unlocked){
+  mandoSession.lock();
+  if(snapshot.mode==='live')applySnapshot({mode:snapshot.mode,source:snapshot.source,lastSignal:snapshot.lastSignal,bots:snapshot.bots.map(b=>({...b}))});
+  else paintMando();
+  $('#refresh-feedback').textContent='Mando bloqueado en este navegador.';
+  return;
+ }
+ $('#mando-error').textContent='';
+ $('#mando-pass').value='';
+ if(!mandoDialog.open)mandoDialog.showModal();
+ $('#mando-pass').focus();
+});
+$('#mando-dialog-close')?.addEventListener('click',()=>mandoDialog.close());
+$('#mando-lock')?.addEventListener('click',()=>{
+ mandoSession.lock();
+ mandoDialog.close();
+ if(snapshot.mode==='live')applySnapshot({mode:snapshot.mode,source:snapshot.source,lastSignal:snapshot.lastSignal,bots:snapshot.bots.map(b=>({...b}))});
+ else paintMando();
+ $('#refresh-feedback').textContent='Mando bloqueado y clave olvidada.';
+});
+$('#mando-form')?.addEventListener('submit',async e=>{
+ e.preventDefault();
+ const pass=$('#mando-pass').value;
+ const remember=$('#mando-remember').checked;
+ $('#mando-error').textContent='Desbloqueando…';
+ try{
+  await mandoSession.unlock(pass,{remember});
+  $('#mando-pass').value='';
+  mandoDialog.close();
+  if(snapshot.mode==='live')applySnapshot({mode:snapshot.mode,source:snapshot.source,lastSignal:snapshot.lastSignal,bots:snapshot.bots.map(b=>({...b}))});
+  else paintMando();
+  $('#refresh-feedback').textContent='Mando desbloqueado. Las frases cifradas se leen solo en este navegador.';
+ }catch(err){
+  $('#mando-error').textContent=err?.message||'No se pudo desbloquear';
+ }
+});
+mandoSession.tryRestore().then(()=>{if(snapshot.mode==='live')applySnapshot({mode:snapshot.mode,source:snapshot.source,lastSignal:snapshot.lastSignal,bots:snapshot.bots.map(b=>({...b}))});else paintMando();});
 refreshLive();
 startLivePolling();
 document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>{

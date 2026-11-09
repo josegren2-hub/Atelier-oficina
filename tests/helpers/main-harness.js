@@ -150,6 +150,10 @@ export function createMainHarness({storage=createMemoryStorage()}={}){
   readSnapshot:async()=>{throw new Error('Harness: live fetch disabled');},
   mountReleaseNotice:()=>{},
   mountCommandCenter:callbacks=>{commandCallbacks=callbacks;return command;},
+  createMandoSession:({onChange}={})=>{
+    const api={unlocked:false,mando:null,tareas:null,unlock:async()=>({unlocked:true}),tryRestore:async()=>({unlocked:false}),refresh:async()=>({unlocked:false}),lock(){api.unlocked=false;onChange?.({unlocked:false});return {unlocked:false};},snapshot:()=>({unlocked:false}),enrichBot:b=>({...b,mandoUnlocked:false}),botRecord:()=>null};
+    return api;
+  },
   createOffice:(container,onChoose,onStats,onAgenda,onFloor)=>{sceneCallbacks={container,onChoose,onAgenda,onFloor};onStats({loaded:16,failed:0});return scene;},
   matchMedia:()=>({matches:true}),setInterval:callback=>{intervals.push(callback);return intervals.length;},clearInterval:()=>{}
  });
