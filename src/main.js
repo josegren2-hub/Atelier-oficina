@@ -240,6 +240,12 @@ function paintSource(){
  $('#demo').setAttribute('aria-pressed',String(demo));
  $('#demo-actions').hidden=!demo;
  $('#demo-banner').hidden=!demo;
+ const foot=$('#team-disclaimer');
+ if(foot){
+  foot.textContent=demo?'Ejemplos simulados. Sin actividad real.'
+   :live?'Identidades reales. Actividad en vivo desde estado.json.'
+   :'Identidades reales. Sin conexión a estado.json.';
+ }
 }
 
 function applySnapshot(next,{demoMotion=false}={}){
@@ -355,7 +361,7 @@ setInterval(()=>{
  if(!selected)return;const b=snapshot.bots.find(b=>b.id===selected);if(!b)return;
  const node=detail.querySelector('[data-profile-field="activity"]');if(node)node.textContent=botProfile(snapshot,b,office?.getActivity?.(selected)).activity;
 },1000);
-setInterval(()=>{const node=$('#movement-overview');if(!node)return;const agents=office?.getMovementStats?.().agents??[];if(snapshot.mode!=='demo'){node.textContent='Sin movimiento de trabajo real.';return;}node.textContent=`Solo ejemplo: ${agents.filter(a=>a.seated).length} sentados · ${agents.filter(a=>a.moving).length} caminando · ${agents.filter(a=>!a.seated&&!a.moving).length} en espera o descanso`;},1000);
+setInterval(()=>{const node=$('#movement-overview');if(!node)return;const agents=office?.getMovementStats?.().agents??[];if(snapshot.mode==='live'){node.textContent=`En vivo: ${agents.filter(a=>a.seated).length} en puesto · ${agents.filter(a=>a.moving).length} en tránsito · ${agents.filter(a=>!a.seated&&!a.moving).length} en pausa o juntas`;return;}if(snapshot.mode!=='demo'){node.textContent='Sin movimiento (sin conexión).';return;}node.textContent=`Solo ejemplo: ${agents.filter(a=>a.seated).length} sentados · ${agents.filter(a=>a.moving).length} caminando · ${agents.filter(a=>!a.seated&&!a.moving).length} en espera o descanso`;},1000);
 
 function consumeDeepLink(){
   try{
@@ -366,9 +372,14 @@ function consumeDeepLink(){
     else if(abrir==='esperan'||abrir==='waiting')command.open('waiting');
     else if(abrir==='mando')command.open('stats');
     if(bot&&bots.some(b=>b.id===bot)){
-      const go=()=>choose(bot);
-      if(snapshot.mode==='live'||snapshot.mode==='demo')setTimeout(go,400);
-      else setTimeout(go,800);
+      let tries=0;
+      const go=()=>{
+        tries+=1;
+        try{choose(bot);}catch(e){/* office may still be wiring */}
+        if(detail?.open)return;
+        if(tries<12)setTimeout(go,250);
+      };
+      setTimeout(go, snapshot.mode==='live'||snapshot.mode==='demo' ? 300 : 700);
     }
     if(bot||abrir){
       const clean=new URL(location.href);clean.searchParams.delete('bot');clean.searchParams.delete('abrir');
@@ -376,4 +387,4 @@ function consumeDeepLink(){
     }
   }catch(e){console.warn('deep link',e);}
 }
-addEventListener('load',()=>setTimeout(consumeDeepLink,600));
+addEventListener('load',()=>setTimeout(consumeDeepLink,500));
