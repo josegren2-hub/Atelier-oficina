@@ -7,6 +7,7 @@ import {bots,floors} from '../src/data.js';
 import {fitVolumes,fitOrthographic} from '../src/camera-fit.js';
 import {createMovement,segmentClear,planRoute,BODY_RADIUS,PERSONAL_SPACE,pointSegmentDistance} from '../src/movement.js';
 import * as layout from '../src/view-layout.js';
+import {attachDeskProps, createDeskProp} from '../src/desk-props.js';
 
 // Exercise the real furniture, batching and scene graph with just GPU/DOM/loaders
 // stubbed. Browser screenshot/picking checks remain a separate integration step.
@@ -23,7 +24,7 @@ for(const [width,height]of [[1000,600],[390,600]])test(`real scene ${width}×${h
  const furnishingsText=readFileSync(new URL('../src/furnishings.js',import.meta.url),'utf8').replace(/^import .*;\n/gm,'').replace('export function','function').replaceAll('import.meta.env.BASE_URL',"'/'");
  const createFurnishings=new Function('THREE','RoundedBoxGeometry','GLTFLoader',`${furnishingsText};return createFurnishings;`)(THREE,RoundedBoxGeometry,class{load(){}});
  const source=readFileSync(new URL('../src/scene.js',import.meta.url),'utf8').replace(/^import .*;\n/gm,'').replace('export function','function');
- const deps={createMovement,segmentClear,planRoute,BODY_RADIUS,PERSONAL_SPACE,pointSegmentDistance,THREE:engine,OrbitControls:Controls,RoomEnvironment:class{dispose(){}},bots,floors,createFurnishings,fitVolumes,fitOrthographic,...layout,createAvatarModels:()=>({attach(){},update(){},getSeatSupport(){return {bottomY:.25};}})};
+ const deps={createMovement,segmentClear,planRoute,BODY_RADIUS,PERSONAL_SPACE,pointSegmentDistance,THREE:engine,OrbitControls:Controls,RoomEnvironment:class{dispose(){}},bots,floors,createFurnishings,fitVolumes,fitOrthographic,...layout,attachDeskProps,createDeskProp,createAvatarModels:()=>({attach(){},update(){},getSeatSupport(){return {bottomY:.25};}})};
  try{
   const createOffice=new Function(...Object.keys(deps),`${source};return createOffice;`)(...Object.values(deps));
   const opened=[],floorClicks=[],botClicks=[];

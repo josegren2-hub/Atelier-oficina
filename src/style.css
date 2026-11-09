@@ -191,3 +191,92 @@ body.v17lejos .v17pin{opacity:0;pointer-events:none}
 .avisos-card .detail-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .avisos-test code{font-size:12px;background:#0006;padding:1px 5px;border-radius:4px}
 .team-actions #avisos-open{border-color:#4ade8088}
+
+/* ——— stale banner: own grid row under header ——— */
+
+/* Keep floating Mission Control below the stale strip */
+body:has(#atelier-stale:not([hidden])) .mcpanel{top:118px}
+@media(max-width:760px){
+  body:has(#atelier-stale:not([hidden])) .mcpanel{top:auto; bottom:12px}
+}
+
+#app > .atelier-stale{
+  grid-column:1 / -1;
+  display:block;
+  width:100%;
+  box-sizing:border-box;
+  position:relative;
+  z-index:2;
+  background:#5c3b14;
+  color:#ffe8c2;
+  padding:.55rem 1rem;
+  font-size:.85rem;
+  line-height:1.35;
+  border-bottom:1px solid #7a5220;
+}
+#app > .atelier-stale[hidden]{display:none !important}
+/* When visible, give the strip its own auto row between header and main */
+#app:has(> .atelier-stale:not([hidden])){
+  grid-template-rows:auto auto minmax(0,1fr);
+}
+@media(min-width:761px){
+  #app:has(> .atelier-stale:not([hidden])){
+    grid-template-rows:auto auto minmax(0,1fr);
+    height:100dvh;
+  }
+  #app:has(> .atelier-stale:not([hidden])) > main{
+    height:auto;
+    min-height:0;
+  }
+}
+@media(max-width:760px){
+  
+/* Keep floating Mission Control below the stale strip */
+body:has(#atelier-stale:not([hidden])) .mcpanel{top:118px}
+@media(max-width:760px){
+  body:has(#atelier-stale:not([hidden])) .mcpanel{top:auto; bottom:12px}
+}
+
+#app > .atelier-stale{font-size:.8rem;padding:.45rem .75rem}
+}
+#lista-stale-slot .atelier-stale{
+  display:block;width:100%;box-sizing:border-box;
+  background:#5c3b14;color:#ffe8c2;padding:.5rem .85rem;
+  font-size:.85rem;line-height:1.35;border-radius:8px;margin:.35rem 0;
+}
+#lista-stale-slot .atelier-stale[hidden]{display:none !important}
+
+/* ——— 0.22.0: Solo lista, ficha extras, resumen, racha ——— */
+.status-dot.callado{box-shadow:0 0 0 2px #7c3aed;background:#7c3aed !important}
+.status-dot.rutina-mal{box-shadow:0 0 0 2px #ef4444}
+.ficha-extras,.ficha-local{margin-top:.75rem;display:grid;gap:.5rem}
+.ficha-extras .mir,.lista-row .mir,.v16rr .mir,.v16rr a,.v16rr button{
+  display:inline-block;margin:.15rem .25rem 0 0;padding:.35rem .65rem;border-radius:999px;
+  background:#1f3a34;color:#e8fff6;text-decoration:none;border:0;font:inherit;cursor:pointer
+}
+.v15pp button{margin:.15rem .25rem 0 0;padding:.35rem .65rem;border-radius:8px;border:1px solid #3d5a52;background:#152924;color:#e8fff6;cursor:pointer}
+.v15nota{border:1px solid #2c403a;border-radius:8px;padding:.4rem .6rem;background:#101a18}
+.v15nota textarea{width:100%;min-height:4rem;margin-top:.35rem;background:#0b1211;color:#e8fff6;border:1px solid #2c403a;border-radius:6px;padding:.4rem}
+.v15callado{color:#c4b5fd}.v15rojo{color:#fca5a5}
+.resumen-dialog{max-width:min(560px,94vw);width:100%;border:0;border-radius:14px;padding:0;background:#13201d;color:#e8fff6}
+.resumen-dialog::backdrop{background:rgba(0,0,0,.55)}
+.resumen-dialog .lt{display:flex;justify-content:space-between;align-items:center;padding:.75rem 1rem;border-bottom:1px solid #2c403a}
+.resumen-body{padding:0 1rem 1rem;max-height:70vh;overflow:auto}
+.resumen-row{display:flex;gap:.5rem;align-items:center;width:100%;text-align:left;background:transparent;border:0;color:inherit;padding:.4rem 0;cursor:pointer;border-bottom:1px solid #1d2e2a}
+.v16tl{display:flex;gap:.5rem;align-items:center;margin:.2rem 0;font-size:.75rem}
+.v16tl .n{min-width:5.5rem}.v16tl .h{display:flex;flex:1;gap:1px;height:12px}
+.v16tl .h i{flex:1;background:#1d2e2a;border-radius:1px}.v16tl .h i.fut{opacity:.35}
+.v16dep{font-weight:600;margin:.6rem 0 .2rem;color:#c2b494}
+body.lista-mode #app{display:none}
+#lista-root{max-width:720px;margin:0 auto;padding:1rem}
+.lista-header{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:.75rem}
+.lista-header button{padding:.4rem .7rem;border-radius:8px;border:1px solid #2c403a;background:#152924;color:#e8fff6}
+.l16k{display:flex;flex-wrap:wrap;gap:.4rem;margin:.5rem 0}
+.l16k button{padding:.45rem .7rem;border-radius:10px;border:1px solid #2c403a;background:#101a18;color:#e8fff6}
+.l16k button.on{outline:2px solid #62bf95}
+.lista-row{display:flex;gap:.65rem;align-items:center;width:100%;text-align:left;padding:.55rem .4rem;border:0;border-bottom:1px solid #1d2e2a;background:transparent;color:inherit;cursor:pointer}
+.lista-row .av{border-radius:8px;object-fit:cover}
+.lista-row .lx{flex:1;display:grid;gap:.15rem}.lista-row .lx small{opacity:.85}
+.lista-ficha{max-width:min(420px,94vw);border:0;border-radius:14px;padding:1rem;background:#13201d;color:#e8fff6}
+#light-mode,#resumen-open,#racha-open,#vista-lista{margin-left:.25rem}
+.roster-dept-label{display:block;margin-top:.5rem;font-size:.8rem;opacity:.8}

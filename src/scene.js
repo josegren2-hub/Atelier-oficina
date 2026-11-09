@@ -7,6 +7,7 @@ import {fitVolumes,fitOrthographic} from './camera-fit.js';
 import {floorPose,viewVolumes,viewDirection,VIEW_MODES,findAvatarSpot,LIGHTING,visualStatus} from './view-layout.js';
 import {createAvatarModels} from './avatar-models.js';
 import {createMovement,segmentClear,planRoute,BODY_RADIUS,PERSONAL_SPACE} from './movement.js';
+import {attachDeskProps} from './desk-props.js';
 
 export function createOffice(container,onBot,onAssets=()=>{},onAgenda=()=>{},onFloor=()=>{}){
  const scene=new THREE.Scene();
@@ -189,11 +190,24 @@ export function createOffice(container,onBot,onAssets=()=>{},onAgenda=()=>{},onF
  function setView(f=-1){floor=f;structures.forEach(g=>g.visible=f<0);facades.forEach(g=>g.visible=walls&&f<0);floorGroups.forEach((g,i)=>g.visible=f<0?(mode!=='spread'||i<4):i===f);roof.visible=f<0&&mode==='exterior';site.visible=f<0&&mode==='exterior';fitCamera();}
  function setMode(next){if(!VIEW_MODES.includes(next))throw new RangeError('Vista desconocida');mode=next;setView(-1);}
  function setNight(v){
-  const p=LIGHTING[v?'night':'day'];scene.background=new THREE.Color(p.background);
-  sun.color.set(v?0x9bb7ff:0xffc78e);sun.intensity=p.sun;ambient.intensity=p.ambient;
-  ambient.color.set(v?0x7194c4:0xd7e0e7);fill.intensity=p.fill;scene.environmentIntensity=p.environment;
-  renderer.toneMappingExposure=p.exposure;interiorLights.forEach(l=>l.intensity=p.interior);
+  applyLighting(v?{...LIGHTING.night,sunColor:'#9bb7ff',ambientSky:'#7194c4',isNight:true}:{...LIGHTING.day,sunColor:'#ffc78e',ambientSky:'#d7e0e7',isNight:false});
  }
+ function applyLighting(p={}){
+  const bg=p.background;
+  scene.background=new THREE.Color(typeof bg==='string'?bg:bg??LIGHTING.day.background);
+  if(p.sunColor)sun.color.set(p.sunColor); else sun.color.set(p.isNight?0x9bb7ff:0xffc78e);
+  sun.intensity=p.sun??LIGHTING.day.sun;
+  ambient.intensity=p.ambient??LIGHTING.day.ambient;
+  if(p.ambientSky)ambient.color.set(p.ambientSky); else ambient.color.set(p.isNight?0x7194c4:0xd7e0e7);
+  fill.intensity=p.fill??LIGHTING.day.fill;
+  scene.environmentIntensity=p.environment??(p.isNight?LIGHTING.night.environment:LIGHTING.day.environment);
+  renderer.toneMappingExposure=p.exposure??LIGHTING.day.exposure;
+  const ii=p.interior??(p.isNight?LIGHTING.night.interior:LIGHTING.day.interior);
+  interiorLights.forEach(l=>l.intensity=ii);
+  try{if(globalThis.document?.documentElement)document.documentElement.dataset.theme=p.isNight?'night':'day';}catch{}
+ }
+ function setLighting(p){applyLighting(p||LIGHTING.day);}
+
  function setStatuses(records=[]){
   const entries=Array.isArray(records)?records:(records.bots??[]);
   const mode=Array.isArray(records)?undefined:records.mode;
@@ -203,9 +217,10 @@ export function createOffice(container,onBot,onAssets=()=>{},onAgenda=()=>{},onF
   const colors={unknown:0x8995a3,working:0x62bf95,review:0xe6b759,idle:0x85b6da,error:0xdb7272};
   for(const b of botModels){const r=entries.find(r=>(r.botId??r.id)===b.id),status=visualStatus(r,{mode});b.indicator.userData.status=status;b.indicator.material.color.set(colors[status]);}
  }
+ const deskProps=attachDeskProps(botModels);
  setNight(false);
  let lastFrame=performance.now()/1000,fpsFrames=0,fpsLast=performance.now(),fpsValue=0;
- function tick(){requestAnimationFrame(tick);const t=performance.now()/1000,dt=t-lastFrame;lastFrame=t;if(document.hidden)return;movement.update(dt,{reducedMotion:reduced});floorGroups.forEach((g,i)=>{const p=floorPose(i,mode,floor>=0);for(const axis of ['x','y','z'])g.position[axis]=reduced?p[axis]:THREE.MathUtils.lerp(g.position[axis],p[axis],.08);});if(moving){camera.position.lerp(desired,reduced?1:.07);controls.target.lerp(target,reduced?1:.07);if(camera.position.distanceTo(desired)<.05)moving=false;}for(const b of botModels){const action=movement.getActivity(b.id);if(action){b.group.position.x=action.position[0];b.group.position.z=action.position[1];b.group.rotation.y=action.angle;avatars.setActivity?.(b.id,{clip:action.clip,seated:action.seated,expression:action.expression,phase:action.moving?1:0});const support=avatars.getSeatSupport?.(b.id),seatOffset=action.seated&&support?Math.max(0,action.seatHeight-b.base-support.bottomY):0;b.visual.position.y=THREE.MathUtils.lerp(b.visual.position.y,seatOffset,reduced?1:Math.min(1,Math.max(0,Number.isFinite(dt)?dt:0)*7));}b.group.position.y=b.base;b.label.position.y=1.75+b.visual.position.y+(b.id==='ted'?.2:0);b.indicator.position.y=b.label.position.y;b.selection.visible=selected===b.id;b.label.visible=floor>=0||mode!=='exterior'||selected===b.id;}const phoneFar=reduced||(!animateBots)||(container.clientWidth<760&&floor<0&&mode==='exterior'&&camera.position.distanceTo(controls.target)>40);avatars.update(t,animateBots?'idle':false,phoneFar);controls.update();renderer.render(scene,camera);fpsFrames++;const nowMs=performance.now();if(nowMs-fpsLast>1000){fpsValue=fpsFrames*1000/(nowMs-fpsLast);fpsFrames=0;fpsLast=nowMs;}}
+ function tick(){requestAnimationFrame(tick);const t=performance.now()/1000,dt=t-lastFrame;lastFrame=t;if(document.hidden)return;movement.update(dt,{reducedMotion:reduced});floorGroups.forEach((g,i)=>{const p=floorPose(i,mode,floor>=0);for(const axis of ['x','y','z'])g.position[axis]=reduced?p[axis]:THREE.MathUtils.lerp(g.position[axis],p[axis],.08);});if(moving){camera.position.lerp(desired,reduced?1:.07);controls.target.lerp(target,reduced?1:.07);if(camera.position.distanceTo(desired)<.05)moving=false;}for(const b of botModels){const action=movement.getActivity(b.id);if(action){b.group.position.x=action.position[0];b.group.position.z=action.position[1];b.group.rotation.y=action.angle;avatars.setActivity?.(b.id,{clip:action.clip,seated:action.seated,expression:action.expression,phase:action.moving?1:0});const support=avatars.getSeatSupport?.(b.id),seatOffset=action.seated&&support?Math.max(0,action.seatHeight-b.base-support.bottomY):0;b.visual.position.y=THREE.MathUtils.lerp(b.visual.position.y,seatOffset,reduced?1:Math.min(1,Math.max(0,Number.isFinite(dt)?dt:0)*7));}b.group.position.y=b.base;b.label.position.y=1.75+b.visual.position.y+(b.id==='ted'?.2:0);b.indicator.position.y=b.label.position.y;b.selection.visible=selected===b.id;b.label.visible=floor>=0||mode!=='exterior'||selected===b.id;}const phoneFar=reduced||(!animateBots)||(container.clientWidth<760&&floor<0&&mode==='exterior'&&camera.position.distanceTo(controls.target)>40);deskProps.setVisible(!phoneFar);avatars.update(t,animateBots?'idle':false,phoneFar);controls.update();renderer.render(scene,camera);fpsFrames++;const nowMs=performance.now();if(nowMs-fpsLast>1000){fpsValue=fpsFrames*1000/(nowMs-fpsLast);fpsFrames=0;fpsLast=nowMs;}}
  const resize=()=>{camera.aspect=container.clientWidth/container.clientHeight;camera.updateProjectionMatrix();renderer.setSize(container.clientWidth,container.clientHeight);fitCamera();};new ResizeObserver(resize).observe(container);resize();const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();let down=null;
  renderer.domElement.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY];moving=false;});renderer.domElement.addEventListener('pointerup',e=>{const start=down;down=null;if(!start||Math.hypot(e.clientX-start[0],e.clientY-start[1])>6)return;const rect=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);ray.setFromCamera(pointer,camera);const roots=floorGroups.filter(g=>g.visible);if(roof.visible)roots.push(roof);const hits=ray.intersectObjects(roots,true);const first=hits.find(hit=>{let visible=true,node=hit.object;while(node){if(!node.visible){visible=false;break;}node=node.parent;}return visible&&(!hit.object.material?.transparent||hit.object.isSprite&&hit.object.userData.bot);});if(first){const targetOf=object=>{let node=object;while(node&&!node.userData.bot&&!node.userData.agenda&&!Number.isInteger(node.userData.floorId))node=node.parent;return node;};let node=targetOf(first.object);
  // Small avatars need the same 12 px aiming tolerance for mouse, pen and touch.
@@ -248,5 +263,5 @@ export function createOffice(container,onBot,onAssets=()=>{},onAgenda=()=>{},onF
   return out;
  }
  function getViewState(){return {floor,mode,selected};}
- return {setView,setMode,setExploded(v){setMode(v?'stacked':'exterior');},setWalls(v){walls=Boolean(v);facades.forEach(g=>g.visible=walls&&floor<0);},setNight,setStatuses,select(id){selected=id;},focusBot,projectBots,getViewState,setDemo(v){movement.setDemo(v);animateBots=Boolean(v)||movement.isLive;},getActivity(id){return movement.getActivity(id);},getMovementStats(){return movement.getStats();},getFps(){return fpsValue;},rotate(d){moving=false;const o=camera.position.clone().sub(controls.target).applyAxisAngle(new THREE.Vector3(0,1,0),d);camera.position.copy(controls.target).add(o);},zoom(s){moving=false;if(camera.isOrthographicCamera){camera.zoom=THREE.MathUtils.clamp(camera.zoom/s,.35,8);camera.updateProjectionMatrix();return;}const o=camera.position.clone().sub(controls.target);o.setLength(THREE.MathUtils.clamp(o.length()*s,12,700));camera.position.copy(controls.target).add(o);},reset(){setView(floor);},get renderer(){return renderer;}};
+ return {setView,setMode,setExploded(v){setMode(v?'stacked':'exterior');},setWalls(v){walls=Boolean(v);facades.forEach(g=>g.visible=walls&&floor<0);},setNight,setLighting,setStatuses,select(id){selected=id;},focusBot,projectBots,getViewState,setDemo(v){movement.setDemo(v);animateBots=Boolean(v)||movement.isLive;},getActivity(id){return movement.getActivity(id);},getMovementStats(){return movement.getStats();},getFps(){return fpsValue;},rotate(d){moving=false;const o=camera.position.clone().sub(controls.target).applyAxisAngle(new THREE.Vector3(0,1,0),d);camera.position.copy(controls.target).add(o);},zoom(s){moving=false;if(camera.isOrthographicCamera){camera.zoom=THREE.MathUtils.clamp(camera.zoom/s,.35,8);camera.updateProjectionMatrix();return;}const o=camera.position.clone().sub(controls.target);o.setLength(THREE.MathUtils.clamp(o.length()*s,12,700));camera.position.copy(controls.target).add(o);},reset(){setView(floor);},get renderer(){return renderer;}};
 }

@@ -1,4 +1,5 @@
 import {waitingAlertCandidates,mapSalud,avisosHealthLabel} from './ntfy-session.js';
+import {isPostponed} from './local-waiting.js';
 import {avatarPhotoUrl} from './avatar-photo.js';
 /** Read-only command center. Import command-center.css in the application entry. */
 export const taskStates = Object.freeze({pending:'Pendientes',in_progress:'En curso',authorization:'Autorización',urgent:'Urgentes',postponed:'Pospuestas',completed:'Completadas'});
@@ -19,7 +20,7 @@ export function commandCenterModel(snapshot = {}) {
   });
   const hasTasks = available && Array.isArray(snapshot.tasks);
   const bots=Array.isArray(snapshot.bots)?snapshot.bots.filter(b=>b && str(b.id) && str(b.name)):[];
-  const waiting=available?bots.filter(b=>b.status==='review' && !b.stale).map(b=>({id:b.id,name:b.name,waitingSince:str(b.waitingSince),pendiente:str(b.pendiente),authorization:Array.isArray(b.authorization)?b.authorization.filter(Boolean):[]})):[];
+  const waiting=available?bots.filter(b=>b.status==='review' && !b.stale && !isPostponed(b)).map(b=>({id:b.id,name:b.name,waitingSince:str(b.waitingSince),pendiente:str(b.pendiente),authorization:Array.isArray(b.authorization)?b.authorization.filter(Boolean):[]})):[];
   return {mode:snapshot.mode || 'disconnected',source:str(snapshot.source),lastSignal:str(snapshot.lastSignal),tasks,hasTasks,
     rejected:raw.length-tasks.length,
     counts:Object.fromEntries(Object.keys(taskStates).map(status=>[status,hasTasks?tasks.filter(task=>status==='urgent'?task.urgent:task.status===status).length:null])),

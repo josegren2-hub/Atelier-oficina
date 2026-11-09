@@ -1,3 +1,4 @@
+import {departmentOf} from './departments.js';
 // Distribution supplied by equipo-bots-rob.docx; assignments do not imply live activity.
 export const floors = [
  {id:0,name:'Personal',description:'Acompañamiento · salud · redes personales',color:'#c2b494'},
@@ -24,7 +25,7 @@ const entries=[
  ['tadeo','Tadeo','Diseño / desarrollo / coordinación web',3,'#ef79b5'],
  ['rulo','Rulo','Productor / director de podcast',2,'#51bce5']
 ];
-export const bots=entries.map(([id,name,role,floor,color],index)=>({id,name,role,floor,color,shape:index%4}));
+export const bots=entries.map(([id,name,role,floor,color],index)=>({id,name,role,floor,color,shape:index%4,department:departmentOf(id)}));
 export function disconnectedSnapshot(){return {mode:'disconnected',source:null,lastSignal:null,bots:bots.map(b=>({...b,status:'unknown',task:null,previousTask:null,activity:null,lastSignal:null}))};}
 // Illustrative local records, never a claim that these tasks happened.
 const demoTasks={

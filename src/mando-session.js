@@ -187,6 +187,8 @@ export function createMandoSession({
       pendiente: unlocked && waiting ? (mandoBot?.pendiente || null) : null,
       authorization: auths,
       agente: unlocked ? (mandoBot?.agente || null) : null,
+      callado: unlocked ? (mandoBot?.callado || null) : null,
+      rutina: unlocked ? (mandoBot?.rutina || null) : null,
       liveTask: task,
       // Prefer live encrypted phrase / supervisor task over public estado frase when unlocked.
       task: task?.text || liveBot.task || null,

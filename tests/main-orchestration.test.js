@@ -127,12 +127,12 @@ test('main: 2×2 pager reaches penthouse and returns, retaining profile origin o
 });
 
 test('main: stored night theme reaches checkbox and scene, survives flows and a new application instance',()=>{
- const storage=createMemoryStorage({'atelier.theme':'night'});
+ const storage=createMemoryStorage({'atelier.theme':'night'}); // migrates to atelierModo=noche
  const h=createMainHarness({storage});
  assert.equal(h.get('#night').checked,true);
  assert.equal(h.document.documentElement.dataset.theme,'night');
  assert.equal(h.scene.night,true);
- assert.deepEqual(h.sceneCalls.filter(([method])=>method==='setNight'),[['setNight',true]]);
+ assert.ok(h.sceneCalls.some(([method,p])=>method==='setLighting'&&p&&p.isNight===true));
  h.change('#floor-jump',2);
  h.click('[data-bot-id="apps"]');h.cancelDetail();
  h.click('#command-open');
@@ -141,18 +141,18 @@ test('main: stored night theme reaches checkbox and scene, survives flows and a 
  h.click('#show-all');h.click('#reset');
  assert.equal(h.get('#night').checked,true);
  assert.equal(h.scene.night,true);
- assert.deepEqual(h.sceneCalls.filter(([method])=>method==='setNight'),[['setNight',true]]);
  const reloaded=createMainHarness({storage});
  assert.equal(reloaded.get('#night').checked,true);
  assert.equal(reloaded.scene.night,true);
  reloaded.change('#night',false);
- assert.equal(storage.getItem('atelier.theme'),'day');
+ assert.equal(storage.getItem('atelierModo'),'dia');
  assert.equal(reloaded.scene.night,false);
  assert.equal(reloaded.document.documentElement.dataset.theme,'day');
  const daylightReload=createMainHarness({storage});
  assert.equal(daylightReload.get('#night').checked,false);
  assert.equal(daylightReload.scene.night,false);
  daylightReload.change('#night',true);
+ assert.equal(storage.getItem('atelierModo'),'noche');
  const nightReload=createMainHarness({storage});
  assert.equal(nightReload.get('#night').checked,true);
  assert.equal(nightReload.scene.night,true);

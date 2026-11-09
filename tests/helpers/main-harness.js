@@ -13,6 +13,10 @@ import * as roster from '../../src/roster.js';
 import {readNightPreference,saveNightPreference} from '../../src/theme-state.js';
 import {SOURCE_CONTRACT} from '../../src/source-contract.js';
 import {avatarPhotoUrl} from '../../src/avatar-photo.js';
+import {DEPARTMENTS, departmentOf} from '../../src/departments.js';
+import * as daylight from '../../src/daylight.js';
+import {isPostponed} from '../../src/local-waiting.js';
+import {rachaText} from '../../src/resumen-panel.js';
 
 const dataKey=name=>name.slice(5).replace(/-([a-z])/g,(_,letter)=>letter.toUpperCase());
 const decode=text=>text.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"');
@@ -132,7 +136,7 @@ export function createMainHarness({storage=createMemoryStorage()}={}){
   floor:-1,mode:'exterior',night:false,selected:null,
   setView(id){sceneCalls.push(['setView',id]);this.floor=id;},
   setMode(mode){sceneCalls.push(['setMode',mode]);this.mode=mode;this.floor=-1;},
-  setNight(night){sceneCalls.push(['setNight',night]);this.night=night;},
+  setNight(night){sceneCalls.push(['setNight',night]);this.night=night;},setLighting(p){sceneCalls.push(['setLighting',p]);this.night=!!p?.isNight;this.lighting=p;},
   select(id){sceneCalls.push(['select',id]);this.selected=id;},
   setDemo(value){this.demo=value;},setStatuses(snapshot){this.snapshot=snapshot;},
   setWalls(value){this.walls=value;},rotate(value){sceneCalls.push(['rotate',value]);},zoom(value){sceneCalls.push(['zoom',value]);},reset(){sceneCalls.push(['reset']);},
@@ -167,6 +171,18 @@ export function createMainHarness({storage=createMemoryStorage()}={}){
   mountHistoryBack:()=>({push(){},destroy(){}}),
   mountPizarron:()=>({open(){},close(){},isOpen(){return false;},refresh(){},destroy(){},element:{}}),
   mountAvisosPanel:()=>({open(){},refresh(){},session:{snapshot:()=>({configured:false})},element:{}}),
+  DEPARTMENTS, departmentOf,
+  readLightPref:()=>daylight.readLightPref(storage),
+  saveLightPref:pref=>daylight.saveLightPref(pref,storage),
+  resolveLighting:(...a)=>daylight.resolveLighting(...a),
+  cycleLightPref:daylight.cycleLightPref,
+  isPostponed,
+  rachaText,
+  mountQuickReplies:()=>({refresh(){},root:{}}),
+  mountFichaLocal:()=>({refresh(){},root:{}}),
+  mountResumenPanel:()=>({open(){},close(){},isOpen(){return false;},refresh(){},rachaText:()=>'🔥'}),
+  mountStaleBanner:()=>({refresh(){}}),
+
   buildPizarronModel:()=>({unlocked:false,aud:[],esp:[],pend:[],gen:null}),
   createMandoSession:({onChange}={})=>{
     const api={unlocked:false,mando:null,tareas:null,unlock:async()=>({unlocked:true}),tryRestore:async()=>({unlocked:false}),refresh:async()=>({unlocked:false}),lock(){api.unlocked=false;onChange?.({unlocked:false});return {unlocked:false};},snapshot:()=>({unlocked:false}),enrichBot:b=>({...b,mandoUnlocked:false}),botRecord:()=>null};

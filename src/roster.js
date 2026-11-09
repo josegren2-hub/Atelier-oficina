@@ -1,8 +1,13 @@
 /** View-only state for the roster. Camera changes never implicitly narrow the team. */
 const normalized=value=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('es').trim();
-export function filterRoster(bots,{floor=-1,query=''}={}) {
+export function filterRoster(bots,{floor=-1,query='',department=''}={}) {
  const q=normalized(query);
- return bots.filter(bot=>(floor<0||bot.floor===floor)&&normalized(`${bot.name} ${bot.role}`).includes(q));
+ const dep=normalized(department);
+ return bots.filter(bot=>{
+  if(floor>=0&&bot.floor!==floor)return false;
+  if(dep&&normalized(bot.department||'')!==dep)return false;
+  return normalized(`${bot.name} ${bot.role} ${bot.department||''}`).includes(q);
+ });
 }
 
 /** A profile never derives a task history or real activity from a 3D animation. */

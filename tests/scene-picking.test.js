@@ -8,6 +8,7 @@ import {fitVolumes,fitOrthographic} from '../src/camera-fit.js';
 import {createMovement,segmentClear,planRoute,BODY_RADIUS,PERSONAL_SPACE} from '../src/movement.js';
 import {createAvatarModels} from '../src/avatar-models.js';
 import * as layout from '../src/view-layout.js';
+import {attachDeskProps, createDeskProp} from '../src/desk-props.js';
 
 function withScene(width,height,run,{left=0,top=0}={}){
  const saved=new Map();let frameCallback,frameTime=0,scene,camera,movement;
@@ -21,7 +22,7 @@ function withScene(width,height,run,{left=0,top=0}={}){
  const furnishingsText=readFileSync(new URL('../src/furnishings.js',import.meta.url),'utf8').replace(/^import .*;\n/gm,'').replace('export function','function').replaceAll('import.meta.env.BASE_URL',"'/'");
  const createFurnishings=new Function('THREE','RoundedBoxGeometry','GLTFLoader',`${furnishingsText};return createFurnishings;`)(THREE,RoundedBoxGeometry,class{load(){}});
  const source=readFileSync(new URL('../src/scene.js',import.meta.url),'utf8').replace(/^import .*;\n/gm,'').replace('export function','function');
- const deps={createMovement:()=>{movement=createMovement();return movement;},segmentClear,planRoute,BODY_RADIUS,PERSONAL_SPACE,THREE:engine,OrbitControls:Controls,RoomEnvironment:class{dispose(){}},bots,floors,createFurnishings,fitVolumes,fitOrthographic,...layout,createAvatarModels};
+ const deps={createMovement:()=>{movement=createMovement();return movement;},segmentClear,planRoute,BODY_RADIUS,PERSONAL_SPACE,THREE:engine,OrbitControls:Controls,RoomEnvironment:class{dispose(){}},bots,floors,createFurnishings,fitVolumes,fitOrthographic,...layout,attachDeskProps,createDeskProp,createAvatarModels};
  try{
   const createOffice=new Function(...Object.keys(deps),`${source};return createOffice;`)(...Object.values(deps));
   const selected=[],agendas=[],floorClicks=[];

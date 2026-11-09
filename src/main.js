@@ -15,12 +15,21 @@ import {mountHistoryBack} from './history-back.js';
 import {mountAvisosPanel} from './avisos-panel.js';
 import {mountPizarron, buildPizarronModel} from './pizarron.js';
 import {avatarPhotoUrl} from './avatar-photo.js';
+import {DEPARTMENTS, departmentOf} from './departments.js';
+import {mountQuickReplies} from './quick-replies.js';
+import {mountFichaLocal} from './ficha-local.js';
+import {mountResumenPanel, rachaText} from './resumen-panel.js';
+import {mountStaleBanner} from './stale-banner.js';
+import {readLightPref, saveLightPref, resolveLighting, cycleLightPref} from './daylight.js';
+import {isPostponed} from './local-waiting.js';
 const $=s=>document.querySelector(s);
 mountReleaseNotice();
 let snapshot=disconnectedSnapshot(),floor=-1,rosterFloor=-1,viewMode='exterior',selected=null,office,detailReturn=null,liveTimer=null,wantLive=true;
-let nightMode=readNightPreference();
-$('#night').checked=nightMode;
+let lightPref=readLightPref();
+let nightMode=resolveLighting(lightPref).isNight;
+if($('#night'))$('#night').checked=nightMode;
 document.documentElement.dataset.theme=nightMode?'night':'day';
+
 function el(tag,text,className){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(className)n.className=className;return n;}
 const mandoSession=createMandoSession({onChange:()=>{if(snapshot.mode==='live')applySnapshot(enrichSnapshot(snapshot),{demoMotion:false});else paintMando();}});
 const command=mountCommandCenter({getSnapshot:()=>snapshot,onChoose:id=>choose(id)});
@@ -42,6 +51,22 @@ const pizarron=mountPizarron({
  onSelect:id=>choose(id),
 });
 let selectionLabels=null;
+const quickReplies=mountQuickReplies(document.querySelector('#detail .detail-content')||document.querySelector('#detail'),{
+ getBot:()=>snapshot.bots.find(b=>b.id===selected),
+ onToast:msg=>{$('#refresh-feedback').textContent=msg;},
+});
+const fichaLocal=mountFichaLocal(document.querySelector('#detail .detail-content')||document.querySelector('#detail'),{
+ getBot:()=>snapshot.bots.find(b=>b.id===selected),
+ onChange:()=>{render();command.refresh();},
+ onToast:msg=>{$('#refresh-feedback').textContent=msg;},
+});
+const resumenPanel=mountResumenPanel({
+ getSnapshot:()=>snapshot,
+ getMando:()=>mandoSession.unlocked?mandoSession.mando:null,
+ onChoose:id=>choose(id),
+});
+const staleBanner=mountStaleBanner(document.body);
+
 const historyBack=mountHistoryBack({
  isDetailOpen:()=>detail.open,
  closeDetail:()=>closeDetail(),
@@ -55,6 +80,8 @@ const historyBack=mountHistoryBack({
  closeCommand:()=>command.close(),
  isMandoOpen:()=>!!mandoDialog?.open,
  closeMando:()=>mandoDialog?.close(),
+ isResumenOpen:()=>resumenPanel?.isOpen?.(),
+ closeResumen:()=>resumenPanel?.close?.(),
 });
 function paintMando(){
  const unlocked=mandoSession.unlocked;
@@ -93,6 +120,9 @@ function enrichSnapshot(base){
 for(const f of floors){
  const title=`${f.id===0?'PB':f.id} · ${f.name}`;
  for(const selector of ['#floor-jump','#roster-floor']){const option=el('option',title);option.value=f.id;$(selector).append(option);}
+}
+if($('#roster-dept')){
+ for(const name of Object.keys(DEPARTMENTS)){const o=el('option',name);o.value=name;$('#roster-dept').append(o);}
 }
 $('#floor-jump').addEventListener('change',e=>setFloor(Number(e.target.value)));
 $('#roster-floor').addEventListener('change',e=>{rosterFloor=Number(e.target.value);renderRoster();});
@@ -169,7 +199,7 @@ $('#show-all').addEventListener('click',()=>closeDetail({all:true}));
 detail.addEventListener('cancel',event=>{event.preventDefault();closeDetail();});
 $('#detail-agenda').addEventListener('click',()=>{if(selected)command.openAgenda(selected);});
 function renderRoster(){
- const list=filterRoster(snapshot.bots,{floor:rosterFloor,query:$('#search').value});
+ const list=filterRoster(snapshot.bots,{floor:rosterFloor,query:$('#search').value,department:$('#roster-dept')?.value||''});
  $('#roster-floor').value=String(rosterFloor);
  $('#bot-count').textContent=`${list.length} de ${snapshot.bots.length} bots`;
  $('#roster-scope').textContent=`${list.length} de ${snapshot.bots.length} bots · ${rosterFloor<0?'Todos los pisos':floors[rosterFloor].name}${$('#search').value.trim()?' · búsqueda activa':''}`;
@@ -180,7 +210,7 @@ function renderRoster(){
   button.setAttribute('aria-label',`${b.name}, ${b.role}, ${statusLabels[b.status]||'Sin señal'}`);button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-controls','detail');
   const avatar=el('span','','avatar');
   const photo=document.createElement('img');photo.src=avatarPhotoUrl(b.id);photo.alt='';photo.width=32;photo.height=32;photo.loading='lazy';photo.decoding='async';
-  const indicator=el('span','',`status-dot status-${b.status}`);indicator.setAttribute('aria-label',statusLabels[b.status]||'Sin señal');indicator.title=statusLabels[b.status]||'Sin señal';
+  const callado=b.callado&&b.callado.dias;const indicator=el('span','',`status-dot status-${b.status}${callado?' callado':''}${b.id==='ted'&&b.rutina&&(b.rutina.fallo||b.rutina.no_corrio)?' rutina-mal':''}`);indicator.setAttribute('aria-label',callado?`Callado ${Math.floor(b.callado.dias)} d`:statusLabels[b.status]||'Sin señal');indicator.title=callado?`Callado ${Math.floor(b.callado.dias)} d`:statusLabels[b.status]||'Sin señal';
   avatar.append(photo,indicator);
   const text=el('span','');text.append(el('strong',b.name),el('small',b.role));
   button.append(avatar,text,el('em',snapshot.mode==='demo'?'DEMO':snapshot.mode==='live'?'EN VIVO':'SIN SEÑAL'));
@@ -203,10 +233,11 @@ function renderDetail(){
  ];
  if(profile.waitingNote)rows.push(['Te espera',profile.waitingNote,'waiting']);
  if(profile.authorization)rows.push(['Autorización',profile.authorization,'authorization']);
- if(profile.agente)rows.push(['Subagente',profile.agente,'agente']);
- rows.push(['Tarea anterior',profile.previousTask,'previous'],['Última señal real',profile.lastSignal,'signal']);
+  rows.push(['Tarea anterior',profile.previousTask,'previous'],['Última señal real',profile.lastSignal,'signal']);
  for(const [label,value,key] of rows){const row=el('div',undefined,'detail-fact'),valueNode=el('dd',value);valueNode.dataset.profileField=key;row.append(el('dt',label),valueNode);facts.append(row);}
  $('#detail-agenda').hidden=!['ted','julian'].includes(b.id);
+ quickReplies.refresh(b);
+ fichaLocal.refresh(b);
 }
 function render(){renderRoster();renderDetail();}
 $('#search').addEventListener('input',renderRoster);
@@ -220,12 +251,27 @@ function mergeLive(result){
   source:result.source,
   lastSignal:result.lastSignal,
   salud:result.salud??null,
+  racha:result.racha??null,
   bots:bots.map(base=>{
    const live=byId.get(base.id);
    if(!live)return {...base,status:'unknown',task:null,previousTask:null,activity:null,lastSignal:null,stale:true,waitingSince:null};
    return {...base,status:live.status,task:live.task,previousTask:null,activity:live.task,lastSignal:live.lastSignal,stale:live.stale,waitingSince:live.waitingSince||null};
   }),
  };
+}
+
+
+function applyDaylight(){
+ lightPref=readLightPref();
+ const lit=resolveLighting(lightPref);
+ nightMode=lit.isNight;
+ if($('#night'))$('#night').checked=nightMode;
+ document.documentElement.dataset.theme=nightMode?'night':'day';
+ office?.setLighting?.(lit);
+ const btn=$('#light-mode');
+ if(btn){btn.textContent=lightPref==='auto'?(nightMode?'🌙 Auto':'☀️ Auto'):lightPref==='noche'?'🌙 Noche':'☀️ Día';btn.title='Modo luz: Auto → Noche → Día (hora Chihuahua)';}
+ const r=$('#racha-open');
+ if(r){r.textContent='🔥 '+(snapshot.racha?.dias??'–');r.title=rachaText(snapshot.racha);}
 }
 
 function paintSource(){
@@ -240,6 +286,7 @@ function paintSource(){
  $('#demo').setAttribute('aria-pressed',String(demo));
  $('#demo-actions').hidden=!demo;
  $('#demo-banner').hidden=!demo;
+ staleBanner?.refresh?.(snapshot);
  const foot=$('#team-disclaimer');
  if(foot){
   foot.textContent=demo?'Ejemplos simulados. Sin actividad real.'
@@ -255,6 +302,7 @@ function applySnapshot(next,{demoMotion=false}={}){
  command.refresh();
  avisosPanel?.refresh?.();
  paintSource();
+ applyDaylight();
  paintMando();
  equipo.refresh();
  pizarron.refresh();
@@ -295,7 +343,7 @@ $('#demo').addEventListener('click',()=>{
 
 try{
  office=createOffice($('#canvas-container'),choose,stats=>{$('#model-status').textContent=`Avatares: ${stats.loaded}/16${stats.failed?' · No se pudieron cargar '+stats.failed:''}`;},id=>command.openAgenda(id),id=>setFloor(id));
- office.setNight(nightMode);
+ applyDaylight();
  office.setDemo(false);
  office.setStatuses(snapshot);
  selectionLabels=mountSelectionLabels({
@@ -354,7 +402,24 @@ document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener
  viewMode=button.dataset.view;selected=null;office?.select(null);office?.setMode(viewMode);if(viewMode==='exterior')$('#walls').checked=true;setFloor(-1);
 }));
 $('#walls').addEventListener('change',e=>office?.setWalls(e.target.checked));
-$('#night').addEventListener('change',e=>{nightMode=e.target.checked;saveNightPreference(nightMode);document.documentElement.dataset.theme=nightMode?'night':'day';office?.setNight(nightMode);});
+$('#night')?.addEventListener('change',e=>{
+ lightPref=e.target.checked?'noche':'dia';
+ saveLightPref(lightPref);
+ applyDaylight();
+});
+$('#light-mode')?.addEventListener('click',()=>{
+ lightPref=cycleLightPref(lightPref);
+ saveLightPref(lightPref);
+ applyDaylight();
+});
+$('#resumen-open')?.addEventListener('click',()=>resumenPanel.open());
+$('#racha-open')?.addEventListener('click',()=>resumenPanel.open());
+$('#vista-lista')?.addEventListener('click',()=>{
+ localStorage.setItem('atelierVista','lista');
+ location.replace(location.pathname+'?abrir=lista');
+});
+$('#roster-dept')?.addEventListener('change',()=>renderRoster());
+
 $('#rotate-left').addEventListener('click',()=>office?.rotate(-.25));$('#rotate-right').addEventListener('click',()=>office?.rotate(.25));$('#zoom-in').addEventListener('click',()=>office?.zoom(.84));$('#zoom-out').addEventListener('click',()=>office?.zoom(1.18));$('#reset').addEventListener('click',()=>office?.reset());
 render();
 setInterval(()=>{
@@ -371,6 +436,7 @@ function consumeDeepLink(){
     if(abrir==='avisos'||abrir==='notificaciones')avisosPanel.open();
     else if(abrir==='esperan'||abrir==='waiting')command.open('waiting');
     else if(abrir==='mando')command.open('stats');
+    else if(abrir==='resumen')resumenPanel.open();
     if(bot&&bots.some(b=>b.id===bot)){
       let tries=0;
       const go=()=>{

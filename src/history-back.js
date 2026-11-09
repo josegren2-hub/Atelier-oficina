@@ -15,6 +15,8 @@ export function mountHistoryBack({
   closeCommand = () => {},
   isMandoOpen = () => false,
   closeMando = () => {},
+  isResumenOpen = () => false,
+  closeResumen = () => {},
 } = {}) {
   let popping = false;
   const mark = () => {
@@ -31,6 +33,7 @@ export function mountHistoryBack({
 
   function closeTop() {
     if (isDetailOpen()) { closeDetail(); return true; }
+    if (isResumenOpen()) { closeResumen(); return true; }
     if (isMandoOpen()) { closeMando(); return true; }
     if (isCommandOpen()) { closeCommand(); return true; }
     if (isPizarronOpen()) { closePizarron(); return true; }

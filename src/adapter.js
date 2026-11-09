@@ -54,6 +54,10 @@ export function mapOficinaEstado(payload, knownIds, now = Date.now()) {
     avisos_error: typeof payload.salud.avisos_error === 'string' ? payload.salud.avisos_error : null,
     avisos_config: typeof payload.salud.avisos_config === 'boolean' ? payload.salud.avisos_config : null,
   } : null;
+  const racha = payload.racha && typeof payload.racha === 'object' ? {
+    dias: Number(payload.racha.dias) || 0,
+    hoy_cero: Boolean(payload.racha.hoy_cero),
+  } : null;
   return {
     schemaVersion: 1,
     mode: 'live',
@@ -62,6 +66,7 @@ export function mapOficinaEstado(payload, knownIds, now = Date.now()) {
     simulated: false,
     bots,
     salud,
+    racha,
   };
 }
 
@@ -82,7 +87,7 @@ export function validateSnapshot(payload, knownIds, now = Date.now()) {
     const stale = now - date > SOURCE_CONTRACT.maxSignalAgeMs;
     return {id: record.id, status: stale ? 'unknown' : record.status, task: stale ? null : record.task ?? null, lastSignal: new Date(date).toISOString(), stale, waitingSince: stale ? null : (record.waitingSince || null)};
   });
-  return {mode: 'live', source: payload.source.slice(0, 120), bots: records, lastSignal: records.length ? records.reduce((a, b) => a > b.lastSignal ? a : b.lastSignal, '') : null, salud: payload.salud && typeof payload.salud === 'object' ? payload.salud : null};
+  return {mode: 'live', source: payload.source.slice(0, 120), bots: records, lastSignal: records.length ? records.reduce((a, b) => a > b.lastSignal ? a : b.lastSignal, '') : null, salud: payload.salud && typeof payload.salud === 'object' ? payload.salud : null, racha: payload.racha && typeof payload.racha === 'object' ? payload.racha : null};
 }
 
 export async function readSnapshot({signal, knownIds, fetcher = fetch, enabled = SOURCE_CONTRACT.enabled, now = Date.now()} = {}) {
