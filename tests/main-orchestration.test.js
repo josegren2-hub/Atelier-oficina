@@ -10,6 +10,8 @@ const field=(h,name)=>h.get(`[data-profile-field="${name}"]`).textContent;
 test('main: roster click opens profile immediately; close restores sixteen and the previous floor',()=>{
  const h=createMainHarness();
  assert.equal(teamSize(h),16);
+ h.click('#demo'); // phase 1 defaults to live/offline; enter demo for example tasks
+ assert.equal(teamSize(h),16);
  h.click('[data-bot-id="ted"]');
  assert.equal(h.get('#detail').open,true);
  assert.equal(h.get('#detail').showModalCalls,1);
@@ -158,7 +160,7 @@ test('main: stored night theme reaches checkbox and scene, survives flows and a 
 
 test('main: source disconnected profile has no fake current/history or scene-activity claim',()=>{
  const h=createMainHarness();
- h.click('#demo');
+ // Default starts disconnected; harness stubs live fetch so it stays offline.
  h.click('[data-bot-id="ted"]');
  assert.match(h.get('#detail-source').textContent,/Fuente no conectada/);
  assert.match(field(h,'status'),/Desconocido/);

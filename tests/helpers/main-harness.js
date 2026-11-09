@@ -11,6 +11,7 @@ import vm from 'node:vm';
 import * as data from '../../src/data.js';
 import * as roster from '../../src/roster.js';
 import {readNightPreference,saveNightPreference} from '../../src/theme-state.js';
+import {SOURCE_CONTRACT} from '../../src/source-contract.js';
 
 const dataKey=name=>name.slice(5).replace(/-([a-z])/g,(_,letter)=>letter.toUpperCase());
 const decode=text=>text.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"');
@@ -108,7 +109,7 @@ class Document extends Events {
     if(!voids.has(tag.toLowerCase())&&!token.endsWith('/>'))stack.push(node);
    }else{const node=new Element('#text',this);node._text=decode(token);stack.at(-1).append(node);}
   }
-  this.documentElement=this.querySelector('html');this.body=this.querySelector('body');this.activeElement=this.body;
+  this.documentElement=this.querySelector('html');this.body=this.querySelector('body');this.activeElement=this.body;this.hidden=false;
   if(!this.documentElement||!this.body)throw new Error('Harness requires an HTML document with body');
  }
  createElement(tag){return new Element(tag,this);}
@@ -144,12 +145,13 @@ export function createMainHarness({storage=createMemoryStorage()}={}){
  const executable=source.replace(/^import [^\n]+;\r?$/gm,'');
  if(/^\s*import\b/m.test(executable))throw new Error('Harness needs an explicit update for new import syntax');
  const context=vm.createContext({
-  document,...data,...roster,console:{...console,error:(...args)=>errors.push(args)},
+  document,...data,...roster,SOURCE_CONTRACT,console:{...console,error:(...args)=>errors.push(args)},
   readNightPreference:()=>readNightPreference(storage),saveNightPreference:night=>saveNightPreference(night,storage),
+  readSnapshot:async()=>{throw new Error('Harness: live fetch disabled');},
   mountReleaseNotice:()=>{},
   mountCommandCenter:callbacks=>{commandCallbacks=callbacks;return command;},
   createOffice:(container,onChoose,onStats,onAgenda,onFloor)=>{sceneCallbacks={container,onChoose,onAgenda,onFloor};onStats({loaded:16,failed:0});return scene;},
-  matchMedia:()=>({matches:true}),setInterval:callback=>{intervals.push(callback);return intervals.length;}
+  matchMedia:()=>({matches:true}),setInterval:callback=>{intervals.push(callback);return intervals.length;},clearInterval:()=>{}
  });
  vm.runInContext(executable,context,{filename:'src/main.js (real body; injected imports)',timeout:1000});
  if(errors.length)throw new Error(`Unexpected main.js initialization errors: ${JSON.stringify(errors)}`);

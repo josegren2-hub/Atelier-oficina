@@ -2,13 +2,15 @@ import './style.css';
 import {mountReleaseNotice} from './release-notice.js';
 import './command-center.css';
 import {bots,floors,disconnectedSnapshot,demoSnapshot,statusLabels} from './data.js';
+import {readSnapshot} from './adapter.js';
+import {SOURCE_CONTRACT} from './source-contract.js';
 import {createOffice} from './scene.js';
 import {mountCommandCenter} from './command-center.js';
 import {filterRoster,botProfile} from './roster.js';
 import {readNightPreference,saveNightPreference} from './theme-state.js';
 const $=s=>document.querySelector(s);
 mountReleaseNotice();
-let snapshot=demoSnapshot(),floor=-1,rosterFloor=-1,viewMode='exterior',selected=null,office,detailReturn=null;
+let snapshot=disconnectedSnapshot(),floor=-1,rosterFloor=-1,viewMode='exterior',selected=null,office,detailReturn=null,liveTimer=null,wantLive=true;
 let nightMode=readNightPreference();
 $('#night').checked=nightMode;
 document.documentElement.dataset.theme=nightMode?'night':'day';
@@ -24,7 +26,7 @@ $('#roster-floor').addEventListener('change',e=>{rosterFloor=Number(e.target.val
 $('#command-open').addEventListener('click',()=>command.open());
 $('#pending-open').addEventListener('click',()=>command.open('tasks'));
 $('#notifications-open').addEventListener('click',()=>command.open('notifications'));
-$('#refresh-office').addEventListener('click',()=>{command.refresh();$('#refresh-feedback').textContent='Vista actualizada. Fuente real no conectada; no se han consultado calendarios ni bots.';});
+$('#refresh-office').addEventListener('click',()=>{command.refresh();if(wantLive&&snapshot.mode!=='demo'){refreshLive({manual:true});}else{$('#refresh-feedback').textContent=snapshot.mode==='demo'?'Vista demo actualizada. Sin consulta a la fuente en vivo.':'Vista actualizada. Sin fuente en vivo activa.';}});
 function toggleAvatars(open){$('#avatar-dropdown').hidden=!open;$('#avatars-toggle').setAttribute('aria-expanded',String(open));if(open){const frame=$('#avatar-dropdown iframe');if(!frame.getAttribute('src'))frame.src=frame.dataset.src;$('#avatars-close').focus();}else $('#avatars-toggle').focus();}
 $('#avatars-toggle').addEventListener('click',()=>toggleAvatars($('#avatar-dropdown').hidden));
 $('#avatars-close').addEventListener('click',()=>toggleAvatars(false));
@@ -100,7 +102,7 @@ function renderRoster(){
   const avatar=el('span','••','avatar');avatar.style.setProperty('--bot',b.color);
   const text=el('span','');text.append(el('strong',b.name),el('small',b.role));
   const indicator=el('span','',`status-dot status-${b.status}`);indicator.setAttribute('aria-label',statusLabels[b.status]||'Sin señal');indicator.title=statusLabels[b.status]||'Sin señal';
-  avatar.append(indicator);button.append(avatar,text,el('em',snapshot.mode==='demo'?'DEMO':'SIN SEÑAL'));
+  avatar.append(indicator);button.append(avatar,text,el('em',snapshot.mode==='demo'?'DEMO':snapshot.mode==='live'?'EN VIVO':'SIN SEÑAL'));
   button.addEventListener('click',()=>choose(b.id));holder.append(button);
  }
  if(!list.length)holder.append(el('p','No hay bots que coincidan. Usa «Ver todos» para quitar los filtros.','muted'));
@@ -123,12 +125,85 @@ function render(){renderRoster();renderDetail();}
 $('#search').addEventListener('input',renderRoster);
 function setDemoPreset(preset){snapshot=demoSnapshot(preset);office?.setDemo(true);office?.setStatuses(snapshot);command.refresh();render();$('#demo-preset-result').textContent=preset==='working'?'Ejemplo: todos van a su puesto para trabajar sentados.':preset==='idle'?'Ejemplo: paseo, lectura y descanso sin trabajo real.':'Ejemplo mixto: trabajando, esperando revisión y descansando.';}
 document.querySelectorAll('[data-demo-preset]').forEach(button=>button.addEventListener('click',()=>setDemoPreset(button.dataset.demoPreset)));
+
+function mergeLive(result){
+ const byId=new Map(result.bots.map(b=>[b.id,b]));
+ return {
+  mode:'live',
+  source:result.source,
+  lastSignal:result.lastSignal,
+  bots:bots.map(base=>{
+   const live=byId.get(base.id);
+   if(!live)return {...base,status:'unknown',task:null,previousTask:null,activity:null,lastSignal:null,stale:true};
+   return {...base,status:live.status,task:live.task,previousTask:null,activity:live.task,lastSignal:live.lastSignal,stale:live.stale};
+  }),
+ };
+}
+
+function paintSource(){
+ const live=snapshot.mode==='live';
+ const demo=snapshot.mode==='demo';
+ const label=demo?'Ejemplos simulados · sin fuente real':live?`En vivo · ${snapshot.source}`:'Sin conexión · reintentando';
+ $('#source-label').textContent=label;
+ $('#last-signal').textContent=snapshot.lastSignal?new Date(snapshot.lastSignal).toLocaleString('es-MX',{timeZone:'America/Chihuahua'}):'ninguna';
+ document.querySelector('.source')?.classList.toggle('live',live);
+ document.querySelector('.source')?.classList.toggle('offline',!live&&!demo);
+ $('#demo').textContent=demo?'Salir de demostración':'Ver demostración';
+ $('#demo').setAttribute('aria-pressed',String(demo));
+ $('#demo-actions').hidden=!demo;
+ $('#demo-banner').hidden=!demo;
+}
+
+function applySnapshot(next,{demoMotion=false}={}){
+ snapshot=next;
+ office?.setDemo(demoMotion);
+ office?.setStatuses(snapshot);
+ command.refresh();
+ paintSource();
+ render();
+}
+
+async function refreshLive({manual=false}={}){
+ if(!wantLive)return;
+ try{
+  const result=await readSnapshot({knownIds:bots.map(b=>b.id)});
+  applySnapshot(mergeLive(result),{demoMotion:false});
+  $('#refresh-feedback').textContent=manual?'Estado en vivo actualizado.':'';
+ }catch(error){
+  if(snapshot.mode==='demo')return;
+  applySnapshot(disconnectedSnapshot(),{demoMotion:false});
+  $('#source-label').textContent='Sin conexión · no se pudo leer estado.json';
+  $('#refresh-feedback').textContent=manual?`No se pudo actualizar: ${error.message}`:`Sin conexión: ${error.message}`;
+ }
+}
+
+function startLivePolling(){
+ if(liveTimer)clearInterval(liveTimer);
+ liveTimer=setInterval(()=>{if(wantLive&&snapshot.mode!=='demo'&&!document.hidden)refreshLive();},SOURCE_CONTRACT.pollIntervalMs);
+}
+
 $('#demo').addEventListener('click',()=>{
- const demo=snapshot.mode!=='demo';snapshot=demo?demoSnapshot():disconnectedSnapshot();
- $('#demo').textContent=demo?'Salir de demostración':'Ver demostración';$('#demo').setAttribute('aria-pressed',String(demo));$('#source-label').textContent=demo?'Ejemplos simulados · sin fuente real':'Fuente desconectada';$('#demo-actions').hidden=!demo;$('#demo-banner').hidden=!demo;
- office?.setDemo(demo);office?.setStatuses(snapshot);command.refresh();render();
+ const entering=snapshot.mode!=='demo';
+ if(entering){
+  wantLive=false;
+  applySnapshot(demoSnapshot(),{demoMotion:true});
+ }else{
+  wantLive=true;
+  applySnapshot(disconnectedSnapshot(),{demoMotion:false});
+  refreshLive({manual:true});
+  startLivePolling();
+ }
 });
-try{office=createOffice($('#canvas-container'),choose,stats=>{$('#model-status').textContent=`Avatares: ${stats.loaded}/16${stats.failed?' · No se pudieron cargar '+stats.failed:''}`;},id=>command.openAgenda(id),id=>setFloor(id));office.setNight(nightMode);office.setDemo(true);office.setStatuses(snapshot);}catch(error){$('#fallback').hidden=false;console.error('WebGL no disponible:',error);}
+
+try{
+ office=createOffice($('#canvas-container'),choose,stats=>{$('#model-status').textContent=`Avatares: ${stats.loaded}/16${stats.failed?' · No se pudieron cargar '+stats.failed:''}`;},id=>command.openAgenda(id),id=>setFloor(id));
+ office.setNight(nightMode);
+ office.setDemo(false);
+ office.setStatuses(snapshot);
+}catch(error){$('#fallback').hidden=false;console.error('WebGL no disponible:',error);}
+paintSource();
+refreshLive();
+startLivePolling();
 document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>{
  viewMode=button.dataset.view;selected=null;office?.select(null);office?.setMode(viewMode);if(viewMode==='exterior')$('#walls').checked=true;setFloor(-1);
 }));

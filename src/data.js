@@ -67,4 +67,4 @@ export function demoSnapshot(preset='mixed'){
    julian:{connected:false,simulated:true,source:'Agenda ficticia de demostración',events:[{id:'sample-julian-1',title:'Ejemplo: preparar una explicación',start:'2030-01-15T11:00:00Z'},{id:'sample-julian-2',title:'Ejemplo: revisar un documento ficticio',start:'2030-01-15T13:00:00Z'}]}}
  };
 }
-export const statusLabels={unknown:'Sin señal',working:'Trabajando · demo',review:'En revisión · demo',idle:'Disponible · demo',error:'Error de fuente'};
+export const statusLabels={unknown:'Sin señal',working:'Trabajando',review:'Te espera',idle:'En pausa',error:'Error de fuente'};
