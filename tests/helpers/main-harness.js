@@ -166,6 +166,7 @@ export function createMainHarness({storage=createMemoryStorage()}={}){
   mountSelectionLabels:()=>({refresh(){},destroy(){},element:{}}),
   mountHistoryBack:()=>({push(){},destroy(){}}),
   mountPizarron:()=>({open(){},close(){},isOpen(){return false;},refresh(){},destroy(){},element:{}}),
+  mountAvisosPanel:()=>({open(){},refresh(){},session:{snapshot:()=>({configured:false})},element:{}}),
   buildPizarronModel:()=>({unlocked:false,aud:[],esp:[],pend:[],gen:null}),
   createMandoSession:({onChange}={})=>{
     const api={unlocked:false,mando:null,tareas:null,unlock:async()=>({unlocked:true}),tryRestore:async()=>({unlocked:false}),refresh:async()=>({unlocked:false}),lock(){api.unlocked=false;onChange?.({unlocked:false});return {unlocked:false};},snapshot:()=>({unlocked:false}),enrichBot:b=>({...b,mandoUnlocked:false}),botRecord:()=>null};

@@ -47,6 +47,13 @@ export function mapOficinaEstado(payload, knownIds, now = Date.now()) {
     byId.set(row.id, {id: row.id, status, task, lastSignal, waitingSince});
   }
   const bots = [...valid].map(id => byId.get(id) || {id, status: 'unknown', task: null, lastSignal, waitingSince: null});
+  const salud = payload.salud && typeof payload.salud === 'object' ? {
+    latido: typeof payload.salud.latido === 'string' ? payload.salud.latido : null,
+    mando: typeof payload.salud.mando === 'string' ? payload.salud.mando : null,
+    avisos_ok: typeof payload.salud.avisos_ok === 'string' ? payload.salud.avisos_ok : null,
+    avisos_error: typeof payload.salud.avisos_error === 'string' ? payload.salud.avisos_error : null,
+    avisos_config: typeof payload.salud.avisos_config === 'boolean' ? payload.salud.avisos_config : null,
+  } : null;
   return {
     schemaVersion: 1,
     mode: 'live',
@@ -54,6 +61,7 @@ export function mapOficinaEstado(payload, knownIds, now = Date.now()) {
     provenance: {kind: SOURCE_CONTRACT.provenanceKind, origin: 'oficina-bots-estado-json', feedUpdatedAt: payload.actualizado, feedHeartbeatAt: payload?.salud?.latido ?? null},
     simulated: false,
     bots,
+    salud,
   };
 }
 
@@ -74,7 +82,7 @@ export function validateSnapshot(payload, knownIds, now = Date.now()) {
     const stale = now - date > SOURCE_CONTRACT.maxSignalAgeMs;
     return {id: record.id, status: stale ? 'unknown' : record.status, task: stale ? null : record.task ?? null, lastSignal: new Date(date).toISOString(), stale, waitingSince: stale ? null : (record.waitingSince || null)};
   });
-  return {mode: 'live', source: payload.source.slice(0, 120), bots: records, lastSignal: records.length ? records.reduce((a, b) => a > b.lastSignal ? a : b.lastSignal, '') : null};
+  return {mode: 'live', source: payload.source.slice(0, 120), bots: records, lastSignal: records.length ? records.reduce((a, b) => a > b.lastSignal ? a : b.lastSignal, '') : null, salud: payload.salud && typeof payload.salud === 'object' ? payload.salud : null};
 }
 
 export async function readSnapshot({signal, knownIds, fetcher = fetch, enabled = SOURCE_CONTRACT.enabled, now = Date.now()} = {}) {

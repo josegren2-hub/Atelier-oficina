@@ -163,3 +163,31 @@ body.v17lejos .v17pin{opacity:0;pointer-events:none}
 .cc-card.h-bot{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start}
 .cc-card.h-bot .cc-bot-meta{display:flex;flex-direction:column;gap:4px;min-width:0}
 .pizarron-dialog .f img.av{width:28px;height:28px;border-radius:50%;object-fit:cover;flex:none;background:#2a3544}
+
+/* Phase 5 · avisos ntfy (tema solo en el navegador) */
+.avisos-dialog{width:min(560px,94vw);max-height:90vh;border:0;border-radius:16px;padding:0;background:#121a19;color:#e8edf5;box-shadow:0 20px 60px #000a}
+.avisos-dialog::backdrop{background:#0a1010cc}
+.avisos-dialog .detail-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:16px 18px 8px;border-bottom:1px solid #ffffff14}
+.avisos-dialog .detail-top>div{flex:1;min-width:0}
+.avisos-dialog .detail-top [data-close]{flex:0 0 auto;align-self:flex-start;margin:0;padding:8px 12px;min-height:36px;height:auto;width:auto;font-size:12px;line-height:1.2;border-radius:10px;background:#2a4358;color:#edf5fc;border:1px solid #7c98ad;white-space:nowrap}
+.avisos-dialog .avisos-lead{font-size:13px;line-height:1.45;margin:.4rem 0 0;color:#b7c2c0}
+@media(max-width:760px){
+ .avisos-dialog{width:calc(100vw - 16px);max-height:calc(100dvh - 16px);border-radius:14px}
+ .avisos-dialog .detail-top{padding:14px 14px 8px;gap:8px}
+ .avisos-dialog .detail-top [data-close]{padding:7px 10px;min-height:34px;font-size:12px}
+ .avisos-dialog h2{font-size:17px;line-height:1.25}
+ .avisos-dialog .avisos-lead{font-size:12px}
+}
+.avisos-body{padding:12px 18px 20px;overflow:auto;max-height:70vh;display:grid;gap:14px}
+.avisos-block{background:#ffffff08;border:1px solid #ffffff12;border-radius:12px;padding:12px 14px}
+.avisos-block h3,.avisos-card h4{margin:0 0 6px;font-size:15px}
+.avisos-form{display:grid;gap:8px;margin-top:8px}
+.avisos-form input[type=password]{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #ffffff22;background:#0c1211;color:inherit}
+.avisos-health{margin:0;padding:8px 10px;border-radius:10px;font-size:13px}
+.avisos-health.ok{background:#14532d44;border:1px solid #4ade8088}
+.avisos-health.warn{background:#7c2d1244;border:1px solid #fb923c88}
+.avisos-health.muted{background:#33415544;border:1px solid #94a3b888}
+.avisos-card{margin-top:8px;padding:10px;border-radius:10px;background:#0c1211;border:1px solid #ffffff10}
+.avisos-card .detail-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.avisos-test code{font-size:12px;background:#0006;padding:1px 5px;border-radius:4px}
+.team-actions #avisos-open{border-color:#4ade8088}

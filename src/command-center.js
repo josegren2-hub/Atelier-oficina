@@ -1,3 +1,4 @@
+import {waitingAlertCandidates,mapSalud,avisosHealthLabel} from './ntfy-session.js';
 import {avatarPhotoUrl} from './avatar-photo.js';
 /** Read-only command center. Import command-center.css in the application entry. */
 export const taskStates = Object.freeze({pending:'Pendientes',in_progress:'En curso',authorization:'Autorización',urgent:'Urgentes',postponed:'Pospuestas',completed:'Completadas'});
@@ -54,10 +55,22 @@ export function mountCommandCenter({getSnapshot=()=>({}),onChoose=()=>{}}={}) {
     content.scrollTop=0;
     if(section==='waiting') renderWaiting();
     if(section==='tasks') renderTasks();
-    if(section==='notifications') {
-      heading('Avisos recibidos','Información de la fuente, sin acciones ni respuestas pendientes en esta pantalla.');
-      summary([['Notificaciones disponibles',model.hasNotifications?model.notifications.length:null]]);
-      if(!model.notifications.length)empty(model.hasNotifications?'Sin notificaciones recibidas':'Fuente de notificaciones no conectada','Aquí aparecerán los avisos disponibles. No se generan notificaciones de actividad ficticia fuera de DEMO.');
+        if(section==='notifications') {
+      heading('Avisos y celular','Estado público de ntfy + avisos DEMO. Atelier no reenvía al tema real (el loop de la caja ya lo hace).');
+      const snap=getSnapshot()||{};
+      const health=avisosHealthLabel(mapSalud(snap.salud));
+      summary([['Salud avisos',health.text],['Notificaciones DEMO',model.hasNotifications?model.notifications.length:null]]);
+      const longWait=waitingAlertCandidates(snap.bots||[]);
+      if(longWait.length){
+        content.append(el('p',`Te espera ≥24 h (${longWait.length}) · solo lectura`,'cc-note'));
+        for(const w of longWait){
+          const card=el('article',undefined,'cc-card');
+          card.append(el('span','Te espera','cc-badge'),el('h3',w.title),el('p',`Abrir ficha en Atelier: ${w.deepLink}`),el('small',dateText(w.waitingSince)));
+          const btn=el('button','Ver ficha');btn.type='button';btn.addEventListener('click',()=>{dialog.close();onChoose(w.id);});
+          card.append(btn);content.append(card);
+        }
+      }
+      if(!model.notifications.length && !longWait.length)empty(model.hasNotifications?'Sin notificaciones DEMO':'Sin avisos DEMO','Usa «Avisos celular» para suscribirte a ntfy. Los envíos reales los hace el loop de la oficina anterior.');
       for(const note of model.notifications){const card=el('article',undefined,'cc-card');card.append(el('span','Notificación','cc-badge'),el('h3',note.title),el('p',note.body),el('small',dateText(note.createdAt)));content.append(card);}
     }
     if(section==='stats'){

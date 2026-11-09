@@ -12,6 +12,7 @@ import {createMandoSession} from './mando-session.js';
 import {mountEquipoPanel} from './equipo-panel.js';
 import {mountSelectionLabels} from './selection-labels.js';
 import {mountHistoryBack} from './history-back.js';
+import {mountAvisosPanel} from './avisos-panel.js';
 import {mountPizarron, buildPizarronModel} from './pizarron.js';
 import {avatarPhotoUrl} from './avatar-photo.js';
 const $=s=>document.querySelector(s);
@@ -23,6 +24,8 @@ document.documentElement.dataset.theme=nightMode?'night':'day';
 function el(tag,text,className){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(className)n.className=className;return n;}
 const mandoSession=createMandoSession({onChange:()=>{if(snapshot.mode==='live')applySnapshot(enrichSnapshot(snapshot),{demoMotion:false});else paintMando();}});
 const command=mountCommandCenter({getSnapshot:()=>snapshot,onChoose:id=>choose(id)});
+const avisosPanel=mountAvisosPanel({getSnapshot:()=>snapshot,onChoose:id=>choose(id),container:document.body});
+
 const nav=$('#floors'),detail=$('#detail');
 const mandoDialog=$('#mando-dialog');
 const equipo=mountEquipoPanel({
@@ -85,7 +88,7 @@ function tasksFromMando(liveBots){
 function enrichSnapshot(base){
  const bots=base.bots.map(b=>mandoSession.enrichBot(b));
  const tasks=tasksFromMando(bots);
- return {...base,bots,mandoUnlocked:mandoSession.unlocked,tasks:tasks??base.tasks,notifications:base.notifications};
+ return {...base,bots,mandoUnlocked:mandoSession.unlocked,tasks:tasks??base.tasks,notifications:base.notifications,salud:base.salud??null};
 }
 for(const f of floors){
  const title=`${f.id===0?'PB':f.id} · ${f.name}`;
@@ -95,7 +98,8 @@ $('#floor-jump').addEventListener('change',e=>setFloor(Number(e.target.value)));
 $('#roster-floor').addEventListener('change',e=>{rosterFloor=Number(e.target.value);renderRoster();});
 $('#command-open').addEventListener('click',()=>command.open());
 $('#pending-open').addEventListener('click',()=>command.open('waiting'));
-$('#notifications-open').addEventListener('click',()=>command.open('notifications'));
+$('#notifications-open').addEventListener('click',()=>avisosPanel.open());
+$('#avisos-open')?.addEventListener('click',()=>avisosPanel.open());
 $('#refresh-office').addEventListener('click',()=>{command.refresh();if(wantLive&&snapshot.mode!=='demo'){refreshLive({manual:true});}else{$('#refresh-feedback').textContent=snapshot.mode==='demo'?'Vista demo actualizada. Sin consulta a la fuente en vivo.':'Vista actualizada. Sin fuente en vivo activa.';}});
 function toggleAvatars(open){$('#avatar-dropdown').hidden=!open;$('#avatars-toggle').setAttribute('aria-expanded',String(open));if(open){const frame=$('#avatar-dropdown iframe');if(!frame.getAttribute('src'))frame.src=frame.dataset.src;$('#avatars-close').focus();}else $('#avatars-toggle').focus();}
 $('#avatars-toggle').addEventListener('click',()=>toggleAvatars($('#avatar-dropdown').hidden));
@@ -215,6 +219,7 @@ function mergeLive(result){
   mode:'live',
   source:result.source,
   lastSignal:result.lastSignal,
+  salud:result.salud??null,
   bots:bots.map(base=>{
    const live=byId.get(base.id);
    if(!live)return {...base,status:'unknown',task:null,previousTask:null,activity:null,lastSignal:null,stale:true,waitingSince:null};
@@ -242,6 +247,7 @@ function applySnapshot(next,{demoMotion=false}={}){
  office?.setDemo(demoMotion);
  office?.setStatuses(snapshot);
  command.refresh();
+ avisosPanel?.refresh?.();
  paintSource();
  paintMando();
  equipo.refresh();
@@ -301,7 +307,7 @@ paintMando();
 $('#mando-unlock')?.addEventListener('click',()=>{
  if(mandoSession.unlocked){
   mandoSession.lock();
-  if(snapshot.mode==='live')applySnapshot({mode:snapshot.mode,source:snapshot.source,lastSignal:snapshot.lastSignal,bots:snapshot.bots.map(b=>({...b}))});
+  if(snapshot.mode==='live')applySnapshot({mode:snapshot.mode,source:snapshot.source,lastSignal:snapshot.lastSignal,salud:snapshot.salud??null,bots:snapshot.bots.map(b=>({...b}))});
   else paintMando();
   $('#refresh-feedback').textContent='Mando bloqueado en este navegador.';
   return;
@@ -315,7 +321,7 @@ $('#mando-dialog-close')?.addEventListener('click',()=>mandoDialog.close());
 $('#mando-lock')?.addEventListener('click',()=>{
  mandoSession.lock();
  mandoDialog.close();
- if(snapshot.mode==='live')applySnapshot({mode:snapshot.mode,source:snapshot.source,lastSignal:snapshot.lastSignal,bots:snapshot.bots.map(b=>({...b}))});
+ if(snapshot.mode==='live')applySnapshot({mode:snapshot.mode,source:snapshot.source,lastSignal:snapshot.lastSignal,salud:snapshot.salud??null,bots:snapshot.bots.map(b=>({...b}))});
  else paintMando();
  $('#refresh-feedback').textContent='Mando bloqueado y clave olvidada.';
 });
@@ -328,14 +334,14 @@ $('#mando-form')?.addEventListener('submit',async e=>{
   await mandoSession.unlock(pass,{remember});
   $('#mando-pass').value='';
   mandoDialog.close();
-  if(snapshot.mode==='live')applySnapshot({mode:snapshot.mode,source:snapshot.source,lastSignal:snapshot.lastSignal,bots:snapshot.bots.map(b=>({...b}))});
+  if(snapshot.mode==='live')applySnapshot({mode:snapshot.mode,source:snapshot.source,lastSignal:snapshot.lastSignal,salud:snapshot.salud??null,bots:snapshot.bots.map(b=>({...b}))});
   else paintMando();
   $('#refresh-feedback').textContent='Mando desbloqueado. Las frases cifradas se leen solo en este navegador.';
  }catch(err){
   $('#mando-error').textContent=err?.message||'No se pudo desbloquear';
  }
 });
-mandoSession.tryRestore().then(()=>{if(snapshot.mode==='live')applySnapshot({mode:snapshot.mode,source:snapshot.source,lastSignal:snapshot.lastSignal,bots:snapshot.bots.map(b=>({...b}))});else paintMando();});
+mandoSession.tryRestore().then(()=>{if(snapshot.mode==='live')applySnapshot({mode:snapshot.mode,source:snapshot.source,lastSignal:snapshot.lastSignal,salud:snapshot.salud??null,bots:snapshot.bots.map(b=>({...b}))});else paintMando();});
 refreshLive();
 startLivePolling();
 document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>{
@@ -350,3 +356,24 @@ setInterval(()=>{
  const node=detail.querySelector('[data-profile-field="activity"]');if(node)node.textContent=botProfile(snapshot,b,office?.getActivity?.(selected)).activity;
 },1000);
 setInterval(()=>{const node=$('#movement-overview');if(!node)return;const agents=office?.getMovementStats?.().agents??[];if(snapshot.mode!=='demo'){node.textContent='Sin movimiento de trabajo real.';return;}node.textContent=`Solo ejemplo: ${agents.filter(a=>a.seated).length} sentados · ${agents.filter(a=>a.moving).length} caminando · ${agents.filter(a=>!a.seated&&!a.moving).length} en espera o descanso`;},1000);
+
+function consumeDeepLink(){
+  try{
+    const q=new URLSearchParams(location.search);
+    const bot=q.get('bot');
+    const abrir=q.get('abrir');
+    if(abrir==='avisos'||abrir==='notificaciones')avisosPanel.open();
+    else if(abrir==='esperan'||abrir==='waiting')command.open('waiting');
+    else if(abrir==='mando')command.open('stats');
+    if(bot&&bots.some(b=>b.id===bot)){
+      const go=()=>choose(bot);
+      if(snapshot.mode==='live'||snapshot.mode==='demo')setTimeout(go,400);
+      else setTimeout(go,800);
+    }
+    if(bot||abrir){
+      const clean=new URL(location.href);clean.searchParams.delete('bot');clean.searchParams.delete('abrir');
+      history.replaceState({},'',clean.pathname+clean.search+clean.hash);
+    }
+  }catch(e){console.warn('deep link',e);}
+}
+addEventListener('load',()=>setTimeout(consumeDeepLink,600));
