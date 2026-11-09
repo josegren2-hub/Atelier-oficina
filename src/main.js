@@ -9,6 +9,11 @@ import {mountCommandCenter} from './command-center.js';
 import {filterRoster,botProfile} from './roster.js';
 import {readNightPreference,saveNightPreference} from './theme-state.js';
 import {createMandoSession} from './mando-session.js';
+import {mountEquipoPanel} from './equipo-panel.js';
+import {mountSelectionLabels} from './selection-labels.js';
+import {mountHistoryBack} from './history-back.js';
+import {mountPizarron, buildPizarronModel} from './pizarron.js';
+import {avatarPhotoUrl} from './avatar-photo.js';
 const $=s=>document.querySelector(s);
 mountReleaseNotice();
 let snapshot=disconnectedSnapshot(),floor=-1,rosterFloor=-1,viewMode='exterior',selected=null,office,detailReturn=null,liveTimer=null,wantLive=true;
@@ -20,6 +25,34 @@ const mandoSession=createMandoSession({onChange:()=>{if(snapshot.mode==='live')a
 const command=mountCommandCenter({getSnapshot:()=>snapshot,onChoose:id=>choose(id)});
 const nav=$('#floors'),detail=$('#detail');
 const mandoDialog=$('#mando-dialog');
+const equipo=mountEquipoPanel({
+ getSnapshot:()=>snapshot,
+ getSelected:()=>selected,
+ onSelect:id=>choose(id,{fromEquipo:true}),
+});
+const pizarron=mountPizarron({
+ getModel:()=>buildPizarronModel({
+  mando:mandoSession.unlocked?mandoSession.mando:null,
+  waiting:(snapshot.bots||[]).filter(b=>b.status==='review'&&!b.stale),
+  bots:snapshot.bots||[],
+ }),
+ onSelect:id=>choose(id),
+});
+let selectionLabels=null;
+const historyBack=mountHistoryBack({
+ isDetailOpen:()=>detail.open,
+ closeDetail:()=>closeDetail(),
+ isPizarronOpen:()=>pizarron.isOpen(),
+ closePizarron:()=>pizarron.close(),
+ isEquipoOpen:()=>equipo.isOpen(),
+ foldEquipo:()=>equipo.fold(),
+ isZoomedOrFloor:()=>{const v=office?.getViewState?.();return !!(v&&(v.floor>=0||v.selected));},
+ resetView:()=>{selected=null;office?.select(null);setFloor(-1,{syncRoster:false});office?.setMode(viewMode==='spread'?'exterior':viewMode);},
+ isCommandOpen:()=>!!document.querySelector('.cc-dialog[open]'),
+ closeCommand:()=>command.close(),
+ isMandoOpen:()=>!!mandoDialog?.open,
+ closeMando:()=>mandoDialog?.close(),
+});
 function paintMando(){
  const unlocked=mandoSession.unlocked;
  const btn=$('#mando-unlock');
@@ -100,17 +133,22 @@ function setFloor(id,{syncRoster=true}={}){
  const active=nav.querySelector('[aria-pressed=true]');
  if(active){const left=active.offsetLeft-nav.offsetLeft-(nav.clientWidth-active.offsetWidth)/2;nav.scrollTo({left:Math.max(0,left),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}
 }
-function choose(id){
+function choose(id,{fromEquipo=false}={}){
  const b=snapshot.bots.find(b=>b.id===id);if(!b)return;
  if(!detail.open){const focus=document.activeElement;detailReturn={floor,focus,botId:focus?.dataset.botId};}
  selected=id;
  if(floor!==b.floor)setFloor(b.floor,{syncRoster:false});
- office?.select(id);render();
+ if(office?.focusBot)office.focusBot(id,{openFloor:false});
+ else office?.select(id);
+ render();
+ equipo.refresh();
+ historyBack.push();
  if(!detail.open)detail.showModal();
  $('#detail-close').focus();
 }
 function closeDetail({all=false}={}){
  const context=detailReturn;detailReturn=null;selected=null;office?.select(null);
+ equipo.refresh();
  if(detail.open)detail.close();
  if(all){$('#search').value='';setFloor(-1);}
  else if(context)setFloor(context.floor,{syncRoster:false});
@@ -136,10 +174,12 @@ function renderRoster(){
  for(const b of list){
   const button=el('button','',`bot ${b.id===selected?'selected':''}`);button.dataset.botId=b.id;
   button.setAttribute('aria-label',`${b.name}, ${b.role}, ${statusLabels[b.status]||'Sin señal'}`);button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-controls','detail');
-  const avatar=el('span','••','avatar');avatar.style.setProperty('--bot',b.color);
-  const text=el('span','');text.append(el('strong',b.name),el('small',b.role));
+  const avatar=el('span','','avatar');
+  const photo=document.createElement('img');photo.src=avatarPhotoUrl(b.id);photo.alt='';photo.width=32;photo.height=32;photo.loading='lazy';photo.decoding='async';
   const indicator=el('span','',`status-dot status-${b.status}`);indicator.setAttribute('aria-label',statusLabels[b.status]||'Sin señal');indicator.title=statusLabels[b.status]||'Sin señal';
-  avatar.append(indicator);button.append(avatar,text,el('em',snapshot.mode==='demo'?'DEMO':snapshot.mode==='live'?'EN VIVO':'SIN SEÑAL'));
+  avatar.append(photo,indicator);
+  const text=el('span','');text.append(el('strong',b.name),el('small',b.role));
+  button.append(avatar,text,el('em',snapshot.mode==='demo'?'DEMO':snapshot.mode==='live'?'EN VIVO':'SIN SEÑAL'));
   button.addEventListener('click',()=>choose(b.id));holder.append(button);
  }
  if(!list.length)holder.append(el('p','No hay bots que coincidan. Usa «Ver todos» para quitar los filtros.','muted'));
@@ -149,6 +189,8 @@ function renderDetail(){
  const b=snapshot.bots.find(b=>b.id===selected);if(!b)return;
  const profile=botProfile(snapshot,b,office?.getActivity?.(selected));
  $('#detail-title').textContent=b.name;$('#detail-role').textContent=b.role;$('#detail-source').textContent=profile.source;
+ const headPhoto=$('#detail-photo');
+ if(headPhoto){headPhoto.src=avatarPhotoUrl(b.id);headPhoto.hidden=false;}
  const facts=$('#detail-facts');facts.replaceChildren();
  const rows=[
   ['Planta',`${b.floor===0?'PB':`Piso ${b.floor}`} · ${floors[b.floor].name}`,'floor'],
@@ -202,6 +244,8 @@ function applySnapshot(next,{demoMotion=false}={}){
  command.refresh();
  paintSource();
  paintMando();
+ equipo.refresh();
+ pizarron.refresh();
  render();
 }
 
@@ -242,7 +286,15 @@ try{
  office.setNight(nightMode);
  office.setDemo(false);
  office.setStatuses(snapshot);
+ selectionLabels=mountSelectionLabels({
+  getSnapshot:()=>snapshot,
+  getSelected:()=>selected,
+  projectBots:()=>office?.projectBots?.()||[],
+  onSelect:id=>choose(id),
+  container:$('#viewport')||document.body,
+ });
 }catch(error){$('#fallback').hidden=false;console.error('WebGL no disponible:',error);}
+$('#pizarron-open')?.addEventListener('click',()=>{pizarron.open();historyBack.push();});
 paintSource();
 paintMando();
 $('#mando-unlock')?.addEventListener('click',()=>{

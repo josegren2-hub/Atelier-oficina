@@ -10,7 +10,7 @@ test('rechaza ID desconocido, duplicado y futuro',()=>{for(const kind of ['unkno
 test('lectura HTTP fallida no se transforma en actividad',async()=>{await assert.rejects(readSnapshot({knownIds:ids,fetcher:async()=>({ok:false,status:503})}));});
 test('IDs canónicos, sin sustituciones por nombres o índices',()=>{assert.deepEqual([...bots.map(b=>b.id)].sort(),['ted','luna','vale','emiliano','julian','ines','ceo','apps','libro','rulo','director','luca','mateo','tadeo','tr-editor','tr-cm'].sort());});
 import {readFileSync} from 'node:fs';
-test('interfaz neutral y cinco niveles confirmados',()=>{const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');assert.ok(!/\bRob\b|<img/i.test(html));assert.equal(floors.length,5);assert.ok(bots.every(b=>b.floor>=0&&b.floor<5));});
+test('interfaz neutral y cinco niveles confirmados',()=>{const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');assert.ok(!/\bRob\b/i.test(html),'nunca el nombre de Rob');assert.ok(!/rob-referencia|fotos-realistas|foto.?de.?rob/i.test(html),'nunca foto de Rob');assert.match(html,/id="detail-photo"/);assert.equal(floors.length,5);assert.ok(bots.every(b=>b.floor>=0&&b.floor<5));});
 
 test('asignación explícita de equipo-bots-rob.docx',()=>{
  const expected=[['luna','emiliano','vale'],['julian','ines'],['libro','apps','ceo','luca','rulo','director'],['mateo','tr-editor','tadeo','tr-cm'],['ted']];

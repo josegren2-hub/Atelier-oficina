@@ -208,5 +208,39 @@ export function createOffice(container,onBot,onAssets=()=>{},onAgenda=()=>{},onF
   for(const radius of [6,12]){if(node?.userData.bot)break;for(let i=0;i<8;i++){const a=i*Math.PI/4;pointer.set((e.clientX-rect.left+Math.cos(a)*radius)/rect.width*2-1,-(e.clientY-rect.top+Math.sin(a)*radius)/rect.height*2+1);ray.setFromCamera(pointer,camera);const nearby=ray.intersectObjects(roots,true).find(hit=>{let o=hit.object;while(o){if(!o.visible)return false;o=o.parent;}return !hit.object.material?.transparent||hit.object.isSprite&&hit.object.userData.bot;});const candidate=nearby&&targetOf(nearby.object);if(candidate?.userData.bot){node=candidate;break;}}}
  }
  if(node?.userData.agenda)onAgenda(node.userData.agenda);else if(node?.userData.bot)onBot(node.userData.bot.id);else if(Number.isInteger(node?.userData.floorId))onFloor(node.userData.floorId);}});renderer.domElement.addEventListener('pointercancel',()=>down=null);controls.addEventListener('start',()=>moving=false);tick();
- return {setView,setMode,setExploded(v){setMode(v?'stacked':'exterior');},setWalls(v){walls=Boolean(v);facades.forEach(g=>g.visible=walls&&floor<0);},setNight,setStatuses,select(id){selected=id;},setDemo(v){animateBots=Boolean(v);movement.setDemo(v);},getActivity(id){return movement.getActivity(id);},getMovementStats(){return movement.getStats();},rotate(d){moving=false;const o=camera.position.clone().sub(controls.target).applyAxisAngle(new THREE.Vector3(0,1,0),d);camera.position.copy(controls.target).add(o);},zoom(s){moving=false;if(camera.isOrthographicCamera){camera.zoom=THREE.MathUtils.clamp(camera.zoom/s,.35,8);camera.updateProjectionMatrix();return;}const o=camera.position.clone().sub(controls.target);o.setLength(THREE.MathUtils.clamp(o.length()*s,12,700));camera.position.copy(controls.target).add(o);},reset(){setView(floor);},get renderer(){return renderer;}};
+ function focusBot(id,{openFloor=true}={}){
+  const bot=botModels.find(b=>b.id===id);if(!bot)return false;
+  selected=id;
+  if(openFloor&&floor!==bot.floor)setView(bot.floor);
+  const world=new THREE.Vector3();bot.group.getWorldPosition(world);world.y+=1.2;
+  const dist=camera.isOrthographicCamera?null:THREE.MathUtils.clamp(camera.position.distanceTo(controls.target)*0.55,8,28);
+  target.copy(world);
+  if(camera.isOrthographicCamera){desired.copy(world).add(new THREE.Vector3(0,18,22));}
+  else{
+   const dir=camera.position.clone().sub(controls.target);if(dir.lengthSq()<1e-6)dir.set(0,12,18);dir.setLength(dist??16);
+   desired.copy(world).add(dir);
+  }
+  moving=true;return true;
+ }
+ function projectBots(){
+  const rect=container.getBoundingClientRect();
+  const w=rect.width,h=rect.height;if(w<=0||h<=0)return [];
+  const out=[];const v=new THREE.Vector3();
+  const far=camera.position.distanceTo(controls.target)>34&&floor<0;
+  document.body.classList.toggle('v17lejos',far);
+  for(const b of botModels){
+   let vis=b.group.visible;for(let p=b.group.parent;p&&vis;p=p.parent)if(p.visible===false)vis=false;if(!vis){out.push({id:b.id,hidden:true});continue;}
+   // When a floor filter is active, hide other floors' labels
+   if(floor>=0&&b.floor!==floor){out.push({id:b.id,hidden:true});continue;}
+   if(floor<0&&mode==='spread'&&b.floor>=4){out.push({id:b.id,hidden:true});continue;}
+   b.group.getWorldPosition(v);v.y+=1.55+b.visual.position.y;v.project(camera);
+   if(v.z>1){out.push({id:b.id,hidden:true});continue;}
+   const x=(v.x*.5+.5)*w+rect.left,y=(-v.y*.5+.5)*h+rect.top;
+   if(y<rect.top+40||y>rect.bottom-20){out.push({id:b.id,hidden:true});continue;}
+   out.push({id:b.id,x,y,small:floor<0&&mode!=='stacked'&&camera.position.distanceTo(controls.target)>28,hidden:false});
+  }
+  return out;
+ }
+ function getViewState(){return {floor,mode,selected};}
+ return {setView,setMode,setExploded(v){setMode(v?'stacked':'exterior');},setWalls(v){walls=Boolean(v);facades.forEach(g=>g.visible=walls&&floor<0);},setNight,setStatuses,select(id){selected=id;},focusBot,projectBots,getViewState,setDemo(v){animateBots=Boolean(v);movement.setDemo(v);},getActivity(id){return movement.getActivity(id);},getMovementStats(){return movement.getStats();},rotate(d){moving=false;const o=camera.position.clone().sub(controls.target).applyAxisAngle(new THREE.Vector3(0,1,0),d);camera.position.copy(controls.target).add(o);},zoom(s){moving=false;if(camera.isOrthographicCamera){camera.zoom=THREE.MathUtils.clamp(camera.zoom/s,.35,8);camera.updateProjectionMatrix();return;}const o=camera.position.clone().sub(controls.target);o.setLength(THREE.MathUtils.clamp(o.length()*s,12,700));camera.position.copy(controls.target).add(o);},reset(){setView(floor);},get renderer(){return renderer;}};
 }

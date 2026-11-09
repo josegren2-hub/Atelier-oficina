@@ -12,6 +12,7 @@ import * as data from '../../src/data.js';
 import * as roster from '../../src/roster.js';
 import {readNightPreference,saveNightPreference} from '../../src/theme-state.js';
 import {SOURCE_CONTRACT} from '../../src/source-contract.js';
+import {avatarPhotoUrl} from '../../src/avatar-photo.js';
 
 const dataKey=name=>name.slice(5).replace(/-([a-z])/g,(_,letter)=>letter.toUpperCase());
 const decode=text=>text.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"');
@@ -115,6 +116,7 @@ class Document extends Events {
  createElement(tag){return new Element(tag,this);}
  querySelector(selector){return this.root.querySelector(selector);}
  querySelectorAll(selector){return this.root.querySelectorAll(selector);}
+ getElementById(id){return this.querySelector('#'+id);}
 }
 
 export function createMemoryStorage(initial={}){
@@ -144,12 +146,27 @@ export function createMainHarness({storage=createMemoryStorage()}={}){
  // quietly deleting application code. No application function is reimplemented.
  const executable=source.replace(/^import [^\n]+;\r?$/gm,'');
  if(/^\s*import\b/m.test(executable))throw new Error('Harness needs an explicit update for new import syntax');
+ const historyStack=[{atelierBack:'inicio'}];
+ const history={
+  get state(){return historyStack.at(-1);},
+  replaceState(state){historyStack[0]=state;},
+  pushState(state){historyStack.push(state);},
+ };
+ const windowListeners=new Map();
  const context=vm.createContext({
-  document,...data,...roster,SOURCE_CONTRACT,console:{...console,error:(...args)=>errors.push(args)},
+  document,...data,...roster,SOURCE_CONTRACT,avatarPhotoUrl,console:{...console,error:(...args)=>errors.push(args.map(a=>a&&a.message?a.message:a))},
+  history,
+  addEventListener:(type,fn)=>{const list=windowListeners.get(type)||[];list.push(fn);windowListeners.set(type,list);},
+  removeEventListener:(type,fn)=>{const list=windowListeners.get(type)||[];windowListeners.set(type,list.filter(x=>x!==fn));},
   readNightPreference:()=>readNightPreference(storage),saveNightPreference:night=>saveNightPreference(night,storage),
   readSnapshot:async()=>{throw new Error('Harness: live fetch disabled');},
   mountReleaseNotice:()=>{},
   mountCommandCenter:callbacks=>{commandCallbacks=callbacks;return command;},
+  mountEquipoPanel:()=>({refresh(){},open(){},fold(){},isOpen(){return false;},destroy(){},element:{}}),
+  mountSelectionLabels:()=>({refresh(){},destroy(){},element:{}}),
+  mountHistoryBack:()=>({push(){},destroy(){}}),
+  mountPizarron:()=>({open(){},close(){},isOpen(){return false;},refresh(){},destroy(){},element:{}}),
+  buildPizarronModel:()=>({unlocked:false,aud:[],esp:[],pend:[],gen:null}),
   createMandoSession:({onChange}={})=>{
     const api={unlocked:false,mando:null,tareas:null,unlock:async()=>({unlocked:true}),tryRestore:async()=>({unlocked:false}),refresh:async()=>({unlocked:false}),lock(){api.unlocked=false;onChange?.({unlocked:false});return {unlocked:false};},snapshot:()=>({unlocked:false}),enrichBot:b=>({...b,mandoUnlocked:false}),botRecord:()=>null};
     return api;

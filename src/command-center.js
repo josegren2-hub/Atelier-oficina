@@ -1,3 +1,4 @@
+import {avatarPhotoUrl} from './avatar-photo.js';
 /** Read-only command center. Import command-center.css in the application entry. */
 export const taskStates = Object.freeze({pending:'Pendientes',in_progress:'En curso',authorization:'Autorización',urgent:'Urgentes',postponed:'Pospuestas',completed:'Completadas'});
 const aliases = {working:'in_progress',review:'authorization',done:'completed',deferred:'postponed',awaiting_approval:'authorization'};
@@ -76,12 +77,15 @@ export function mountCommandCenter({getSnapshot=()=>({}),onChoose=()=>{}}={}) {
     if(!(model.mode==='live'||model.mode==='demo')){empty('Sin señal en vivo','Conecta el estado en vivo para ver quién te espera.');return;}
     if(!model.waiting.length){empty('Nadie te espera ahora','Cuando un bot pase a esperando aparecerá aquí.');return;}
     for(const w of model.waiting){
-      const card=el('article',undefined,'cc-card');
-      card.append(el('span','Te espera','cc-badge'),el('h3',w.name));
-      if(w.waitingSince)card.append(el('p',`Desde ${dateText(w.waitingSince)}`));
-      if(model.mandoUnlocked&&w.pendiente)card.append(el('p',w.pendiente));
-      if(model.mandoUnlocked&&w.authorization.length)card.append(el('small',`Autorización: ${w.authorization.join(' · ')}`));
-      card.append(button(`Ver a ${w.name}`,()=>{close();onChoose(w.id);}));
+      const card=el('article',undefined,'cc-card h-bot');
+      const img=document.createElement('img');img.className='cc-bot-av';img.src=avatarPhotoUrl(w.id);img.alt='';img.width=28;img.height=28;img.loading='lazy';
+      const meta=el('div',undefined,'cc-bot-meta');
+      meta.append(el('span','Te espera','cc-badge'),el('h3',w.name));
+      if(w.waitingSince)meta.append(el('p',`Desde ${dateText(w.waitingSince)}`));
+      if(model.mandoUnlocked&&w.pendiente)meta.append(el('p',w.pendiente));
+      if(model.mandoUnlocked&&w.authorization.length)meta.append(el('small',`Autorización: ${w.authorization.join(' · ')}`));
+      meta.append(button(`Ver a ${w.name}`,()=>{close();onChoose(w.id);}));
+      card.append(img,meta);
       content.append(card);
     }
   }
