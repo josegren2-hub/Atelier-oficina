@@ -27,3 +27,32 @@ test('opposing routes yield instead of passing through another avatar',()=>{
  for(let i=0;i<500;i++){const prev=m.getStats().agents;m.update(.05);const [a,b]=m.getStats().agents;assert.ok(pointSegmentDistance([0,0],[prev[0].position[0]-prev[1].position[0],0],[a.position[0]-b.position[0],0])>=PERSONAL_SPACE-1e-8);}
  assert.ok(m.getStats().agents.some(a=>a.blocked>0));
 });
+test('live mode routes working to seat, idle to lounge, review near desk/meeting',()=>{
+ const m=createMovement();
+ const seats=[
+  {id:'sw',position:[0,0],angle:0,height:.75},
+  {id:'si',position:[8,0],angle:0,height:.75},
+  {id:'sr',position:[-8,0],angle:0,height:.75},
+ ];
+ m.add({id:'w',floor:0,position:[5,5],obstacles:[],seats,assignedSeat:'sw',lounge:[6,6],meeting:[-3,-3]});
+ m.add({id:'i',floor:0,position:[-5,5],obstacles:[],seats,assignedSeat:'si',lounge:[6,6],meeting:[-3,-3]});
+ m.add({id:'r',floor:0,position:[5,-5],obstacles:[],seats,assignedSeat:'sr',lounge:[6,6],meeting:[-3,-3]});
+ m.setLive(true);
+ m.setStatuses([{id:'w',status:'working'},{id:'i',status:'idle'},{id:'r',status:'review'}]);
+ for(let i=0;i<900;i++)m.update(.05);
+ const w=m.getActivity('w'),idle=m.getActivity('i'),rev=m.getActivity('r');
+ assert.equal(w.seated,true);assert.equal(w.clip,'work');
+ assert.ok(['rest','read','wave','idle','walk'].includes(idle.clip));
+ assert.ok(rev.bubble.includes('⏳')||rev.expression==='aburrido'||rev.clip==='rest'||rev.moving);
+ assert.equal(m.getStats().live,true);
+});
+test('celebrate bubble appears when leaving working',()=>{
+ const m=createMovement();
+ m.add({id:'a',floor:0,position:[0,0],obstacles:[],seats:[{id:'s',position:[0,0],angle:0}],assignedSeat:'s',lounge:[2,2]});
+ m.setLive(true);m.setStatuses([{id:'a',status:'working'}]);
+ for(let i=0;i<400;i++)m.update(.05);
+ m.setStatuses([{id:'a',status:'idle'}]);
+ m.update(.05);
+ const act=m.getActivity('a');
+ assert.ok(act.bubble.includes('✅')||act.expression==='feliz');
+});

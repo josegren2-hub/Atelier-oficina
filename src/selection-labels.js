@@ -8,6 +8,7 @@ export function mountSelectionLabels({
   getSnapshot = () => ({}),
   getSelected = () => null,
   projectBots = () => [],
+  getActivity = () => null,
   onSelect = () => {},
   container = document.body,
 } = {}) {
@@ -49,7 +50,10 @@ export function mountSelectionLabels({
       el.style.transform = `translate(${item.x}px, ${item.y}px) translate(-50%, -100%)`;
       el.style.display = '';
       el.setAttribute('aria-label', `${bot.name}, ${statusLabels[bot.status] || 'Sin señal'}`);
+      const act = getActivity?.(bot.id);
+      const bub = act?.bubble || '';
       el.innerHTML = `<span class="stem" aria-hidden="true"></span>`
+        + (bub ? `<i class="bub${act?.status==='review'?' te':''}${bub.includes('✅')?' ok':''}">${bub}</i>` : '')
         + `<img src="${avatarPhotoUrl(bot.id)}" alt="" width="40" height="40" loading="lazy">`
         + `<span class="sd" aria-hidden="true"></span>`
         + `<em>${first}</em>`;

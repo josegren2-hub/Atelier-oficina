@@ -227,16 +227,20 @@ export function createPlushModel(config) {
  root.userData.plushRig={eyes,arms,feet};return root;
 }
 
-export function animatePlushModel(root,{time=0,clip=null,seated=false,phase=0,reducedMotion=false}={}) {
+export function animatePlushModel(root,{time=0,clip=null,seated=false,phase=0,reducedMotion=false,expression='neutro'}={}) {
  const active=!!clip&&!reducedMotion;
  const t=active?(Number.isFinite(time)?time:0)+(Number.isFinite(phase)?phase:0):0;
  const walking=clip==='walk'&&!seated,working=clip==='work',reading=clip==='read',resting=clip==='rest';
+ const expr=expression||'neutro';
  // Pose stays legible with reduced motion; only time-dependent movement is removed.
  root.position.set(0,0,0);
- root.rotation.set(working?.045:reading?.025:resting?-.035:0,0,active?Math.sin(t*(walking?6:1.7))*(walking?.022:.012):0);
+ root.rotation.set(working?.045:reading?.025:resting?-.035:(expr==='sorprendido'?.02:0),0,active?Math.sin(t*(walking?6:1.7))*(walking?.022:.012):0);
+ // Keep scale footprint identical to 0.18; expression only via eyes/arms.
  root.scale.set(1,active?1+Math.sin(t*2)*.004:1,1);
  const rig=root.userData.plushRig;
- for(const eye of rig?.eyes??[])eye.scale.y=active&&t%5.2<.11?.006:.042;
+ const eyeY=expr==='sorprendido'?.055:expr==='feliz'?.038:expr==='cansado'?.02:expr==='concentrado'?.034:.042;
+ const blink=active&&t%5.2<.11;
+ for(const eye of (rig?.eyes??[]))eye.scale.y=blink?.006:eyeY;
  (rig?.feet??[]).forEach((foot,i)=>{
   foot.position.fromArray(foot.userData.rest);foot.rotation.set(0,0,0);
   if(seated){foot.position.y+=.065;foot.position.z+=.20;foot.rotation.x=-.85;}

@@ -50,7 +50,7 @@ export function createAvatarModels({onLoaded=()=>{},visualHeight=.9}={}) {
   if(state===null){activities.delete(id);return;}
   if(!state||!ACTIVITY_CLIPS.includes(state.clip))throw new RangeError('Unknown avatar activity');
   if(state.phase!==undefined&&!Number.isFinite(state.phase))throw new TypeError('Activity phase must be finite');
-  activities.set(id,{clip:state.clip,seated:state.seated===true,phase:state.phase??0});
+  activities.set(id,{clip:state.clip,seated:state.seated===true,phase:state.phase??0,expression:state.expression||'neutro'});
  }
  function clearActivities(){activities.clear();}
  // Geometry support in the dedicated visual group's coordinates, excluding limbs/halo.

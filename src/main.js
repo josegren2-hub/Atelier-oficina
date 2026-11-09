@@ -290,6 +290,7 @@ try{
   getSnapshot:()=>snapshot,
   getSelected:()=>selected,
   projectBots:()=>office?.projectBots?.()||[],
+  getActivity:id=>office?.getActivity?.(id)||null,
   onSelect:id=>choose(id),
   container:$('#viewport')||document.body,
  });

@@ -126,6 +126,10 @@ body:has(#detail[open]){overflow:hidden}
 .v17pin.chico img{width:24px;height:24px;border-width:2px}
 .v17pin.chico em{display:none}
 .v17pin.chico .stem{height:8px;bottom:-6px}
+.v17pin .bub{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-style:normal;font-size:11px;line-height:1.2;white-space:nowrap;background:#0e1118e6;color:#f4f7fb;padding:2px 7px;border-radius:999px;border:1px solid #e8edf533;pointer-events:none;z-index:2;box-shadow:0 2px 8px #0005}
+.v17pin .bub.te{background:#7c2d12ee;border-color:#fb923c88}
+.v17pin .bub.ok{background:#14532dee;border-color:#4ade8088}
+.v17pin.chico .bub{font-size:9px;top:-14px;padding:1px 5px}
 body.v17lejos .v17pin{opacity:0;pointer-events:none}
 
 /* Phase 3 · Ted pizarrón */
