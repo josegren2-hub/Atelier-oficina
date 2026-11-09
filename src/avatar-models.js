@@ -1,11 +1,12 @@
 /** Local visual assets only. No activity inference, state fetch, timers, or host transforms. */
 import * as THREE from 'three';
 import {createPlushModel, animatePlushModel} from './avatars/plush-models.js';
+import {createTedReconstructed} from './avatars/ted-reconstructed.js';
 export const PLUSH_ROSTER=Object.freeze({
  ted:{template:3,color:'#f9d9b2',trim:'#25222b',hero:true},
  tommy:{template:9,color:'#2779e7'},charly:{template:13,color:'#ffad27'},rodrigo:{template:2,color:'#19b9f0'},
  rulo:{template:12,color:'#63cdf5'},joss:{template:10,color:'#ffe4b8',trim:'#74213d'},luca:{template:14,color:'#9ce3bd'},
- mateo:{template:4,color:'#df378b'},naim:{template:11,color:'#c86d98'},tadeo:{template:14,color:'#f77eb1'},dany:{template:15,color:'#ffc1d9',accessory:'beret',sleeping:true},
+ mateo:{template:4,color:'#df378b'},naim:{template:11,color:'#c86d98',trim:'#25222b'},tadeo:{template:14,color:'#f77eb1'},dany:{template:15,color:'#ffc1d9',accessory:'beret',sleeping:true},
  luna:{template:5,color:'#bba0ef'},valery:{template:8,color:'#ffa18c'},emiliano:{template:7,color:'#37be83',trim:'#fff0d8'},julian:{template:1,color:'#ffca32',accessory:'glasses',serious:true},ines:{template:6,color:'#bc81ed'}
 });
 
@@ -40,7 +41,8 @@ export function createAvatarModels({onLoaded=()=>{},visualHeight=.9}={}) {
   const record={bot,parent:parentGroup,modelId:AVATAR_MAP[bot.id],ready:false};records.set(parentGroup,record);stats.pending++;
   // Metadata on visual group complements, never replaces, host-root metadata.
   parentGroup.userData.bot=bot;parentGroup.userData.botId=bot.id;
-  install(record,createPlushModel({...PLUSH_ROSTER[record.modelId],modelId:record.modelId}));
+  const createModel=record.modelId==='ted'?createTedReconstructed:createPlushModel;
+  install(record,createModel({...PLUSH_ROSTER[record.modelId],modelId:record.modelId}));
   return Promise.resolve(parentGroup);
  }
  function setActivity(id,state=null) {

@@ -25,9 +25,32 @@ const entries=[
  ['rulo','Rulo','Productor / director de podcast',2,'#51bce5']
 ];
 export const bots=entries.map(([id,name,role,floor,color],index)=>({id,name,role,floor,color,shape:index%4}));
-export function disconnectedSnapshot(){return {mode:'disconnected',source:null,lastSignal:null,bots:bots.map(b=>({...b,status:'unknown',task:null,lastSignal:null}))};}
+export function disconnectedSnapshot(){return {mode:'disconnected',source:null,lastSignal:null,bots:bots.map(b=>({...b,status:'unknown',task:null,previousTask:null,activity:null,lastSignal:null}))};}
+// Illustrative local records, never a claim that these tasks happened.
+const demoTasks={
+ ted:['Ordenar prioridades de prueba','Preparar un resumen ficticio'],
+ ceo:['Comparar ideas de ingresos de ejemplo','Clasificar una propuesta ficticia'],
+ luna:['Preparar una reflexión de ejemplo','Ordenar una lectura ficticia'],
+ emiliano:['Organizar una rutina de ejemplo','Revisar un esquema ficticio'],
+ julian:['Preparar una explicación jurídica ficticia','Ordenar apuntes de ejemplo'],
+ ines:['Revisar un presupuesto ficticio','Clasificar recibos de ejemplo'],
+ libro:['Escribir una escena de ejemplo','Revisar un párrafo ficticio'],
+ 'tr-editor':['Revisar un artículo de ejemplo','Comprobar una referencia ficticia'],
+ mateo:['Organizar una edición de ejemplo','Preparar una pauta ficticia'],
+ 'tr-cm':['Diseñar una publicación de ejemplo','Elegir una imagen ficticia'],
+ vale:['Preparar una idea para redes de ejemplo','Revisar un texto ficticio'],
+ director:['Preparar un guion audiovisual de ejemplo','Ordenar una secuencia ficticia'],
+ apps:['Revisar una maqueta de app ficticia','Probar un botón de ejemplo'],
+ luca:['Comprobar un recurso de demostración','Revisar una configuración ficticia'],
+ tadeo:['Organizar una página de ejemplo','Revisar un diseño web ficticio'],
+ rulo:['Preparar una escaleta de podcast ficticia','Ordenar un episodio de ejemplo']
+};
 export function demoSnapshot(preset='mixed'){
- const demoBots=bots.map((b,i)=>({...b,status:preset==='working'?'working':preset==='idle'?'idle':['working','review','idle'][i%3],task:'Ejemplo visual ficticio',lastSignal:null}));
+ const demoBots=bots.map((b,i)=>{
+  const status=preset==='working'?'working':preset==='idle'?'idle':['working','review','idle'][i%3];
+  const [current,previous]=demoTasks[b.id];
+  return {...b,status,task:status==='idle'?null:`Ejemplo: ${current}`,previousTask:`Ejemplo: ${previous}`,activity:status==='working'?'Trabajo simulado en el puesto':status==='review'?'Espera de revisión simulada':'Paseo y descanso simulados',lastSignal:null};
+ });
  const definitions=[
   ['example-1','Preparar un borrador de ejemplo','pending','ted'],
   ['example-2','Revisar una maqueta ficticia','in_progress','apps'],

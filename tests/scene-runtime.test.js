@@ -105,6 +105,7 @@ for(const [width,height]of [[1000,600],[390,600]])test(`real scene ${width}×${h
   const ted=hosts.find(h=>h.userData.bot.id==='ted'),beforeFloor=floorClicks.length;
   clickPoint(ted.children.find(o=>o.isSprite).getWorldPosition(new THREE.Vector3()));
   assert.equal(botClicks.at(-1),'ted');assert.equal(floorClicks.length,beforeFloor,'avatar has priority over floor');
+  const touchPoint=ted.children.find(o=>o.isSprite).getWorldPosition(new THREE.Vector3()).project(renderedCamera);const touch={clientX:(touchPoint.x+1)*width/2,clientY:(1-touchPoint.y)*height/2+7,pointerType:'touch'};const beforeTouch=botClicks.length;listeners.pointerdown(touch);listeners.pointerup(touch);assert.equal(botClicks.length,beforeTouch+1,'touch near the avatar opens its card');assert.equal(botClicks.at(-1),'ted');
   const before= floorClicks.length,point=ted.parent.localToWorld(new THREE.Vector3(0,.07,9)).project(renderedCamera),e={clientX:(point.x+1)*width/2,clientY:(1-point.y)*height/2};
   listeners.pointerdown(e);listeners.pointerup({...e,clientX:e.clientX+20});assert.equal(floorClicks.length,before,'drag must not navigate');
   listeners.pointerup(e);assert.equal(floorClicks.length,before,'old pointerdown cannot be reused');
