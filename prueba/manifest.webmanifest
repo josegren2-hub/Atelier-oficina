@@ -1,0 +1,24 @@
+{
+  "id": "/Atelier-oficina/prueba/",
+  "name": "San Junipero Corp · PRUEBA",
+  "short_name": "SJ Prueba",
+  "description": "Oficina digital de los bots en vivo · San Junipero Corp",
+  "lang": "es-MX",
+  "start_url": "/Atelier-oficina/prueba/",
+  "scope": "/Atelier-oficina/prueba/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#111817",
+  "theme_color": "#111817",
+  "icons": [
+    {"src": "/Atelier-oficina/prueba/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/Atelier-oficina/prueba/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}
+  ],
+  "shortcuts": [
+    {"name": "Te esperan", "short_name": "Te esperan", "url": "/Atelier-oficina/prueba/?abrir=esperan", "icons": [{"src": "/Atelier-oficina/prueba/icon-192.png", "sizes": "192x192"}]},
+    {"name": "Resumen del día", "short_name": "Resumen", "url": "/Atelier-oficina/prueba/?abrir=resumen", "icons": [{"src": "/Atelier-oficina/prueba/icon-192.png", "sizes": "192x192"}]},
+    {"name": "Centro de mando", "short_name": "Mando", "url": "/Atelier-oficina/prueba/?abrir=mando", "icons": [{"src": "/Atelier-oficina/prueba/icon-192.png", "sizes": "192x192"}]},
+    {"name": "Solo lista", "short_name": "Lista", "url": "/Atelier-oficina/prueba/?abrir=lista", "icons": [{"src": "/Atelier-oficina/prueba/icon-192.png", "sizes": "192x192"}]},
+    {"name": "Avisos", "short_name": "Avisos", "url": "/Atelier-oficina/prueba/?abrir=avisos", "icons": [{"src": "/Atelier-oficina/prueba/icon-192.png", "sizes": "192x192"}]}
+  ]
+}

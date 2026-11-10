@@ -1,0 +1,489 @@
+{
+  "package": "oficina-companeros-suaves",
+  "version": "1.0.0",
+  "date": "2026-11-04",
+  "characters": 16,
+  "newGlbCharacters": 15,
+  "threeRevisionTested": "169",
+  "upAxis": "+Y",
+  "frontAxis": "+Z",
+  "nominalHeight": 0.6,
+  "groundY": 0,
+  "unifiedModule": "src/equipo16.js",
+  "containsPrivateData": false,
+  "publicationStatus": "not integrated, not published",
+  "qa": "QA.md",
+  "renderCaveat": "Blender renders of exported Three.js geometry; WebGL verification blocked",
+  "models": [
+    {
+      "id": "luna",
+      "nombre": "Luna",
+      "forma": "luna",
+      "color": "#B9C5F4",
+      "acento": "#F9E9AA",
+      "accesorio": "estrella",
+      "descripcion": "Luna de mejillas anchas y punta suave",
+      "proceduralModule": "src/avatares.js",
+      "glb": "modelos/luna.glb",
+      "sha256": "214a383d77a218d1b5ed46d0a9031d76b9aebac48fc0a642a1f7f4b666ac8ed5",
+      "bytes": 565480,
+      "nominalDimensions": {
+        "x": 0.5173425110262402,
+        "y": 0.6000000000000001,
+        "z": 0.24855893255953765
+      },
+      "meshes": 17,
+      "triangles": 12432,
+      "animations": [
+        "idle",
+        "walk",
+        "wave",
+        "work",
+        "celebrate",
+        "rest"
+      ],
+      "animationType": "hierarchical node transforms, no skin/bones",
+      "clipDurationSeconds": 2
+    },
+    {
+      "id": "valery",
+      "nombre": "Valery",
+      "forma": "corazon",
+      "color": "#F3A1AE",
+      "acento": "#FFF0DC",
+      "accesorio": "credencial",
+      "descripcion": "Corazón rosa con credencial",
+      "proceduralModule": "src/avatares.js",
+      "glb": "modelos/valery.glb",
+      "sha256": "80da95dc47965def954fba01a8efda153d9e4cecd4b71814345bd0f1d9a17844",
+      "bytes": 387052,
+      "nominalDimensions": {
+        "x": 0.6939702489773852,
+        "y": 0.6000000000000001,
+        "z": 0.4251258262320161
+      },
+      "meshes": 19,
+      "triangles": 14360,
+      "animations": [
+        "idle",
+        "walk",
+        "wave",
+        "work",
+        "celebrate",
+        "rest"
+      ],
+      "animationType": "hierarchical node transforms, no skin/bones",
+      "clipDurationSeconds": 2
+    },
+    {
+      "id": "emiliano",
+      "nombre": "Emiliano",
+      "forma": "cuadrado",
+      "color": "#B5D09B",
+      "acento": "#5C626F",
+      "accesorio": "auriculares",
+      "descripcion": "Cuadrado verde salvia con auriculares",
+      "proceduralModule": "src/avatares.js",
+      "glb": "modelos/emiliano.glb",
+      "sha256": "9316db5e4f7d395e71d25c34b9fc86fd27a1e72f36a952c2cfe2e043d202a0b3",
+      "bytes": 398028,
+      "nominalDimensions": {
+        "x": 0.5258948223078896,
+        "y": 0.6,
+        "z": 0.29040120643889455
+      },
+      "meshes": 21,
+      "triangles": 15280,
+      "animations": [
+        "idle",
+        "walk",
+        "wave",
+        "work",
+        "celebrate",
+        "rest"
+      ],
+      "animationType": "hierarchical node transforms, no skin/bones",
+      "clipDurationSeconds": 2
+    },
+    {
+      "id": "julian",
+      "nombre": "Julián",
+      "forma": "gota",
+      "color": "#F9C776",
+      "acento": "#A1819C",
+      "accesorio": "bolsillo",
+      "descripcion": "Gota ámbar con bolsillo y lápices",
+      "proceduralModule": "src/avatares.js",
+      "glb": "modelos/julian.glb",
+      "sha256": "50384a0daaeefabf972b08952740dbf8aba07ab068f7e6fdb8e4ee3d97245e62",
+      "bytes": 376388,
+      "nominalDimensions": {
+        "x": 0.5531166392073645,
+        "y": 0.6000000000000001,
+        "z": 0.30758507761024856
+      },
+      "meshes": 20,
+      "triangles": 15000,
+      "animations": [
+        "idle",
+        "walk",
+        "wave",
+        "work",
+        "celebrate",
+        "rest"
+      ],
+      "animationType": "hierarchical node transforms, no skin/bones",
+      "clipDurationSeconds": 2
+    },
+    {
+      "id": "ines",
+      "nombre": "Inés",
+      "forma": "flor",
+      "color": "#C8A5DF",
+      "acento": "#FFE9BA",
+      "accesorio": "libro",
+      "descripcion": "Flor lila de cinco pétalos con libro",
+      "proceduralModule": "src/avatares.js",
+      "glb": "modelos/ines.glb",
+      "sha256": "607f67101c2fd676c9b010f28b5e9f291446527dd7a2bc7938b5dbbac16f8569",
+      "bytes": 383328,
+      "nominalDimensions": {
+        "x": 0.5311866242551156,
+        "y": 0.6000000000000001,
+        "z": 0.33575917354671797
+      },
+      "meshes": 20,
+      "triangles": 12968,
+      "animations": [
+        "idle",
+        "walk",
+        "wave",
+        "work",
+        "celebrate",
+        "rest"
+      ],
+      "animationType": "hierarchical node transforms, no skin/bones",
+      "clipDurationSeconds": 2
+    },
+    {
+      "id": "tommy",
+      "nombre": "Tommy",
+      "forma": "capsula",
+      "color": "#9AD7CC",
+      "acento": "#FFF0DB",
+      "accesorio": "pajarita",
+      "descripcion": "Cápsula menta con pajarita",
+      "proceduralModule": "src/avatares.js",
+      "glb": "modelos/tommy.glb",
+      "sha256": "04affe3156612e86df8b70317fc2884c30c6130b5233742bbe331cb8d5b58fb9",
+      "bytes": 376368,
+      "nominalDimensions": {
+        "x": 0.45567023484968167,
+        "y": 0.6000000000000001,
+        "z": 0.30618379011276076
+      },
+      "meshes": 19,
+      "triangles": 14480,
+      "animations": [
+        "idle",
+        "walk",
+        "wave",
+        "work",
+        "celebrate",
+        "rest"
+      ],
+      "animationType": "hierarchical node transforms, no skin/bones",
+      "clipDurationSeconds": 2
+    },
+    {
+      "id": "charly",
+      "nombre": "Charly",
+      "forma": "nube",
+      "color": "#BEDCEB",
+      "acento": "#E7B1CB",
+      "accesorio": "auriculares",
+      "descripcion": "Nube celeste de tres lóbulos",
+      "proceduralModule": "src/avatares.js",
+      "glb": "modelos/charly.glb",
+      "sha256": "fcd478ca83d5288a688dcdbfa2491353706f95215fc8c2872219016fe1fed74e",
+      "bytes": 398048,
+      "nominalDimensions": {
+        "x": 0.63486623787698,
+        "y": 0.6,
+        "z": 0.3357356954210118
+      },
+      "meshes": 21,
+      "triangles": 15280,
+      "animations": [
+        "idle",
+        "walk",
+        "wave",
+        "work",
+        "celebrate",
+        "rest"
+      ],
+      "animationType": "hierarchical node transforms, no skin/bones",
+      "clipDurationSeconds": 2
+    },
+    {
+      "id": "rodrigo",
+      "nombre": "Rodrigo",
+      "forma": "hexagono",
+      "color": "#DBB397",
+      "acento": "#FFF0D9",
+      "accesorio": "gafas",
+      "descripcion": "Hexágono caramelo con gafas redondas",
+      "proceduralModule": "src/avatares.js",
+      "glb": "modelos/rodrigo.glb",
+      "sha256": "b793d6d26bb89a5b8fe8fe6473c1486188b9aca90eb633e079d271817501f8d8",
+      "bytes": 410004,
+      "nominalDimensions": {
+        "x": 0.6533397297294384,
+        "y": 0.6000000000000001,
+        "z": 0.35756766368650994
+      },
+      "meshes": 19,
+      "triangles": 14184,
+      "animations": [
+        "idle",
+        "walk",
+        "wave",
+        "work",
+        "celebrate",
+        "rest"
+      ],
+      "animationType": "hierarchical node transforms, no skin/bones",
+      "clipDurationSeconds": 2
+    },
+    {
+      "id": "joss",
+      "nombre": "Joss",
+      "forma": "estrella",
+      "color": "#F4DC8C",
+      "acento": "#C093C4",
+      "accesorio": "credencial",
+      "descripcion": "Estrella vainilla de cinco puntas redondeadas",
+      "proceduralModule": "src/avatares.js",
+      "glb": "modelos/joss.glb",
+      "sha256": "4f78ecc78e29891849d0f0382979764c47dd704a15e46a385fc455892faaa2a6",
+      "bytes": 387052,
+      "nominalDimensions": {
+        "x": 0.5008604819035837,
+        "y": 0.6000000000000001,
+        "z": 0.32317069518337094
+      },
+      "meshes": 19,
+      "triangles": 14360,
+      "animations": [
+        "idle",
+        "walk",
+        "wave",
+        "work",
+        "celebrate",
+        "rest"
+      ],
+      "animationType": "hierarchical node transforms, no skin/bones",
+      "clipDurationSeconds": 2
+    },
+    {
+      "id": "luca",
+      "nombre": "Luca",
+      "forma": "circulo",
+      "color": "#9ABCE7",
+      "acento": "#5E657B",
+      "accesorio": "gafas",
+      "descripcion": "Esfera azul con gafas redondas",
+      "proceduralModule": "src/avatares.js",
+      "glb": "modelos/luca.glb",
+      "sha256": "bf46f5e36378ee7fec797256c1132ceef51fa3ac5c96136a26e8b21f7dd7a71e",
+      "bytes": 410056,
+      "nominalDimensions": {
+        "x": 0.6236025560774009,
+        "y": 0.6,
+        "z": 0.34570563817055233
+      },
+      "meshes": 19,
+      "triangles": 14184,
+      "animations": [
+        "idle",
+        "walk",
+        "wave",
+        "work",
+        "celebrate",
+        "rest"
+      ],
+      "animationType": "hierarchical node transforms, no skin/bones",
+      "clipDurationSeconds": 2
+    },
+    {
+      "id": "rulo",
+      "nombre": "Rulo",
+      "forma": "frijol",
+      "color": "#D8B1D2",
+      "acento": "#FFEAC4",
+      "accesorio": "rizo",
+      "descripcion": "Frijol malva con rizo de caramelo",
+      "proceduralModule": "src/avatares.js",
+      "glb": "modelos/rulo.glb",
+      "sha256": "a5853390899109a6fc97fe7c102efc03202c7c1e614322798eb6048eb4ec77c4",
+      "bytes": 440548,
+      "nominalDimensions": {
+        "x": 0.48349169583159074,
+        "y": 0.6,
+        "z": 0.3078600794726407
+      },
+      "meshes": 17,
+      "triangles": 15560,
+      "animations": [
+        "idle",
+        "walk",
+        "wave",
+        "work",
+        "celebrate",
+        "rest"
+      ],
+      "animationType": "hierarchical node transforms, no skin/bones",
+      "clipDurationSeconds": 2
+    },
+    {
+      "id": "mateo",
+      "nombre": "Mateo",
+      "forma": "pera",
+      "color": "#C8D996",
+      "acento": "#629A7F",
+      "accesorio": "hoja",
+      "descripcion": "Pera pistacho con hoja suave",
+      "proceduralModule": "src/avatares.js",
+      "glb": "modelos/mateo.glb",
+      "sha256": "2725a3bce98edbc04720c3495e43c5db176f694db9642ad640b2ea3c1845821d",
+      "bytes": 383156,
+      "nominalDimensions": {
+        "x": 0.4946101839356133,
+        "y": 0.6,
+        "z": 0.27378943560711383
+      },
+      "meshes": 18,
+      "triangles": 13680,
+      "animations": [
+        "idle",
+        "walk",
+        "wave",
+        "work",
+        "celebrate",
+        "rest"
+      ],
+      "animationType": "hierarchical node transforms, no skin/bones",
+      "clipDurationSeconds": 2
+    },
+    {
+      "id": "tadeo",
+      "nombre": "Tadeo",
+      "forma": "octagono",
+      "color": "#A8B0D8",
+      "acento": "#F5DDA7",
+      "accesorio": "bolsillo",
+      "descripcion": "Octágono índigo pastel con lápices",
+      "proceduralModule": "src/avatares.js",
+      "glb": "modelos/tadeo.glb",
+      "sha256": "e621f4d2cdb1740876309dc28fca1c77637678c5ea69480ede631de3a34f6f08",
+      "bytes": 376328,
+      "nominalDimensions": {
+        "x": 0.5875020941034625,
+        "y": 0.6000000000000001,
+        "z": 0.32912198416722344
+      },
+      "meshes": 20,
+      "triangles": 15000,
+      "animations": [
+        "idle",
+        "walk",
+        "wave",
+        "work",
+        "celebrate",
+        "rest"
+      ],
+      "animationType": "hierarchical node transforms, no skin/bones",
+      "clipDurationSeconds": 2
+    },
+    {
+      "id": "naim",
+      "nombre": "Naim",
+      "forma": "triangulo",
+      "color": "#F2B88F",
+      "acento": "#9ACFCB",
+      "accesorio": "pajarita",
+      "descripcion": "Triángulo melocotón redondeado",
+      "proceduralModule": "src/avatares.js",
+      "glb": "modelos/naim.glb",
+      "sha256": "ce5fd1b36f385da65756cb43a2592ed6e1594eca70a272c823ec746cde89a40c",
+      "bytes": 376380,
+      "nominalDimensions": {
+        "x": 0.5285134754798737,
+        "y": 0.6000000000000001,
+        "z": 0.3176032496019412
+      },
+      "meshes": 19,
+      "triangles": 14480,
+      "animations": [
+        "idle",
+        "walk",
+        "wave",
+        "work",
+        "celebrate",
+        "rest"
+      ],
+      "animationType": "hierarchical node transforms, no skin/bones",
+      "clipDurationSeconds": 2
+    },
+    {
+      "id": "dany",
+      "nombre": "Dany",
+      "forma": "rombo",
+      "color": "#B7DFD6",
+      "acento": "#DF9BB7",
+      "accesorio": "libro",
+      "descripcion": "Rombo aguamarina de bordes suaves",
+      "proceduralModule": "src/avatares.js",
+      "glb": "modelos/dany.glb",
+      "sha256": "bacf028860a3a640dff623326c431572d549b7ce8e707d20c47943cebdbc6c44",
+      "bytes": 383356,
+      "nominalDimensions": {
+        "x": 0.5588440040001507,
+        "y": 0.6,
+        "z": 0.33628808617671424
+      },
+      "meshes": 20,
+      "triangles": 12968,
+      "animations": [
+        "idle",
+        "walk",
+        "wave",
+        "work",
+        "celebrate",
+        "rest"
+      ],
+      "animationType": "hierarchical node transforms, no skin/bones",
+      "clipDurationSeconds": 2
+    },
+    {
+      "id": "ted",
+      "nombre": "Ted",
+      "forma": "cuadrado-redondeado",
+      "color": "#91AD69",
+      "proceduralModule": "ted/ted-tierno.js",
+      "sha256": "805281341fbafbb001180a97788c34c5fbf86c50fd8b212a341050594fb9bc32",
+      "glb": null,
+      "animations": [
+        "idle",
+        "walk",
+        "wave",
+        "work",
+        "celebrate",
+        "rest"
+      ],
+      "animationType": "procedural JS through src/equipo16.js",
+      "nominalHeightViaUnifiedAPI": 0.6,
+      "seatFit": "P5-specific helper; not automatically applied by unified API"
+    }
+  ]
+}
