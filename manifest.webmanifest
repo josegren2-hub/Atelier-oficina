@@ -1,24 +1,24 @@
 {
   "id": "/Atelier-oficina/",
-  "name": "Atelier · Oficina digital",
-  "short_name": "Atelier",
-  "description": "Oficina digital de los bots en vivo",
+  "name": "San Junipero Corp",
+  "short_name": "San Junipero",
+  "description": "Oficina digital de los bots en vivo · San Junipero Corp",
   "lang": "es-MX",
-  "start_url": "./",
-  "scope": "./",
+  "start_url": "/Atelier-oficina/",
+  "scope": "/Atelier-oficina/",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#111817",
   "theme_color": "#111817",
   "icons": [
-    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
-    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}
+    {"src": "/Atelier-oficina/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/Atelier-oficina/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}
   ],
   "shortcuts": [
-    {"name": "Te esperan", "short_name": "Te esperan", "url": "./?abrir=esperan", "icons": [{"src": "icon-192.png", "sizes": "192x192"}]},
-    {"name": "Resumen del día", "short_name": "Resumen", "url": "./?abrir=resumen", "icons": [{"src": "icon-192.png", "sizes": "192x192"}]},
-    {"name": "Centro de mando", "short_name": "Mando", "url": "./?abrir=mando", "icons": [{"src": "icon-192.png", "sizes": "192x192"}]},
-    {"name": "Solo lista", "short_name": "Lista", "url": "./?abrir=lista", "icons": [{"src": "icon-192.png", "sizes": "192x192"}]},
-    {"name": "Avisos", "short_name": "Avisos", "url": "./?abrir=avisos", "icons": [{"src": "icon-192.png", "sizes": "192x192"}]}
+    {"name": "Te esperan", "short_name": "Te esperan", "url": "/Atelier-oficina/?abrir=esperan", "icons": [{"src": "/Atelier-oficina/icon-192.png", "sizes": "192x192"}]},
+    {"name": "Resumen del día", "short_name": "Resumen", "url": "/Atelier-oficina/?abrir=resumen", "icons": [{"src": "/Atelier-oficina/icon-192.png", "sizes": "192x192"}]},
+    {"name": "Centro de mando", "short_name": "Mando", "url": "/Atelier-oficina/?abrir=mando", "icons": [{"src": "/Atelier-oficina/icon-192.png", "sizes": "192x192"}]},
+    {"name": "Solo lista", "short_name": "Lista", "url": "/Atelier-oficina/?abrir=lista", "icons": [{"src": "/Atelier-oficina/icon-192.png", "sizes": "192x192"}]},
+    {"name": "Avisos", "short_name": "Avisos", "url": "/Atelier-oficina/?abrir=avisos", "icons": [{"src": "/Atelier-oficina/icon-192.png", "sizes": "192x192"}]}
   ]
 }
