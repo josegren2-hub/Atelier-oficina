@@ -1,5 +1,5 @@
 // Atelier SW: network-first for app shell; NEVER cache estado.json / mando.enc / tareas.enc / sw.js.
-const CACHE = 'atelier-prueba-v0.22.1s9d';
+const CACHE = 'atelier-prueba-v0.22.1s9e';
 self.addEventListener('install', (e) => { self.skipWaiting(); });
 self.addEventListener('message', (e) => {
   if (e.data === 'SKIP_WAITING' || e.data?.type === 'SKIP_WAITING') self.skipWaiting();
