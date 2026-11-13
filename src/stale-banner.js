@@ -50,7 +50,7 @@ export function mountStaleBanner(anchor = document.body) {
     refresh(snapshot) {
       const msgs = staleMessages(snapshot);
       el.hidden = !msgs.length;
-      el.textContent = msgs.length ? `⚠️ ${msgs.join(' · ')}` : '';
+      el.textContent = msgs.length ? `${msgs.join(' · ')}` : '';
     },
     element: el,
   };

@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {bots,floors,disconnectedSnapshot,demoSnapshot} from '../src/data.js';import {validateSnapshot,readSnapshot} from '../src/adapter.js';
-test('16 identidades únicas y cinco plantas según archivo',()=>{assert.equal(bots.length,16);assert.equal(new Set(bots.map(b=>b.id)).size,16);assert.deepEqual(floors.map(f=>bots.filter(b=>b.floor===f.id).length),[3,2,6,4,1]);});
+test('16 identidades únicas y seis plantas según la asignación aprobada',()=>{assert.equal(bots.length,16);assert.equal(new Set(bots.map(b=>b.id)).size,16);assert.deepEqual(floors.map(f=>bots.filter(b=>b.floor===f.id).length),[2,2,4,3,4,1]);});
 test('inicio sin señal, tareas ni fuente inventada',()=>{const s=disconnectedSnapshot();assert.equal(s.source,null);assert.equal(s.lastSignal,null);assert.ok(s.bots.every(b=>b.status==='unknown'&&b.task===null&&b.lastSignal===null));});
 test('demo explícita no produce timestamps reales',()=>{const s=demoSnapshot();assert.equal(s.mode,'demo');assert.equal(s.source,'Ejemplos ficticios locales');assert.ok(s.bots.every(b=>b.lastSignal===null));assert.equal(disconnectedSnapshot().bots[0].status,'unknown');});
 const now=Date.now();const payload=()=>({schemaVersion:1,source:'Proveedor de prueba',bots:[{id:bots[0].id,status:'working',task:'Prueba',lastSignal:new Date(now-1000).toISOString()}]});const ids=bots.map(b=>b.id);
@@ -10,9 +10,9 @@ test('rechaza ID desconocido, duplicado y futuro',()=>{for(const kind of ['unkno
 test('lectura HTTP fallida no se transforma en actividad',async()=>{await assert.rejects(readSnapshot({knownIds:ids,fetcher:async()=>({ok:false,status:503})}));});
 test('IDs canónicos, sin sustituciones por nombres o índices',()=>{assert.deepEqual([...bots.map(b=>b.id)].sort(),['ted','luna','vale','emiliano','julian','ines','ceo','apps','libro','rulo','director','luca','mateo','tadeo','tr-editor','tr-cm'].sort());});
 import {readFileSync} from 'node:fs';
-test('interfaz neutral y cinco niveles confirmados',()=>{const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');assert.ok(!/\bRob\b/i.test(html),'nunca el nombre de Rob');assert.ok(!/rob-referencia|fotos-realistas|foto.?de.?rob/i.test(html),'nunca foto de Rob');assert.match(html,/id="detail-photo"/);assert.equal(floors.length,5);assert.ok(bots.every(b=>b.floor>=0&&b.floor<5));});
+test('interfaz neutral y seis niveles confirmados',()=>{const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');assert.ok(!/\bRob\b/i.test(html),'nunca el nombre de Rob');assert.ok(!/rob-referencia|fotos-realistas|foto.?de.?rob/i.test(html),'nunca foto de Rob');assert.match(html,/id="detail-photo"/);assert.equal(floors.length,6);assert.ok(bots.every(b=>b.floor>=0&&b.floor<6));});
 
-test('asignación explícita de equipo-bots-rob.docx',()=>{
- const expected=[['luna','emiliano','vale'],['julian','ines'],['libro','apps','ceo','luca','rulo','director'],['mateo','tr-editor','tadeo','tr-cm'],['ted']];
+test('asignación de bots a las seis plantas (Medios y Producción)',()=>{
+ const expected=[['luna','emiliano'],['julian','ines'],['libro','apps','ceo','luca'],['director','rulo','vale'],['mateo','tr-editor','tadeo','tr-cm'],['ted']];
  expected.forEach((ids,n)=>assert.deepEqual(bots.filter(b=>b.floor===n).map(b=>b.id).sort(),ids.sort()));
 });

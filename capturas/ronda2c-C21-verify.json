@@ -1,0 +1,865 @@
+{
+  "665x1024": {
+    "stacked_t0": {
+      "lejos": false,
+      "visible": 16,
+      "leible": 16,
+      "chico": 0,
+      "pinCount": 16,
+      "names": [
+        {
+          "name": "Luna",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 338,
+          "y": 598
+        },
+        {
+          "name": "Emiliano",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 283,
+          "y": 556
+        },
+        {
+          "name": "Valery",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 268,
+          "y": 546
+        },
+        {
+          "name": "Julián",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 408,
+          "y": 541
+        },
+        {
+          "name": "Inés",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 308,
+          "y": 565
+        },
+        {
+          "name": "Tommy",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 263,
+          "y": 445
+        },
+        {
+          "name": "Rodrigo",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 305,
+          "y": 462
+        },
+        {
+          "name": "Joss",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 406,
+          "y": 463
+        },
+        {
+          "name": "Charly",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 238,
+          "y": 497
+        },
+        {
+          "name": "Luca",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 447,
+          "y": 473
+        },
+        {
+          "name": "Rulo",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 426,
+          "y": 490
+        },
+        {
+          "name": "Naim",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 198,
+          "y": 416
+        },
+        {
+          "name": "Mateo",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 278,
+          "y": 402
+        },
+        {
+          "name": "Dany",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 307,
+          "y": 411
+        },
+        {
+          "name": "Tadeo",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 301,
+          "y": 453
+        },
+        {
+          "name": "Ted",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 274,
+          "y": 353
+        }
+      ]
+    },
+    "stacked_t2": {
+      "lejos": false,
+      "visible": 5,
+      "leible": 16,
+      "names": [
+        {
+          "name": "Luna",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 327,
+          "y": 824
+        },
+        {
+          "name": "Emiliano",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 204,
+          "y": 792
+        },
+        {
+          "name": "Valery",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 171,
+          "y": 792
+        },
+        {
+          "name": "Julián",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 369,
+          "y": 459
+        },
+        {
+          "name": "Inés",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 341,
+          "y": 525
+        }
+      ]
+    },
+    "spread": {
+      "lejos": false,
+      "visible": 9,
+      "leible": 16,
+      "chico": 0,
+      "names": [
+        {
+          "name": "Luna",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 327,
+          "y": 824
+        },
+        {
+          "name": "Emiliano",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 204,
+          "y": 788
+        },
+        {
+          "name": "Valery",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 172,
+          "y": 788
+        },
+        {
+          "name": "Julián",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 362,
+          "y": 459
+        },
+        {
+          "name": "Inés",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 341,
+          "y": 525
+        },
+        {
+          "name": "Tommy",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 202,
+          "y": 340
+        },
+        {
+          "name": "Rodrigo",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 254,
+          "y": 340
+        },
+        {
+          "name": "Charly",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 268,
+          "y": 383
+        },
+        {
+          "name": "Rulo",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 369,
+          "y": 329
+        }
+      ]
+    },
+    "isolated": {
+      "lejos": false,
+      "visible": 3,
+      "leible": 13,
+      "chico": 3
+    }
+  },
+  "820x1180": {
+    "stacked_t0": {
+      "lejos": false,
+      "visible": 5,
+      "leible": 16,
+      "chico": 0,
+      "pinCount": 16,
+      "names": [
+        {
+          "name": "Luna",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 292,
+          "y": 866
+        },
+        {
+          "name": "Emiliano",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 233,
+          "y": 670
+        },
+        {
+          "name": "Valery",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 215,
+          "y": 663
+        },
+        {
+          "name": "Julián",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 357,
+          "y": 586
+        },
+        {
+          "name": "Inés",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 304,
+          "y": 582
+        }
+      ]
+    },
+    "stacked_t2": {
+      "lejos": false,
+      "visible": 5,
+      "leible": 16,
+      "names": [
+        {
+          "name": "Luna",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 292,
+          "y": 867
+        },
+        {
+          "name": "Emiliano",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 172,
+          "y": 838
+        },
+        {
+          "name": "Valery",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 141,
+          "y": 838
+        },
+        {
+          "name": "Julián",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 331,
+          "y": 520
+        },
+        {
+          "name": "Inés",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 304,
+          "y": 582
+        }
+      ]
+    },
+    "spread": {
+      "lejos": false,
+      "visible": 15,
+      "leible": 16,
+      "chico": 0,
+      "names": [
+        {
+          "name": "Luna",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 144,
+          "y": 582
+        },
+        {
+          "name": "Emiliano",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 61,
+          "y": 550
+        },
+        {
+          "name": "Valery",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 42,
+          "y": 550
+        },
+        {
+          "name": "Julián",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 445,
+          "y": 538
+        },
+        {
+          "name": "Inés",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 435,
+          "y": 611
+        },
+        {
+          "name": "Tommy",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 37,
+          "y": 715
+        },
+        {
+          "name": "Rodrigo",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 83,
+          "y": 715
+        },
+        {
+          "name": "Joss",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 143,
+          "y": 684
+        },
+        {
+          "name": "Charly",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 96,
+          "y": 786
+        },
+        {
+          "name": "Luca",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 165,
+          "y": 678
+        },
+        {
+          "name": "Rulo",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 187,
+          "y": 698
+        },
+        {
+          "name": "Naim",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 327,
+          "y": 773
+        },
+        {
+          "name": "Mateo",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 346,
+          "y": 729
+        },
+        {
+          "name": "Dany",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 376,
+          "y": 718
+        },
+        {
+          "name": "Tadeo",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 429,
+          "y": 785
+        }
+      ]
+    },
+    "isolated": {
+      "lejos": false,
+      "visible": 3,
+      "leible": 13,
+      "chico": 3
+    }
+  },
+  "1180x820": {
+    "stacked_t0": {
+      "lejos": false,
+      "visible": 5,
+      "leible": 16,
+      "chico": 0,
+      "pinCount": 16,
+      "names": [
+        {
+          "name": "Luna",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 468,
+          "y": 606
+        },
+        {
+          "name": "Emiliano",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 374,
+          "y": 586
+        },
+        {
+          "name": "Valery",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 352,
+          "y": 586
+        },
+        {
+          "name": "Julián",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 504,
+          "y": 339
+        },
+        {
+          "name": "Inés",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 479,
+          "y": 387
+        }
+      ]
+    },
+    "stacked_t2": {
+      "lejos": false,
+      "visible": 5,
+      "leible": 16,
+      "names": [
+        {
+          "name": "Luna",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 468,
+          "y": 606
+        },
+        {
+          "name": "Emiliano",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 375,
+          "y": 581
+        },
+        {
+          "name": "Valery",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 353,
+          "y": 581
+        },
+        {
+          "name": "Julián",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 495,
+          "y": 339
+        },
+        {
+          "name": "Inés",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 479,
+          "y": 387
+        }
+      ]
+    },
+    "spread": {
+      "lejos": false,
+      "visible": 15,
+      "leible": 16,
+      "chico": 0,
+      "names": [
+        {
+          "name": "Luna",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 315,
+          "y": 379
+        },
+        {
+          "name": "Emiliano",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 211,
+          "y": 334
+        },
+        {
+          "name": "Valery",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 185,
+          "y": 337
+        },
+        {
+          "name": "Julián",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 644,
+          "y": 301
+        },
+        {
+          "name": "Inés",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 631,
+          "y": 394
+        },
+        {
+          "name": "Tommy",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 179,
+          "y": 470
+        },
+        {
+          "name": "Rodrigo",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 239,
+          "y": 467
+        },
+        {
+          "name": "Joss",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 313,
+          "y": 432
+        },
+        {
+          "name": "Charly",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 255,
+          "y": 558
+        },
+        {
+          "name": "Luca",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 341,
+          "y": 424
+        },
+        {
+          "name": "Rulo",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 369,
+          "y": 445
+        },
+        {
+          "name": "Naim",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 493,
+          "y": 523
+        },
+        {
+          "name": "Mateo",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 518,
+          "y": 468
+        },
+        {
+          "name": "Dany",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 555,
+          "y": 449
+        },
+        {
+          "name": "Tadeo",
+          "emFont": "12px",
+          "imgW": "30px",
+          "x": 625,
+          "y": 539
+        }
+      ]
+    },
+    "isolated": {
+      "lejos": false,
+      "visible": 3,
+      "leible": 13,
+      "chico": 3
+    }
+  },
+  "390x844": {
+    "stacked_t0": {
+      "lejos": false,
+      "visible": 5,
+      "leible": 16,
+      "chico": 0,
+      "pinCount": 16,
+      "names": [
+        {
+          "name": "Luna",
+          "emFont": "11px",
+          "imgW": "28px",
+          "x": 185,
+          "y": 633
+        },
+        {
+          "name": "Emiliano",
+          "emFont": "11px",
+          "imgW": "28px",
+          "x": 103,
+          "y": 617
+        },
+        {
+          "name": "Valery",
+          "emFont": "11px",
+          "imgW": "28px",
+          "x": 84,
+          "y": 617
+        },
+        {
+          "name": "Julián",
+          "emFont": "11px",
+          "imgW": "28px",
+          "x": 216,
+          "y": 404
+        },
+        {
+          "name": "Inés",
+          "emFont": "11px",
+          "imgW": "28px",
+          "x": 193,
+          "y": 445
+        }
+      ]
+    },
+    "stacked_t2": {
+      "lejos": false,
+      "visible": 5,
+      "leible": 16,
+      "names": [
+        {
+          "name": "Luna",
+          "emFont": "11px",
+          "imgW": "28px",
+          "x": 185,
+          "y": 634
+        },
+        {
+          "name": "Emiliano",
+          "emFont": "11px",
+          "imgW": "28px",
+          "x": 104,
+          "y": 614
+        },
+        {
+          "name": "Valery",
+          "emFont": "11px",
+          "imgW": "28px",
+          "x": 85,
+          "y": 614
+        },
+        {
+          "name": "Julián",
+          "emFont": "11px",
+          "imgW": "28px",
+          "x": 209,
+          "y": 403
+        },
+        {
+          "name": "Inés",
+          "emFont": "11px",
+          "imgW": "28px",
+          "x": 194,
+          "y": 445
+        }
+      ]
+    },
+    "spread": {
+      "lejos": false,
+      "visible": 15,
+      "leible": 16,
+      "chico": 0,
+      "names": [
+        {
+          "name": "Luna",
+          "emFont": "11px",
+          "imgW": "28px",
+          "x": 94,
+          "y": 483
+        },
+        {
+          "name": "Emiliano",
+          "emFont": "11px",
+          "imgW": "28px",
+          "x": 36,
+          "y": 462
+        },
+        {
+          "name": "Valery",
+          "emFont": "11px",
+          "imgW": "28px",
+          "x": 26,
+          "y": 462
+        },
+        {
+          "name": "Julián",
+          "emFont": "11px",
+          "imgW": "28px",
+          "x": 279,
+          "y": 451
+        },
+        {
+          "name": "Inés",
+          "emFont": "11px",
+          "imgW": "28px",
+          "x": 274,
+          "y": 498
+        },
+        {
+          "name": "Tommy",
+          "emFont": "11px",
+          "imgW": "28px",
+          "x": 21,
+          "y": 556
+        },
+        {
+          "name": "Rodrigo",
+          "emFont": "11px",
+          "imgW": "28px",
+          "x": 51,
+          "y": 556
+        },
+        {
+          "name": "Joss",
+          "emFont": "11px",
+          "imgW": "28px",
+          "x": 93,
+          "y": 536
+        },
+        {
+          "name": "Charly",
+          "emFont": "11px",
+          "imgW": "28px",
+          "x": 61,
+          "y": 602
+        },
+        {
+          "name": "Luca",
+          "emFont": "11px",
+          "imgW": "28px",
+          "x": 107,
+          "y": 532
+        },
+        {
+          "name": "Rulo",
+          "emFont": "11px",
+          "imgW": "28px",
+          "x": 122,
+          "y": 545
+        },
+        {
+          "name": "Naim",
+          "emFont": "11px",
+          "imgW": "28px",
+          "x": 203,
+          "y": 590
+        },
+        {
+          "name": "Mateo",
+          "emFont": "11px",
+          "imgW": "28px",
+          "x": 214,
+          "y": 562
+        },
+        {
+          "name": "Dany",
+          "emFont": "11px",
+          "imgW": "28px",
+          "x": 235,
+          "y": 554
+        },
+        {
+          "name": "Tadeo",
+          "emFont": "11px",
+          "imgW": "28px",
+          "x": 269,
+          "y": 598
+        }
+      ]
+    },
+    "isolated": {
+      "lejos": false,
+      "visible": 3,
+      "leible": 13,
+      "chico": 3
+    }
+  }
+}

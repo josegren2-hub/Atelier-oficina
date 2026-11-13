@@ -1,8 +1,9 @@
-/** Department map matching Oficina-bots ≤v16.20 (floor grouping for Solo lista / resumen). */
+/** Department map matching the approved floor assignment (Medios y Producción, t359u). */
 export const DEPARTMENTS = Object.freeze({
-  'Personal': ['ted', 'luna', 'vale', 'emiliano'],
+  'Personal': ['ted', 'luna', 'emiliano'],
   'Jurídico y Finanzas': ['julian', 'ines'],
-  'Proyectos': ['ceo', 'apps', 'libro', 'rulo', 'director', 'luca'],
+  'Proyectos': ['ceo', 'apps', 'libro', 'luca'],
+  'Medios y Producción': ['director', 'rulo', 'vale'],
   'Tinta Rosa': ['mateo', 'tr-editor', 'tr-cm', 'tadeo'],
 });
 

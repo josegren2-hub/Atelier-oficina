@@ -1,11 +1,13 @@
 /** Resumen del día / semanal / racha 🔥 (datos públicos + mando cifrado local). */
+import {avatarPhotoUrl} from './avatar-photo.js';
 import {DEPARTMENTS, departmentOf} from './departments.js';
 import {filterWaiting} from './local-waiting.js';
+import {getUsoState, formatActualizado} from './uso-feed.js';
 
 export function rachaText(racha) {
-  if (!racha) return '🔥 Racha: sin datos aún';
+  if (!racha) return 'Racha: sin datos aún';
   const d = Number(racha.dias) || 0;
-  return `🔥 Racha: ${d} día${d === 1 ? '' : 's'}${racha.hoy_cero ? ' · hoy ya llegaste a cero' : ' · hoy aún no llegas a cero'}`;
+  return `Racha: ${d} día${d === 1 ? '' : 's'}${racha.hoy_cero ? ' · hoy ya llegaste a cero' : ' · hoy aún no llegas a cero'}`;
 }
 
 function esc(s) {
@@ -23,11 +25,36 @@ function hace(t) {
   return `hace ${Math.floor(h / 24)} días`;
 }
 
+
+export function horaCorta(h) {
+  const n = Number(h);
+  if (!Number.isFinite(n) || n < 0) return '';
+  const hour = Math.floor(n) % 24;
+  const h12 = hour % 12 || 12;
+  return `${h12} ${hour < 12 ? 'am' : 'pm'}`;
+}
+
+/** Plain-language daily activity from mando.horas_hoy. Sorted by messages desc. */
+export function todayMessageRows(mando, byId = {}) {
+  const rows = [];
+  for (const m of mando?.bots || []) {
+    const hh = Array.isArray(m.horas_hoy) ? m.horas_hoy : [];
+    const total = hh.reduce((a, n) => a + (Number(n) || 0), 0);
+    let last = -1;
+    for (let i = hh.length - 1; i >= 0; i--) if (Number(hh[i]) > 0) { last = i; break; }
+    const name = byId[m.id]?.name || m.nombre || m.id;
+    rows.push({id: m.id, name, total, last, lastLabel: last >= 0 ? horaCorta(last) : ''});
+  }
+  rows.sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, 'es'));
+  const max = Math.max(1, ...rows.map(r => r.total));
+  return rows.map(r => ({...r, bar: r.total / max}));
+}
+
 export function mountResumenPanel({getSnapshot, getMando, onChoose, container = document.body} = {}) {
   const dialog = document.createElement('dialog');
   dialog.id = 'resumen-dialog';
   dialog.className = 'resumen-dialog';
-  dialog.innerHTML = `<div class="lt"><b>📋 Resumen del día</b><button type="button" data-close aria-label="Cerrar">✕ Cerrar</button></div><div class="resumen-body"></div>`;
+  dialog.innerHTML = `<div class="lt"><b>Resumen del día</b><button type="button" data-close aria-label="Cerrar">✕</button></div><div class="resumen-body"></div>`;
   container.appendChild(dialog);
   const body = dialog.querySelector('.resumen-body');
   dialog.querySelector('[data-close]').addEventListener('click', () => dialog.close());
@@ -43,6 +70,30 @@ export function mountResumenPanel({getSnapshot, getMando, onChoose, container = 
     const waiting = filterWaiting(bots);
     const byId = Object.fromEntries(bots.map(b => [b.id, b]));
     let html = `<p class="v16racha">${esc(rachaText(snap.racha))}</p>`;
+    const usoState = getUsoState();
+    html += '<h4>Uso</h4>';
+    if (!mando || usoState.state === 'locked') html += '<p class="muted">Solo con el mando desbloqueado.</p>';
+    else if (usoState.state === 'missing' || !usoState.uso) html += '<p class="muted">Aún sin datos.</p>';
+    else {
+      const u = usoState.uso;
+      const semana = u.semana_pct == null ? '—' : (Number.isInteger(u.semana_pct) ? String(u.semana_pct) : String(Math.round(u.semana_pct * 10) / 10));
+      html += `<p class="uso-semana">Uso del plan esta semana: <b>${esc(semana)} %</b></p>`;
+      if (u.actualizado) {
+        const when = formatActualizado(u.actualizado);
+        if (when) html += `<p class="uso-actualizado muted">actualizado ${esc(when)}</p>`;
+      }
+      if (u.bots.length) {
+        const max = Math.max(1, ...u.bots.map(b => b.pct));
+        html += '<ul class="uso-bars">';
+        for (const row of u.bots) {
+          const n = Number.isInteger(row.pct) ? String(row.pct) : String(Math.round(row.pct * 10) / 10);
+          const w = Math.round((row.pct / max) * 100);
+          html += `<li class="uso-bar-row"><div class="uso-bar-line"><b>${esc(row.name)}</b> · ${esc(n)} %</div><span class="uso-bar" aria-hidden="true"><i style="width:${w}%"></i></span></li>`;
+        }
+        html += '</ul>';
+      } else html += '<p class="muted">Aún sin datos.</p>';
+    }
+
     html += '<h4>Atorado (te espera)</h4>';
     html += waiting.length
       ? waiting.map(b => `<button type="button" class="resumen-row" data-bot="${esc(b.id)}"><span class="status-dot status-review"></span><b>${esc(b.name)}</b> <span class="muted">${esc(hace(b.waitingSince))}</span></button>`).join('')
@@ -54,14 +105,15 @@ export function mountResumenPanel({getSnapshot, getMando, onChoose, container = 
         const b = byId[id];
         if (!b) continue;
         const m = mando?.bots?.find(x => x.id === id);
-        const callado = m?.callado?.dias ? ` · 🤐 callado ${Math.floor(m.callado.dias)} d` : '';
+        const callado = m?.callado?.dias ? ` · callado ${Math.floor(m.callado.dias)} d` : '';
         const st = b.status === 'review' ? 'te espera' : b.status === 'working' ? 'trabajando' : b.status === 'idle' ? 'en pausa' : 'sin señal';
-        html += `<button type="button" class="resumen-row" data-bot="${esc(id)}"><span class="status-dot status-${esc(b.status)}"></span><b>${esc(b.name)}</b> <span class="muted">${esc(st)}${esc(callado)}</span></button>`;
+        html += `<button type="button" class="resumen-row sj-rrow" data-bot="${esc(id)}"><img class="av" data-st="${esc(b.status || 'unknown')}" src="${esc(avatarPhotoUrl(id))}" alt="" width="28" height="28" loading="lazy"><b>${esc(b.name)}</b><span class="sj-rst"><i class="sj-dot st-${esc(b.status)}"></i>${esc(st)}${esc(callado)}</span></button>`;
       }
     }
 
-    html += '<h4>📈 Resumen semanal</h4>';
-    if (!mando) html += '<p class="muted">🔐 Solo con el mando desbloqueado.</p>';
+
+    html += '<h4>Resumen semanal</h4>';
+    if (!mando) html += '<p class="muted">Solo con el mando desbloqueado.</p>';
     else if (!mando.semanal) html += '<p class="muted">Sin datos semanales.</p>';
     else {
       const a = mando.semanal.esta || {};
@@ -72,24 +124,19 @@ export function mountResumenPanel({getSnapshot, getMando, onChoose, container = 
       if (mando.semanal.nota) html += `<p class="muted">${esc(mando.semanal.nota)}</p>`;
     }
 
-    // timeline (hours_hoy from mando)
-    html += '<h4>🕒 Línea de tiempo de hoy</h4>';
-    if (!mando) html += '<p class="muted">🔐 Solo con el mando desbloqueado.</p>';
+    html += '<h4>Mensajes de hoy</h4>';
+    if (!mando) html += '<p class="muted">Solo con el mando desbloqueado.</p>';
     else {
-      html += '<p class="muted">Cada cuadro es una hora (0–23 h, Chihuahua); más verde = más mensajes. Solo conteos.</p>';
-      const hb = new Date(new Date().toLocaleString('en-US', {timeZone: 'America/Chihuahua'})).getHours();
-      for (const [dep, ids] of Object.entries(DEPARTMENTS)) {
-        html += `<div class="v16dep">${esc(dep)}</div>`;
-        for (const id of ids) {
-          const m = mando.bots?.find(x => x.id === id);
-          const b = byId[id];
-          const hh = m?.horas_hoy;
-          const mx = Math.max(1, ...(hh || [0]));
-          const cel = hh
-            ? hh.map((n, i) => `<i class="${i > hb ? 'fut' : ''}" style="${n ? `background:rgba(34,197,94,${(0.25 + 0.75 * n / mx).toFixed(2)})` : ''}" title="${i}:00 · ${n}"></i>`).join('')
-            : '<span class="muted">sin datos</span>';
-          html += `<div class="v16tl"><span class="n">${esc(b?.name || id)}</span><span class="h">${cel}</span></div>`;
+      const rows = todayMessageRows(mando, byId);
+      if (!rows.length) html += '<p class="muted">Sin conteos de hoy.</p>';
+      else {
+        html += '<ul class="resumen-hoy">';
+        for (const r of rows) {
+          const msg = r.total === 1 ? '1 mensaje hoy' : `${r.total} mensajes hoy`;
+          const last = r.lastLabel ? ` · último ${r.lastLabel}` : ' · sin mensajes';
+          html += `<li class="resumen-hoy-row" data-bot="${esc(r.id)}"><div class="resumen-hoy-line"><b>${esc(r.name)}</b> · ${esc(msg)}${esc(last)}</div><span class="resumen-hoy-bar" aria-hidden="true"><i style="width:${Math.round(r.bar*100)}%"></i></span></li>`;
         }
+        html += '</ul>';
       }
     }
     body.innerHTML = html;

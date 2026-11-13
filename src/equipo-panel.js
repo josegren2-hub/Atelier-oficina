@@ -6,19 +6,20 @@ const statusClass = status => {
   if (status === 'working') return 'trabajando';
   if (status === 'review') return 'te';
   if (status === 'idle') return 'pausa';
+  if (status === 'error') return 'error';
   return 'unknown';
 };
 const statusText = status => {
   if (status === 'working') return 'trabajando';
   if (status === 'review') return 'te espera';
-  if (status === 'idle') return 'disponible';
+  if (status === 'idle') return 'en pausa';
   if (status === 'error') return 'error';
   return 'sin señal';
 };
 
 
 export function renderEquipoHtml({bots = [], floors: floorList = floors, selected = null, folded = false} = {}) {
-  let html = `<button type="button" class="mc-tg" aria-expanded="${String(!folded)}">☰ Equipo</button>`;
+  let html = `<button type="button" class="mc-tg" aria-expanded="${String(!folded)}">Equipo</button>`;
   if (folded) return html;
   html += '<div class="mc-in"><div class="mc-h">MISSION CONTROL</div>';
   for (const floor of floorList) {
@@ -29,7 +30,7 @@ export function renderEquipoHtml({bots = [], floors: floorList = floors, selecte
       const on = bot.id === selected ? ' on' : '';
       const st = statusClass(bot.status);
       html += `<button type="button" class="mc-bot${on}" data-id="${bot.id}" aria-pressed="${String(bot.id === selected)}">`
-        + `<span class="mc-av"><img src="${avatarPhotoUrl(bot.id)}" alt="" width="24" height="24" loading="lazy"><span class="sd ${st}" aria-label="${statusLabels[bot.status] || statusText(bot.status)}"></span></span>`
+        + `<span class="mc-av"><img data-st="${bot.status || 'unknown'}" src="${avatarPhotoUrl(bot.id)}" alt="" width="24" height="24" loading="lazy"><span class="sd ${st}" aria-label="${statusLabels[bot.status] || statusText(bot.status)}"></span></span>`
         + `<span class="mc-name">${bot.name}</span><small>${statusText(bot.status)}</small></button>`;
     }
   }
@@ -41,7 +42,7 @@ export function mountEquipoPanel({getSnapshot = () => ({}), getSelected = () => 
   panel.id = 'mcpanel';
   panel.className = 'mcpanel';
   panel.setAttribute('aria-label', 'Equipo');
-  if (typeof matchMedia === 'function' && matchMedia('(max-width: 760px)').matches) panel.classList.add('plegado');
+  panel.classList.add('plegado');
   document.body.append(panel);
 
   function render() {

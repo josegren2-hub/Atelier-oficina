@@ -8,7 +8,8 @@ import {readNightPreference,saveNightPreference} from '../src/theme-state.js';
 test('roster combines explicit floor and accent-insensitive search without a camera dependency',()=>{
  assert.equal(filterRoster(bots).length,16);
  assert.deepEqual(filterRoster(bots,{query:'JULIAN'}).map(b=>b.id),['julian']);
- assert.equal(filterRoster(bots,{floor:2}).length,6);
+ assert.equal(filterRoster(bots,{floor:2}).length,4);
+ assert.equal(filterRoster(bots,{floor:3}).length,3);
  assert.equal(filterRoster(bots,{floor:2,query:'desarrollo'}).length,1);
  assert.equal(filterRoster(bots,{floor:4,query:'luna'}).length,0);
  assert.equal(filterRoster(bots,{floor:-1,query:''}).length,16);
@@ -63,7 +64,7 @@ test('profile markup is a modal read-only detail with two routes back to all six
  assert.match(html,/<dialog id="detail" aria-labelledby="detail-title" aria-describedby="detail-source">/);
  assert.match(html,/id="show-all"[^>]*>Ver todos \(16\)/);
  assert.match(html,/id="detail-all"[^>]*>Ver todos \(16\)/);
- assert.match(html,/<dl id="detail-facts"><\/dl>/);
+ assert.match(html,/<div id="detail-facts"><\/div>/);
  assert.match(main,/detail\.showModal\(\)/);
  assert.match(main,/detail\.addEventListener\('cancel'/);
  assert.match(main,/setFloor\(b.floor,\{syncRoster:false\}\)/);
@@ -72,9 +73,8 @@ test('profile markup is a modal read-only detail with two routes back to all six
 test('2×2 pager explicitly exposes the fifth floor and a return to the four-floor page',()=>{
  const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
  const main=fs.readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
- assert.match(html,/Página 1 de 2 · PB a piso 3/);
- assert.match(html,/Siguiente: Penthouse · Ted →/);
- assert.match(html,/← Volver a las cuatro plantas/);
- assert.match(main,/Página 2 de 2 · Piso 4 · Penthouse/);
- assert.match(main,/floors.filter\(f=>f.id<4\)/);
+ assert.doesNotMatch(html,/las 6 en una página/);
+ assert.doesNotMatch(main,/las 6 en una página/);
+ assert.match(html,/id="spread-page-label"[^>]*hidden/);
+ assert.match(main,/for\(const f of floors\)/);
 });

@@ -2,15 +2,17 @@
 export const LIGHT_KEY = 'atelierModo'; // auto | noche | dia
 
 const LUZH = [
-  [7, {sun: 1.35, ambient: 0.72, fill: 0.38, exposure: 1.18, background: '#E4D8C8', sunColor: '#ffd6a8', ambientSky: '#ffe7cc'}],
-  [11, {sun: 1.6, ambient: 0.75, fill: 0.4, exposure: 1.22, background: '#D9D4CC', sunColor: '#ffc78e', ambientSky: '#d7e0e7'}],
-  [15, {sun: 1.6, ambient: 0.75, fill: 0.4, exposure: 1.22, background: '#D9D4CC', sunColor: '#ffc78e', ambientSky: '#d7e0e7'}],
-  [17.5, {sun: 1.4, ambient: 0.7, fill: 0.35, exposure: 1.12, background: '#DCC4A2', sunColor: '#ffbf70', ambientSky: '#ffd9a6'}],
-  [19, {sun: 1.2, ambient: 0.65, fill: 0.3, exposure: 1.06, background: '#D6BC98', sunColor: '#ffb060', ambientSky: '#ffd29c'}],
+  // Morning / midday stay soft; late afternoon → blue-hour dusk (fachada REF).
+  [7, {sun: 1.35, ambient: 0.72, fill: 0.38, exposure: 1.18, background: '#E4D8C8', sunColor: '#ffd6a8', ambientSky: '#ffe7cc', interior: 28}],
+  [11, {sun: 1.55, ambient: 0.72, fill: 0.4, exposure: 1.2, background: '#D5D2CC', sunColor: '#ffc78e', ambientSky: '#d7e0e7', interior: 24}],
+  [15, {sun: 1.35, ambient: 0.62, fill: 0.36, exposure: 1.12, background: '#C8CFD8', sunColor: '#ffb070', ambientSky: '#c5d0dc', interior: 55}],
+  // Blue-hour: cool grey/blue sky, warm interiors (matches fachada-san-junipero-tower-REF)
+  [17.5, {sun: 0.32, ambient: 0.48, fill: 0.34, exposure: 1.06, background: '#B8C4D2', sunColor: '#ff9a6a', ambientSky: '#8fa3b8', interior: 110}],
+  [19, {sun: 0.22, ambient: 0.4, fill: 0.28, exposure: 1.0, background: '#9AA8B8', sunColor: '#ff8a50', ambientSky: '#7a90a8', interior: 120}],
 ];
 
-const NIGHT = {sun: 0.55, ambient: 0.45, fill: 0.22, exposure: 0.97, background: '#2E261D', sunColor: '#9bb7ff', ambientSky: '#7194c4', interior: 1.1};
-const DAY = {sun: 1.6, ambient: 0.65, fill: 0.4, exposure: 1.22, background: '#c5d3c8', sunColor: '#ffc78e', ambientSky: '#d7e0e7', interior: 0.55};
+const NIGHT = {sun: 0.13, ambient: 0.22, fill: 0.16, exposure: 0.95, background: '#080f20', sunColor: '#9bb7ff', ambientSky: '#7194c4', interior: 90};
+const DAY = {sun: 1.6, ambient: 0.65, fill: 0.4, exposure: 1.22, background: '#c9d8ea', sunColor: '#ffe2b0', ambientSky: '#d7e6f4', interior: 28};
 
 export function horaChihuahua(now = new Date()) {
   const p = new Intl.DateTimeFormat('en-US', {timeZone: 'America/Chihuahua', hour: 'numeric', minute: 'numeric', hourCycle: 'h23'}).formatToParts(now);
@@ -61,7 +63,7 @@ export function luzHora(h = horaChihuahua()) {
     background: lerpHex(a.background, b.background, t),
     sunColor: lerpHex(a.sunColor, b.sunColor, t),
     ambientSky: lerpHex(a.ambientSky, b.ambientSky, t),
-    interior: 0.55,
+    interior: lerp(a.interior ?? 28, b.interior ?? 28, t),
     fase: h < 11 ? 'mañana' : h < 15 ? 'mediodía' : 'tarde',
   };
 }

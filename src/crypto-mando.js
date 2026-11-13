@@ -22,7 +22,7 @@ export function assertEncEnvelope(enc) {
   }
 }
 
-export async function deriveMandoKey(passphrase, enc, subtle = globalThis.crypto?.subtle) {
+export async function deriveMandoKey(passphrase, enc, subtle = globalThis.crypto?.subtle, usages = ['decrypt']) {
   if (!subtle) throw new Error('Web Crypto no disponible');
   assertEncEnvelope(enc);
   if (typeof passphrase !== 'string' || !passphrase) throw new Error('Frase vacía');
@@ -32,8 +32,23 @@ export async function deriveMandoKey(passphrase, enc, subtle = globalThis.crypto
     material,
     {name: 'AES-GCM', length: 256},
     true,
-    ['decrypt']
+    usages
   );
+}
+
+/** Encrypt JSON with the same envelope as mando.enc (reuse salt + iter; new iv + ct). */
+export async function encryptEncJson(key, data, meta, subtle = globalThis.crypto?.subtle) {
+  if (!subtle) throw new Error('Web Crypto no disponible');
+  if (!meta || typeof meta.salt !== 'string' || !Number.isFinite(meta.iter) || meta.iter < 100000) {
+    throw new Error('Sobre cifrado incompleto');
+  }
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await subtle.encrypt(
+    {name: 'AES-GCM', iv},
+    key,
+    new TextEncoder().encode(JSON.stringify(data))
+  );
+  return {v: 1, kdf: 'PBKDF2-SHA256', iter: meta.iter, salt: meta.salt, iv: bytesToB64(iv), ct: bytesToB64(ct)};
 }
 
 export async function decryptEncJson(key, enc, subtle = globalThis.crypto?.subtle) {

@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import * as THREE from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {bots,floors} from '../src/data.js';
-import {fitVolumes,fitOrthographic} from '../src/camera-fit.js';
+import {fitVolumes,fitOrthographic,applyBottomChromePad} from '../src/camera-fit.js';
 import {createMovement,segmentClear,planRoute,BODY_RADIUS,PERSONAL_SPACE,pointSegmentDistance} from '../src/movement.js';
 import * as layout from '../src/view-layout.js';
 import {attachDeskProps, createDeskProp} from '../src/desk-props.js';
@@ -24,14 +24,14 @@ for(const [width,height]of [[1000,600],[390,600]])test(`real scene ${width}×${h
  const furnishingsText=readFileSync(new URL('../src/furnishings.js',import.meta.url),'utf8').replace(/^import .*;\n/gm,'').replace('export function','function').replaceAll('import.meta.env.BASE_URL',"'/'");
  const createFurnishings=new Function('THREE','RoundedBoxGeometry','GLTFLoader',`${furnishingsText};return createFurnishings;`)(THREE,RoundedBoxGeometry,class{load(){}});
  const source=readFileSync(new URL('../src/scene.js',import.meta.url),'utf8').replace(/^import .*;\n/gm,'').replace('export function','function');
- const deps={createMovement,segmentClear,planRoute,BODY_RADIUS,PERSONAL_SPACE,pointSegmentDistance,THREE:engine,OrbitControls:Controls,RoomEnvironment:class{dispose(){}},bots,floors,createFurnishings,fitVolumes,fitOrthographic,...layout,attachDeskProps,createDeskProp,createAvatarModels:()=>({attach(){},update(){},getSeatSupport(){return {bottomY:.25};}})};
+ const deps={createMovement,segmentClear,planRoute,BODY_RADIUS,PERSONAL_SPACE,pointSegmentDistance,THREE:engine,OrbitControls:Controls,RoomEnvironment:class{dispose(){}},bots,floors,createFurnishings,fitVolumes,fitOrthographic,applyBottomChromePad,...layout,attachDeskProps,createDeskProp,mountFloorLabels:()=>({update(){},destroy(){}}),createAvatarModels:()=>({attach(){},update(){},getSeatSupport(){return {bottomY:.25};}})};
  try{
   const createOffice=new Function(...Object.keys(deps),`${source};return createOffice;`)(...Object.values(deps));
   const opened=[],floorClicks=[],botClicks=[];
   const office=createOffice({clientWidth:width,clientHeight:height,appendChild(){}},id=>botClicks.push(id),()=>{},id=>opened.push(id),id=>floorClicks.push(id));
   const hosts=[],panels=[];
   scene.traverse(o=>{if(o.isGroup&&o.userData.bot)hosts.push(o);if(o.userData.agenda)panels.push(o);});
-  assert.equal(hosts.length,16);assert.equal(new Set(hosts.map(h=>h.parent)).size,5);assert.equal(hosts.filter(h=>h.userData.bot.floor===2).length,6);assert.deepEqual(panels.map(p=>p.userData.agenda),['julian','ted']);
+  assert.equal(hosts.length,16);assert.equal(new Set(hosts.map(h=>h.parent)).size,6);assert.equal(hosts.filter(h=>h.userData.bot.floor===2).length,4);assert.equal(hosts.filter(h=>h.userData.bot.floor===3).length,3);assert.deepEqual(panels.map(p=>p.userData.agenda),['julian','ted']);
   for(const p of panels)assert.ok(p.children.some(o=>o.isMesh&&o.geometry.type==='PlaneGeometry'));
   for(const host of hosts){
    assert.equal(host.position.y,.3);
@@ -80,11 +80,19 @@ for(const [width,height]of [[1000,600],[390,600]])test(`real scene ${width}×${h
   office.setDemo(true);office.setStatuses({mode:'disconnected',bots:[]});verifyFrames(20);assert.deepEqual(office.getMovementStats().agents.map(a=>a.position),frozen,'source disconnect stops any active demo');
   for(const host of hosts)assert.equal(host.children.find(c=>c.userData.status).userData.status,'unknown');
   office.setNight(true);assert.equal(scene.background.getHex(),layout.LIGHTING.night.background);
-  office.setNight(false);assert.equal(scene.background.getHex(),layout.LIGHTING.day.background);
+  office.setNight(false);assert.equal(scene.background.getHex(),layout.LIGHTING.dusk.background);
+  const shown=o=>{let n=o;while(n){if(n.visible===false)return false;n=n.parent;}return true;};
+  const ceilingWashes=[];scene.traverse(o=>{if(o.userData?.ceilingWash&&o.isGroup)ceilingWashes.push(o);});
+  assert.ok(ceilingWashes.length>0,'soffit wash exists on lower floors');
+  office.setView(0);assert.ok(ceilingWashes.every(w=>shown(w)===false),'isolated floor hides soffit wash');
+  office.setView(1);assert.ok(ceilingWashes.every(w=>shown(w)===false),'Jurídico hides soffit wash');
+  office.setMode('stacked');assert.ok(ceilingWashes.every(w=>shown(w)===false),'stacked hides soffit wash');
+  office.setMode('spread');assert.ok(ceilingWashes.every(w=>shown(w)===false),'2x2 hides soffit wash');
+  office.setMode('exterior');assert.ok(ceilingWashes.every(w=>shown(w)===true),'closed building keeps soffit wash');
   office.setView(1);assert.equal(hosts.filter(h=>h.parent.visible).length,bots.filter(b=>b.floor===1).length);
   office.setMode('stacked');assert.equal(hosts.filter(h=>h.parent.visible).length,16);
-  for(const [floor,id]of [[4,'ted'],[1,'julian']]){
-   office.setView(floor);frameCallback();scene.updateMatrixWorld(true);renderedCamera.updateMatrixWorld(true);
+  for(const [floor,id]of [[5,'ted'],[1,'julian']]){
+   office.setView(floor);frameTime+=1100;frameCallback();scene.updateMatrixWorld(true);renderedCamera.updateMatrixWorld(true);
    const panel=panels.find(p=>p.userData.agenda===id),face=panel.children.find(o=>o.geometry?.type==='PlaneGeometry');
    const point=face.getWorldPosition(new THREE.Vector3()).project(renderedCamera);
    const e={clientX:(point.x+1)*width/2,clientY:(1-point.y)*height/2};listeners.pointerdown(e);listeners.pointerup(e);
@@ -92,9 +100,9 @@ for(const [width,height]of [[1000,600],[390,600]])test(`real scene ${width}×${h
   }
   const clickPoint=point=>{const p=point.clone().project(renderedCamera),e={clientX:(p.x+1)*width/2,clientY:(1-p.y)*height/2};listeners.pointerdown(e);listeners.pointerup(e);return e;};
   for(const mode of ['exterior','stacked','spread']){
-   office.setMode(mode);frameCallback();scene.updateMatrixWorld(true);renderedCamera.updateMatrixWorld(true);
-   assert.equal(hosts.filter(h=>h.parent.visible).length,mode==='spread'?15:16);
-   for(const f of floors.filter(f=>mode!=='spread'||f.id<4)){
+   office.setMode(mode);frameTime+=1100;frameCallback();scene.updateMatrixWorld(true);renderedCamera.updateMatrixWorld(true);
+   assert.equal(hosts.filter(h=>h.parent.visible).length,16);
+   for(const f of floors){
     const group=hosts.find(h=>h.userData.bot.floor===f.id).parent;
     const point=group.localToWorld(new THREE.Vector3(0,.07,9));
     const before=floorClicks.length;clickPoint(point);
@@ -102,7 +110,7 @@ for(const [width,height]of [[1000,600],[390,600]])test(`real scene ${width}×${h
     assert.equal(floorClicks.at(-1),f.id,`${mode} opens the clicked floor`);
    }
   }
-  office.setView(4);assert.equal(hosts.filter(h=>h.parent.visible).length,1,'penthouse remains reachable from spread');frameCallback();scene.updateMatrixWorld(true);renderedCamera.updateMatrixWorld(true);
+  office.setView(5);assert.equal(hosts.filter(h=>h.parent.visible).length,1,'penthouse remains reachable from spread');frameTime+=1100;frameCallback();scene.updateMatrixWorld(true);renderedCamera.updateMatrixWorld(true);
   const ted=hosts.find(h=>h.userData.bot.id==='ted'),beforeFloor=floorClicks.length;
   clickPoint(ted.children.find(o=>o.isSprite).getWorldPosition(new THREE.Vector3()));
   assert.equal(botClicks.at(-1),'ted');assert.equal(floorClicks.length,beforeFloor,'avatar has priority over floor');

@@ -25,3 +25,16 @@ export function fitOrthographic(volumes,aspect,height,direction=[0,1.8,1]){
  let halfHeight=0;for(const point of points){const p=point.clone().sub(center);halfHeight=Math.max(halfHeight,Math.abs(p.dot(up))/Math.max(.7,(height-16)/height),Math.abs(p.dot(right))/(aspect*.97));}
  return {center,position:center.clone().addScaledVector(forward,150),halfHeight:halfHeight*1.01};
 }
+
+/** Expand only the bottom of an orthographic fit so overlay chrome does not cover the front row. Floor scale stays almost the same. */
+export function applyBottomChromePad(fit, direction, fraction=.2){
+ const forward=new THREE.Vector3(...direction).normalize();
+ const right=new THREE.Vector3().crossVectors(new THREE.Vector3(0,1,0),forward).normalize();
+ const up=new THREE.Vector3().crossVectors(forward,right).normalize();
+ const dist=fit.position.distanceTo(fit.center)||150;
+ const pad=fit.halfHeight*fraction;
+ fit.halfHeight+=pad/2;
+ fit.center.addScaledVector(up,-pad/2);
+ fit.position.copy(fit.center).addScaledVector(forward,dist);
+ return fit;
+}

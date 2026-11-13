@@ -15,13 +15,14 @@ export function botProfile(snapshot,bot,movement=null) {
  const demo=snapshot.mode==='demo';
  const received=demo||snapshot.mode==='live';
  const known=received&&!bot.stale&&bot.status!=='unknown';
- const states={working:'Trabajando',review:'Te espera',idle:'Disponible',error:'Error de fuente'};
+ const states={working:'Trabajando',review:'Te espera',idle:'En pausa',error:'Error de fuente'};
  const text=value=>typeof value==='string'&&value.trim()?value.trim():null;
  const taskText=text(bot.task);
  const activityText=text(bot.activity);
  const unlocked=bot.mandoUnlocked===true;
  let currentTask;
  if(!known) currentTask='No disponible · fuente sin señal.';
+ else if(!demo&&text(bot.resumen)) currentTask=text(bot.resumen);
  else if(taskText) currentTask=taskText+(bot.liveTask?.detail?` · ${bot.liveTask.detail}`:'');
  else if(bot.status==='working') currentTask=demo?'Sin tarea asignada en este ejemplo.':'Trabajando'; // never "sin datos" while working when live
  else if(demo) currentTask='Sin tarea asignada en este ejemplo.';

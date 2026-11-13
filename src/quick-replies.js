@@ -50,7 +50,7 @@ export function mountQuickReplies(container, {getBot, onToast} = {}) {
     } else if (!unlocked) {
       const lock = document.createElement('p');
       lock.className = 'muted';
-      lock.textContent = '🔐 Chat y respuestas rápidas con el mando desbloqueado.';
+      lock.textContent = 'Chat y respuestas rápidas con el mando desbloqueado.';
       root.appendChild(lock);
     }
 

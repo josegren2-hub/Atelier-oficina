@@ -86,7 +86,7 @@ export function avisosHealthLabel(saludMapped, now = Date.now()) {
  * Optional POST only to an explicit throwaway topic for QA.
  * Never call with Rob's real topic. Requires confirmThrowaway === true.
  */
-export async function sendThrowawayTest({topic, body = 'Prueba Atelier (tema desechable)', fetcher = fetch, confirmThrowaway = false} = {}) {
+export async function sendThrowawayTest({topic, body = 'Prueba San Junipero (tema desechable)', fetcher = fetch, confirmThrowaway = false} = {}) {
   if (confirmThrowaway !== true) throw new Error('Se requiere confirmThrowaway=true');
   const t = normalizeTopic(topic);
   if (!/^prueba-atelier-/i.test(t) && !/^test-atelier-/i.test(t)) {
@@ -96,7 +96,7 @@ export async function sendThrowawayTest({topic, body = 'Prueba Atelier (tema des
     method: 'POST',
     body,
     headers: {
-      Title: 'Atelier · prueba',
+      Title: 'San Junipero · prueba',
       Tags: 'test_tube',
       Click: atelierDeepLink({abrir: 'avisos'}),
     },

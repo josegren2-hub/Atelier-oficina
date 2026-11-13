@@ -1,0 +1,82 @@
+{
+  "target": {
+    "name": "Julián",
+    "x": 373,
+    "y": 459.1,
+    "w": 48.8,
+    "h": 52.4,
+    "inView": true,
+    "x2": 360.8,
+    "y2": 459.1,
+    "dist": 12.2,
+    "inView2": true
+  },
+  "clip": {
+    "x": 270.8,
+    "y": 409.1,
+    "width": 262.2,
+    "height": 140
+  },
+  "moved": [
+    {
+      "name": "Luna",
+      "x": 327.4,
+      "y": 823.8,
+      "w": 42.4,
+      "h": 52.4,
+      "inView": true,
+      "x2": 327.4,
+      "y2": 823.8,
+      "dist": 0,
+      "inView2": true
+    },
+    {
+      "name": "Emiliano",
+      "x": 203.4,
+      "y": 794.2,
+      "w": 63,
+      "h": 52.4,
+      "inView": true,
+      "x2": 204.1,
+      "y2": 787.3,
+      "dist": 6.94,
+      "inView2": true
+    },
+    {
+      "name": "Valery",
+      "x": 170.9,
+      "y": 794.2,
+      "w": 51.2,
+      "h": 52.4,
+      "inView": true,
+      "x2": 171.9,
+      "y2": 787.3,
+      "dist": 6.97,
+      "inView2": true
+    },
+    {
+      "name": "Julián",
+      "x": 373,
+      "y": 459.1,
+      "w": 48.8,
+      "h": 52.4,
+      "inView": true,
+      "x2": 360.8,
+      "y2": 459.1,
+      "dist": 12.2,
+      "inView2": true
+    },
+    {
+      "name": "Inés",
+      "x": 341.2,
+      "y": 525,
+      "w": 38.4,
+      "h": 52.4,
+      "inView": true,
+      "x2": 341.2,
+      "y2": 525,
+      "dist": 0,
+      "inView2": true
+    }
+  ]
+}

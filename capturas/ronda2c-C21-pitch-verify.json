@@ -1,0 +1,299 @@
+{
+  "665x1024": {
+    "source": "En vivo · Oficina-bots · estado.json público\nÚltima señal: 9/11/2026, 11:15:10 p.m.",
+    "demo": "false",
+    "pills": [
+      "PB · Personal",
+      "Piso 1 · Jurídico y Finanzas",
+      "Piso 2 · Proyectos"
+    ],
+    "pins": [
+      {
+        "name": "Luna",
+        "x": 327.7,
+        "y": 758.4,
+        "w": 42.4,
+        "h": 52.4,
+        "inView": true
+      },
+      {
+        "name": "Emil.",
+        "x": 292.6,
+        "y": 504.6,
+        "w": 42.2,
+        "h": 52.4,
+        "inView": true
+      },
+      {
+        "name": "Vale.",
+        "x": 170.7,
+        "y": 733,
+        "w": 43,
+        "h": 52.4,
+        "inView": true
+      },
+      {
+        "name": "Julián",
+        "x": 382.9,
+        "y": 506.5,
+        "w": 48.8,
+        "h": 52.4,
+        "inView": true
+      },
+      {
+        "name": "Inés",
+        "x": 340.9,
+        "y": 590.2,
+        "w": 38.4,
+        "h": 52.4,
+        "inView": true
+      },
+      {
+        "name": "Tommy",
+        "x": 121,
+        "y": 263.7,
+        "w": 56.8,
+        "h": 52.4,
+        "inView": true
+      },
+      {
+        "name": "Rodrigo",
+        "x": 216.1,
+        "y": 263.7,
+        "w": 59.3,
+        "h": 52.4,
+        "inView": true
+      },
+      {
+        "name": "Joss",
+        "x": 405.6,
+        "y": 463,
+        "w": 41.5,
+        "h": 52.4,
+        "inView": true
+      },
+      {
+        "name": "Charly",
+        "x": 230.6,
+        "y": 330.2,
+        "w": 52.3,
+        "h": 52.4,
+        "inView": true
+      },
+      {
+        "name": "Luca",
+        "x": 447.5,
+        "y": 473.7,
+        "w": 42.1,
+        "h": 52.4,
+        "inView": true
+      },
+      {
+        "name": "Rulo",
+        "x": 425,
+        "y": 421,
+        "w": 39.6,
+        "h": 52.4,
+        "inView": true
+      }
+    ]
+  },
+  "820x1180": {
+    "source": "En vivo · Oficina-bots · estado.json público\nÚltima señal: 9/11/2026, 11:15:10 p.m.",
+    "demo": "false",
+    "pills": [
+      "PB · Personal",
+      "Piso 1 · Jurídico y Finanzas",
+      "Piso 2 · Proyectos"
+    ],
+    "pins": [
+      {
+        "name": "Luna",
+        "x": 292,
+        "y": 804.2,
+        "w": 42.4,
+        "h": 52.4,
+        "inView": true
+      },
+      {
+        "name": "Emil.",
+        "x": 260.1,
+        "y": 547,
+        "w": 42.2,
+        "h": 52.4,
+        "inView": true
+      },
+      {
+        "name": "Vale.",
+        "x": 141.9,
+        "y": 780.7,
+        "w": 43,
+        "h": 52.4,
+        "inView": true
+      },
+      {
+        "name": "Julián",
+        "x": 343.6,
+        "y": 564.6,
+        "w": 48.8,
+        "h": 52.4,
+        "inView": true
+      },
+      {
+        "name": "Inés",
+        "x": 303.9,
+        "y": 642.7,
+        "w": 38.4,
+        "h": 52.4,
+        "inView": true
+      },
+      {
+        "name": "Tommy",
+        "x": 100.9,
+        "y": 342.3,
+        "w": 56.8,
+        "h": 52.4,
+        "inView": true
+      },
+      {
+        "name": "Rodr.",
+        "x": 195.7,
+        "y": 342.3,
+        "w": 44.3,
+        "h": 52.4,
+        "inView": true
+      },
+      {
+        "name": "Joss",
+        "x": 361.1,
+        "y": 536.3,
+        "w": 41.5,
+        "h": 52.4,
+        "inView": true
+      },
+      {
+        "name": "Char.",
+        "x": 214.9,
+        "y": 567.9,
+        "w": 44.9,
+        "h": 52.4,
+        "inView": true
+      },
+      {
+        "name": "Luca",
+        "x": 398,
+        "y": 472.7,
+        "w": 42.1,
+        "h": 52.4,
+        "inView": true
+      },
+      {
+        "name": "Rulo",
+        "x": 377.4,
+        "y": 452.2,
+        "w": 39.6,
+        "h": 52.4,
+        "inView": true
+      }
+    ]
+  },
+  "390x844": {
+    "source": "En vivo · Oficina-bots · estado.json público\nÚltima señal: 9/11/2026, 11:15:10 p.m.",
+    "demo": "false",
+    "pills": [
+      "PB · Personal",
+      "Piso 1 · Jurídico y Finanzas",
+      "Piso 2 · Proyectos"
+    ],
+    "pins": [
+      {
+        "name": "Luna",
+        "x": 185.8,
+        "y": 562.6,
+        "w": 40,
+        "h": 49.2,
+        "inView": true
+      },
+      {
+        "name": "Emiliano",
+        "x": 154.8,
+        "y": 382.5,
+        "w": 59,
+        "h": 49.2,
+        "inView": true
+      },
+      {
+        "name": "Valery",
+        "x": 147.6,
+        "y": 450.4,
+        "w": 48.1,
+        "h": 49.2,
+        "inView": true
+      },
+      {
+        "name": "Juli.",
+        "x": 235.9,
+        "y": 461.7,
+        "w": 36.4,
+        "h": 49.2,
+        "inView": true
+      },
+      {
+        "name": "Inés",
+        "x": 174.3,
+        "y": 387.8,
+        "w": 36.3,
+        "h": 49.2,
+        "inView": true
+      },
+      {
+        "name": "Tommy",
+        "x": 144.4,
+        "y": 398.8,
+        "w": 53.2,
+        "h": 49.2,
+        "inView": true
+      },
+      {
+        "name": "Rodr.",
+        "x": 175.3,
+        "y": 327.3,
+        "w": 41.8,
+        "h": 49.2,
+        "inView": true
+      },
+      {
+        "name": "Joss",
+        "x": 230.7,
+        "y": 415.8,
+        "w": 39.2,
+        "h": 49.2,
+        "inView": true
+      },
+      {
+        "name": "Char.",
+        "x": 134.6,
+        "y": 348.6,
+        "w": 42.3,
+        "h": 49.2,
+        "inView": true
+      },
+      {
+        "name": "Luca",
+        "x": 254.8,
+        "y": 373.8,
+        "w": 39.8,
+        "h": 49.2,
+        "inView": true
+      },
+      {
+        "name": "Rulo",
+        "x": 241.6,
+        "y": 344.5,
+        "w": 37.5,
+        "h": 49.2,
+        "inView": true
+      }
+    ]
+  }
+}

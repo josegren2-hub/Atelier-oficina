@@ -1,5 +1,6 @@
 /** Vista Solo lista — sin Three/WebGL. */
 import './style.css';
+import {bindSwipeToClose} from './ui-sheets.js';
 import {mountReleaseNotice} from './release-notice.js';
 import {bots as catalog, floors, disconnectedSnapshot, statusLabels} from './data.js';
 import {readSnapshot} from './adapter.js';
@@ -13,6 +14,7 @@ import {mountResumenPanel, rachaText} from './resumen-panel.js';
 import {mountStaleBanner} from './stale-banner.js';
 import {avatarPhotoUrl} from './avatar-photo.js';
 import {readLightPref, isNightHour, horaChihuahua} from './daylight.js';
+import {loadUsoEnc, getUsoState, setUsoState, displayUsoLine, onUsoChange} from './uso-feed.js';
 
 mountReleaseNotice();
 document.body.classList.add('lista-mode');
@@ -27,26 +29,40 @@ if (app) app.hidden = true;
 const main = document.createElement('main');
 main.id = 'lista-root';
 main.innerHTML = `
-  <header class="lista-header">
-    <strong>Atelier · Solo lista</strong>
-    <span id="lista-source" class="muted">Conectando…</span>
-    <button type="button" id="lista-resumen">📋 Resumen</button>
-    <button type="button" id="lista-racha" class="lista-racha" title="Racha">🔥 –</button>
-    <button type="button" id="lista-to-3d" title="Ver la oficina en 3D">🏢 3D</button>
-    <button type="button" id="lista-mando">Desbloquear mando</button>
+  <header class="lista-header sj-lh">
+    <div class="sj-lh-top">
+      <button type="button" id="lista-back" class="lista-back sj-x" aria-label="Atrás"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="sj-lh-t"><p class="eyebrow">San Junipero Corp</p><strong>Solo lista</strong></div>
+      <span id="lista-source" class="sj-chip sj-live">Conectando…</span>
+    </div>
+    <div id="lista-counters" class="l16k sj-cnts" role="toolbar"></div>
+    <div class="sj-lh-act">
+      <button type="button" id="lista-resumen" class="btn-slim sj-mini">Resumen</button>
+      <span id="lista-racha" class="racha-pill sj-mini" title="Racha" role="status">Racha –</span>
+      <button type="button" id="lista-to-3d" class="sj-mini" title="Ver la oficina en 3D">Oficina 3D</button>
+      <button type="button" id="lista-mando" class="sj-mini">Desbloquear mando</button>
+    </div>
   </header>
   <div id="lista-stale-slot"></div>
-  <div id="lista-counters" class="l16k" role="toolbar"></div>
   <p id="lista-meta" class="muted"></p>
   <div id="lista-body"></div>
-  <p class="muted l16pie">Vista ligera sin 3D. Para volver a la oficina toca “🏢 3D”.</p>
+  <p class="muted l16pie">Vista ligera sin 3D. Para volver a la oficina toca “← Atrás” o el gesto atrás del teléfono.</p>
 `;
 document.body.appendChild(main);
 
 const stale = mountStaleBanner(document.getElementById('lista-stale-slot') || main);
 let snapshot = disconnectedSnapshot();
 let filtro = null;
-const mandoSession = createMandoSession({onChange: () => { enrich(); paint(); }});
+const mandoSession = createMandoSession({onChange: () => { enrich(); refreshUso(); paint(); }});
+
+async function refreshUso() {
+  if (!mandoSession.unlocked || !mandoSession.key) {
+    setUsoState({state: 'locked', uso: null});
+    return;
+  }
+  const next = await loadUsoEnc({key: mandoSession.key});
+  setUsoState(next);
+}
 
 function enrich() {
   if (snapshot.mode !== 'live') return;
@@ -62,6 +78,7 @@ const resumen = mountResumenPanel({
   getMando: () => (mandoSession.unlocked ? mandoSession.mando : null),
   onChoose: id => openFicha(id),
 });
+onUsoChange(() => { try { paint(); resumen.refresh?.(); } catch {} });
 
 function counts() {
   const c = {review: 0, working: 0, idle: 0, unknown: 0};
@@ -76,33 +93,35 @@ function paint() {
   const c = counts();
   const counters = document.getElementById('lista-counters');
   const items = [
-    ['review', 'Te esperan', c.review],
-    ['working', 'Trabajando', c.working],
-    ['idle', 'En pausa', c.idle],
+    ['review', c.review === 1 ? 'te espera' : 'te esperan', c.review],
+    ['working', 'trabajando', c.working],
+    ['idle', 'en pausa', c.idle],
   ];
   counters.innerHTML = items.map(([k, t, n]) =>
-    `<button type="button" data-k="${k}" class="${filtro === k ? 'on' : ''}"><b class="status-${k}">${n}</b> ${t}</button>`).join('');
+    `<button type="button" data-k="${k}" class="sj-cnt${filtro === k ? ' on' : ''}"><i class="sj-dot st-${k}"></i><b>${n}</b> ${t}</button>`).join('');
   document.getElementById('lista-meta').textContent =
     `${snapshot.mode === 'live' ? 'En vivo' : 'Sin conexión'} · ${filtro ? 'filtro activo' : 'toca un bot'}`;
   document.getElementById('lista-source').textContent =
-    snapshot.mode === 'live' ? `En vivo · ${snapshot.source || ''}` : 'Sin conexión';
-  document.getElementById('lista-racha').textContent = '🔥 ' + (snapshot.racha?.dias ?? '–');
+    snapshot.mode === 'live' ? 'En vivo' : 'Sin conexión';
+  document.getElementById('lista-source').classList.toggle('off', snapshot.mode !== 'live');
+  document.getElementById('lista-racha').textContent = 'Racha ' + (snapshot.racha?.dias ?? '–');
   document.getElementById('lista-racha').title = rachaText(snapshot.racha);
   stale.refresh(snapshot);
 
   const body = document.getElementById('lista-body');
   const byId = Object.fromEntries(snapshot.bots.map(b => [b.id, b]));
   let html = '';
-  for (const [dep, ids] of Object.entries(DEPARTMENTS)) {
-    const rows = ids.map(i => byId[i]).filter(b => b && (!filtro || b.status === filtro));
+  for (const fl of [...floors].sort((a, b) => b.id - a.id)) {
+    const rows = snapshot.bots.filter(b => b.floor === fl.id && (!filtro || b.status === filtro));
     if (!rows.length) continue;
-    html += `<h3>${dep}</h3>`;
+    html += `<h3 class="sj-floor">${fl.name.replace(' · Ted', '')}</h3>`;
     for (const b of rows) {
       const dot = b.callado ? 'callado' : b.status;
-      html += `<button type="button" class="lista-row" data-id="${b.id}">
-        <img class="av" src="${avatarPhotoUrl(b.id)}" alt="" width="36" height="36" loading="lazy">
+      const sub = [statusLabels[b.status] || 'Sin señal', b.resumen || b.task].filter(Boolean).join(' · ');
+      html += `<button type="button" class="lista-row sj-lrow" data-id="${b.id}">
+        <img class="av" data-st="${b.status || 'unknown'}" src="${avatarPhotoUrl(b.id)}" alt="" width="32" height="32" loading="lazy">
         <span class="lx"><b>${b.name}</b>
-          <small><span class="status-dot status-${dot}"></span> ${statusLabels[b.status] || 'Sin señal'} · ${b.task || b.role}</small>
+          <small><span class="status-dot status-${dot}" hidden></span>${sub}</small>
           ${b.status === 'review' && b.agente ? quickHtml(b) : ''}
         </span>
         <span class="lir">›</span>
@@ -118,49 +137,73 @@ function quickHtml(b) {
     `<a class="mir v16r" href="${chatHref(b.agente)}" data-copia="${t.replace(/"/g, '&quot;')}" data-agente="${b.agente}">${l}</a>`).join('')}</span>`;
 }
 
+function closeListaFicha() {
+  const card = document.getElementById('lista-ficha');
+  const veil = document.getElementById('lista-ficha-veil');
+  if (card) { card.classList.remove('open'); card.hidden = true; }
+  if (veil) { veil.hidden = true; }
+}
+
 function openFicha(id) {
   const b = snapshot.bots.find(x => x.id === id);
   if (!b) return;
-  let dlg = document.getElementById('lista-ficha');
-  if (!dlg) {
-    dlg = document.createElement('dialog');
-    dlg.id = 'lista-ficha';
-    dlg.className = 'lista-ficha';
-    document.body.appendChild(dlg);
+  let veil = document.getElementById('lista-ficha-veil');
+  if (!veil) {
+    veil = document.createElement('div');
+    veil.id = 'lista-ficha-veil';
+    veil.hidden = true;
+    veil.addEventListener('click', closeListaFicha);
+    document.body.appendChild(veil);
+  }
+  let card = document.getElementById('lista-ficha');
+  if (!card) {
+    card = document.createElement('aside');
+    card.id = 'lista-ficha';
+    card.className = 'ficha-flotante glass-card lista-ficha-card';
+    card.setAttribute('role', 'dialog');
+    card.setAttribute('aria-label', 'Ficha del bot');
+    document.body.appendChild(card);
+    bindSwipeToClose(card, () => closeListaFicha());
   }
   const waiting = b.status === 'review' && !b.stale;
-  dlg.innerHTML = `
-    <div class="detail-top"><div>
-      <img src="${avatarPhotoUrl(b.id)}" alt="" width="48" height="48">
-      <h2>${b.name}</h2><p>${b.role} · ${departmentOf(b.id)}</p>
-    </div><button type="button" data-close>Cerrar ×</button></div>
-    <p><strong>${statusLabels[b.status] || 'Sin señal'}</strong>${b.task ? ` · ${b.task}` : ''}</p>
-    ${b.agente ? `<p><a class="mir" href="${chatHref(b.agente)}" id="lista-chat">Abrir chat →</a></p>` : '<p class="muted">🔐 Chat con mando desbloqueado.</p>'}
-    ${waiting && b.agente ? `<p class="v16rr">${QUICK_REPLIES.map(([l]) => `<button type="button" data-qr="${l}">${l}</button>`).join('')}</p>` : ''}
-    ${waiting ? `<p class="v15pp"><button type="button" data-pos="3h">⏰ Posponer 3 h</button> <button type="button" data-pos="manana">🌙 Hasta mañana</button>${isPostponed(b) ? ' <span class="muted">(pospuesto)</span>' : ''}</p>` : ''}
-    <details class="v15nota" ${getNote(b.id) ? 'open' : ''}><summary>📝 Nota privada</summary>
+  const st = statusLabels[b.status] || 'Sin señal';
+  card.hidden = false;
+  card.innerHTML = `
+    <button type="button" class="icon-btn ficha-x" data-close aria-label="Cerrar"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <img class="ficha-av" data-st="${b.status || 'unknown'}" src="${avatarPhotoUrl(b.id)}" alt="" width="48" height="48">
+    <b class="ficha-name">${b.name}</b>
+    <span class="ficha-role">${b.role || ''} · ${departmentOf(b.id)}</span>
+    <span class="ficha-st st-${b.status || 'unknown'}">${st}</span>
+    <p class="uso-line">${displayUsoLine(getUsoState(), b.id, b.mandoUso)}</p>
+    ${b.resumen ? `<p class="ficha-resumen">${b.resumen}</p>` : ''}
+    ${b.task && b.task !== b.resumen ? `<p class="ficha-task">${b.task}</p>` : ''}
+    ${b.agente ? `<p><a class="mir sj-btn gold" href="${chatHref(b.agente)}" id="lista-chat">Abrir chat</a></p>` : '<p class="muted">Chat con mando desbloqueado.</p>'}
+    ${waiting && b.agente ? `<p class="v16rr">${QUICK_REPLIES.map(([l]) => `<button type="button" class="btn-slim" data-qr="${l}">${l}</button>`).join('')}</p>` : ''}
+    ${waiting ? `<p class="v15pp"><button type="button" class="btn-slim" data-pos="3h">Posponer 3 h</button> <button type="button" class="btn-slim" data-pos="manana">Hasta mañana</button>${isPostponed(b) ? ' <span class="muted">(pospuesto)</span>' : ''}</p>` : ''}
+    <details class="v15nota" ${getNote(b.id) ? 'open' : ''}><summary>Nota privada</summary>
       <textarea rows="3" data-nota>${getNote(b.id).replace(/</g, '&lt;')}</textarea></details>
   `;
-  dlg.showModal();
-  dlg.querySelector('[data-close]').onclick = () => dlg.close();
-  dlg.querySelector('#lista-chat')?.addEventListener('click', (e) => {
+  veil.hidden = false;
+  requestAnimationFrame(() => card.classList.add('open'));
+  card.querySelector('[data-close]').onclick = closeListaFicha;
+  card.querySelector('#lista-chat')?.addEventListener('click', (e) => {
     e.preventDefault();
     copyAndOpenChat({agente: b.agente});
   });
-  dlg.querySelectorAll('[data-qr]').forEach(btn => {
+  card.querySelectorAll('[data-qr]').forEach(btn => {
     btn.addEventListener('click', () => {
       const text = QUICK_REPLIES.find(([l]) => l === btn.dataset.qr)?.[1];
       copyAndOpenChat({agente: b.agente, text});
     });
   });
-  dlg.querySelectorAll('[data-pos]').forEach(btn => {
+  card.querySelectorAll('[data-pos]').forEach(btn => {
     btn.addEventListener('click', () => {
       postpone(b.id, b.waitingSince, btn.dataset.pos);
-      dlg.close();
+      closeListaFicha();
       paint();
     });
   });
-  const ta = dlg.querySelector('[data-nota]');
+  const ta = card.querySelector('[data-nota]');
   ta?.addEventListener('input', () => setNote(b.id, ta.value));
 }
 
@@ -180,18 +223,54 @@ document.getElementById('lista-body').addEventListener('click', (e) => {
   const row = e.target.closest('[data-id]');
   if (row) openFicha(row.dataset.id);
 });
-document.getElementById('lista-to-3d').onclick = () => {
-  localStorage.setItem('atelierVista', '3d');
+function goTo3d() {
+  try { localStorage.setItem('atelierVista', '3d'); } catch {}
   const u = new URL(location.href);
   u.searchParams.delete('abrir');
-  location.replace(u.pathname + u.search);
-};
+  const dest = u.pathname + u.search;
+  if (history.state && history.state.atelierLista && history.length > 1) {
+    // Leave a flag so popstate (if it fires after back) is a no-op if we also assign.
+    try { sessionStorage.setItem('atelierLeavingLista', '1'); } catch {}
+    history.back();
+    // If Back didn't unload us quickly (same-document pop), assign.
+    setTimeout(() => {
+      if (document.body.classList.contains('lista-mode')) location.assign(dest);
+    }, 200);
+    return;
+  }
+  location.assign(dest);
+}
+document.getElementById('lista-to-3d').onclick = goTo3d;
+document.getElementById('lista-back').onclick = goTo3d;
+
+(function setupListaHistory() {
+  const u = new URL(location.href);
+  try {
+    if (!history.state || !history.state.atelierLista) {
+      if (history.length <= 1) {
+        const clean = new URL(location.href);
+        clean.searchParams.delete('abrir');
+        history.replaceState({atelierVista: '3d'}, '', clean.pathname + clean.search);
+        u.searchParams.set('abrir', 'lista');
+        history.pushState({atelierLista: true}, '', u.pathname + u.search);
+      } else {
+        history.replaceState({atelierLista: true}, '', u.pathname + u.search);
+      }
+    }
+  } catch {}
+  window.addEventListener('popstate', (e) => {
+    if (e.state && e.state.atelierLista) return;
+    try { localStorage.setItem('atelierVista', '3d'); } catch {}
+    const clean = new URL(location.href);
+    clean.searchParams.delete('abrir');
+    location.assign(clean.pathname + clean.search);
+  });
+})();
 document.getElementById('lista-resumen').onclick = () => resumen.open();
-document.getElementById('lista-racha').onclick = () => resumen.open();
 document.getElementById('lista-mando').onclick = () => {
   // Reuse 3D page mando by switching? Simpler: prompt unlock via same dialog markup
   const pass = prompt('Frase de mando (solo en este navegador):');
-  if (pass) mandoSession.unlock(pass, {remember: true}).then(() => { enrich(); paint(); });
+  if (pass) mandoSession.unlock(pass, {remember: true}).then(() => { enrich(); refreshUso(); paint(); });
 };
 
 async function refresh() {
@@ -227,4 +306,4 @@ async function refresh() {
 
 refresh();
 setInterval(refresh, SOURCE_CONTRACT.pollIntervalMs || 60000);
-mandoSession.tryRestore?.();
+Promise.resolve(mandoSession.tryRestore?.()).then(() => refreshUso());

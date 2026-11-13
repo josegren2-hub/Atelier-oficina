@@ -163,7 +163,7 @@ export function createMovement(){
     a.arrived=true;a.moving=false;
     if(a.requested==='working'){a.seated=true;a.angle=a.seat.angle+Math.PI;a.clip='work';a.dwell=live?12:8;a.completedSeats+=1;}
     else if(a.requested==='review'){a.seated=false;a.clip='rest';a.dwell=live?14:8;}
-    else if(a.requested==='idle'){a.seated=false;a.clip=['rest','read','wave'][Math.floor(a.phase/2)%3];a.dwell=live?7:5;}
+    else if(a.requested==='idle'){a.seated=false;a.clip=['rest','read','wave'][Math.floor(a.phase/2)%3];a.dwell=live?3:5;}
     else{a.seated=false;a.clip='idle';a.dwell=4;}
    }}
    refreshPresentation(a);

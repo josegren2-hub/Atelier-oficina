@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
 import {bytesToB64} from '../src/crypto-mando.js';
-import {createMandoSession, liveTaskText, waitingFromLive, authorizationItems} from '../src/mando-session.js';
+import {createMandoSession, liveTaskText, waitingFromLive, authorizationItems, previousTaskText} from '../src/mando-session.js';
 
 const subtle = webcrypto.subtle;
 
@@ -58,4 +58,50 @@ test('session unlocks, remembers, enriches, and locks without leaking storage ke
   session.lock();
   assert.equal(session.unlocked, false);
   assert.equal(store.has('atelierMandoClave'), false);
+});
+
+test('previousTaskText uses the next historial snippet, not the current one', () => {
+  const bot = {
+    ultimo: {t: '2026-11-12T20:00:00-06:00', txt: 'Mensaje actual largo'},
+    historial: [
+      {t: '2026-11-12T20:00:00-06:00', txt: 'Mensaje actual'},
+      {t: '2026-11-11T09:30:00-06:00', txt: 'Tarea previa del bot'},
+    ],
+  };
+  const text = previousTaskText(bot, 'Mensaje actual largo');
+  assert.match(text, /Tarea previa del bot/);
+  assert.match(text, /09:30/);
+  assert.equal(previousTaskText({historial: [{t: '2026-11-12T20:00:00-06:00', txt: 'Solo una'}]}, 'Solo una'), null);
+});
+
+test('enrichBot exposes previousTask and mandoUso when unlocked', async () => {
+  const salt = webcrypto.getRandomValues(new Uint8Array(16));
+  const mandoPayload = {
+    generado: new Date().toISOString(),
+    bots: [{
+      id: 'ted',
+      tarea: '',
+      historial: [
+        {t: '2026-11-12T20:00:00-06:00', txt: 'Frase de ted ahora'},
+        {t: '2026-11-11T08:15:00-06:00', txt: 'Lo que hizo ayer'},
+      ],
+      uso: {hoy: {mensajes: 3}, '7d': {mensajes: 21}},
+    }],
+  };
+  const tareasPayload = {generado: new Date().toISOString(), bots: {ted: {frase: 'Frase de ted ahora', desde: '2026-11-12T20:00:00-06:00'}}};
+  const {enc: mandoEnc} = await makeEnc('clave', mandoPayload, salt);
+  const {enc: tareasEnc} = await makeEnc('clave', tareasPayload, salt);
+  const fetcher = async url => {
+    const body = url.includes('tareas.enc') ? tareasEnc : mandoEnc;
+    return {ok: true, status: 200, json: async () => body};
+  };
+  const session = createMandoSession({fetcher, storage: null, subtle});
+  await session.unlock('clave', {remember: false});
+  const enriched = session.enrichBot({id: 'ted', name: 'Ted', status: 'working', task: null, stale: false});
+  assert.match(enriched.previousTask, /Lo que hizo ayer/);
+  assert.equal(enriched.mandoUso['7d'].mensajes, 21);
+  session.lock();
+  const locked = session.enrichBot({id: 'ted', name: 'Ted', status: 'working', task: 'x', stale: false, previousTask: null});
+  assert.equal(locked.previousTask, null);
+  assert.equal(locked.mandoUso, null);
 });

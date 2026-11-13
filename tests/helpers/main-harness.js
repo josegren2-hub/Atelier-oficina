@@ -17,6 +17,7 @@ import {DEPARTMENTS, departmentOf} from '../../src/departments.js';
 import * as daylight from '../../src/daylight.js';
 import {isPostponed} from '../../src/local-waiting.js';
 import {rachaText} from '../../src/resumen-panel.js';
+import {createSheetManager, bindSwipeToClose} from '../../src/ui-sheets.js';
 
 const dataKey=name=>name.slice(5).replace(/-([a-z])/g,(_,letter)=>letter.toUpperCase());
 const decode=text=>text.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"');
@@ -25,7 +26,7 @@ class Events {
  constructor(){this.listeners=new Map();}
  addEventListener(type,handler){const list=this.listeners.get(type)||[];list.push(handler);this.listeners.set(type,list);}
  dispatch(type,extra={}){
-  const event={type,target:this,currentTarget:this,defaultPrevented:false,preventDefault(){this.defaultPrevented=true;},...extra};
+  const event={type,target:this,currentTarget:this,defaultPrevented:false,preventDefault(){this.defaultPrevented=true;},stopPropagation(){},...extra};
   for(const handler of this.listeners.get(type)||[])handler(event);
   return event;
  }
@@ -138,6 +139,7 @@ export function createMainHarness({storage=createMemoryStorage()}={}){
   setMode(mode){sceneCalls.push(['setMode',mode]);this.mode=mode;this.floor=-1;},
   setNight(night){sceneCalls.push(['setNight',night]);this.night=night;},setLighting(p){sceneCalls.push(['setLighting',p]);this.night=!!p?.isNight;this.lighting=p;},
   select(id){sceneCalls.push(['select',id]);this.selected=id;},
+  focusBot(id,opts){sceneCalls.push(['focusBot',id,opts]);this.selected=id;this.focused=id;},
   setDemo(value){this.demo=value;},setStatuses(snapshot){this.snapshot=snapshot;},
   setWalls(value){this.walls=value;},rotate(value){sceneCalls.push(['rotate',value]);},zoom(value){sceneCalls.push(['zoom',value]);},reset(){sceneCalls.push(['reset']);},
   getActivity(){return {label:'Postura de prueba · ejemplo'};},getMovementStats(){return {agents:[]};}
@@ -148,7 +150,7 @@ export function createMainHarness({storage=createMemoryStorage()}={}){
  const source=fs.readFileSync(new URL('../../src/main.js',import.meta.url),'utf8');
  // Intentionally fail if future imports become multiline or dynamic rather than
  // quietly deleting application code. No application function is reimplemented.
- const executable=source.replace(/^import [^\n]+;\r?$/gm,'');
+ const executable=source.replace(/^import [^\n]+;\r?$/gm,'').replace(/await import\('\.\/scene\.js'\)/g,'Promise.resolve({createOffice:globalThis.__createOffice||createOffice})');
  if(/^\s*import\b/m.test(executable))throw new Error('Harness needs an explicit update for new import syntax');
  const historyStack=[{atelierBack:'inicio'}];
  const history={
@@ -182,14 +184,39 @@ export function createMainHarness({storage=createMemoryStorage()}={}){
   mountFichaLocal:()=>({refresh(){},root:{}}),
   mountResumenPanel:()=>({open(){},close(){},isOpen(){return false;},refresh(){},rachaText:()=>'🔥'}),
   mountStaleBanner:()=>({refresh(){}}),
+  ICON:{mando:'',equipo:'',proyectos:'',paneles:'',noche:'',dia:'',resumen:'',lista:'',mas:'',racha:'',close:''},
+  iconHtml:(n,l)=>l||'',
+  mountProyectosPanel:()=>({open(){},close(){},isOpen(){return false;},refresh(){},element:{}}),
+  createSheetManager, bindSwipeToClose,
+  sheets: createSheetManager(),
+  bindChromeNow(){},
+  loadUsoEnc:async()=>({state:'missing',uso:null}),
+  getUsoState:()=>({state:'locked',uso:null}),
+  setUsoState:s=>s,
+  usoLine:()=>'Solo con el mando desbloqueado',
+  displayUsoLine:()=>'Solo con el mando desbloqueado',
+  dedupeFactRows:(rows)=>rows,
+  onUsoChange:()=>()=>{},
+  mountFichaFlotante:({onOpenFull}={})=>({
+    open(bot){ /* orchestration tests expect the detail dialog for profile */ const d=document.querySelector('#detail'); if(d){d.open=true;d.showModalCalls=(d.showModalCalls||0)+1;} this._id=bot?.id; },
+    close(){this._id=null; const d=document.querySelector('#detail'); if(d)d.open=false;},
+    isOpen(){return !!this._id;},
+    getCurrentId(){return this._id||null;},
+    reposition(){},
+    destroy(){},
+    element:{},
+  }),
+
 
   buildPizarronModel:()=>({unlocked:false,aud:[],esp:[],pend:[],gen:null}),
   createMandoSession:({onChange}={})=>{
-    const api={unlocked:false,mando:null,tareas:null,unlock:async()=>({unlocked:true}),tryRestore:async()=>({unlocked:false}),refresh:async()=>({unlocked:false}),lock(){api.unlocked=false;onChange?.({unlocked:false});return {unlocked:false};},snapshot:()=>({unlocked:false}),enrichBot:b=>({...b,mandoUnlocked:false}),botRecord:()=>null};
+    const api={unlocked:false,mando:null,tareas:null,key:null,unlock:async()=>({unlocked:true}),tryRestore:async()=>({unlocked:false}),refresh:async()=>({unlocked:false}),lock(){api.unlocked=false;onChange?.({unlocked:false});return {unlocked:false};},snapshot:()=>({unlocked:false}),enrichBot:b=>({...b,mandoUnlocked:false}),botRecord:()=>null};
     return api;
   },
   createOffice:(container,onChoose,onStats,onAgenda,onFloor)=>{sceneCallbacks={container,onChoose,onAgenda,onFloor};onStats({loaded:16,failed:0});return scene;},
-  matchMedia:()=>({matches:true}),setInterval:callback=>{intervals.push(callback);return intervals.length;},clearInterval:()=>{}
+  __createOffice:(container,onChoose,onStats,onAgenda,onFloor)=>{sceneCallbacks={container,onChoose,onAgenda,onFloor};onStats({loaded:16,failed:0});return scene;},
+  matchMedia:()=>({matches:false,addEventListener(){},removeEventListener(){}}),requestAnimationFrame:fn=>0,setTimeout:(fn)=>fn(),clearTimeout:()=>{},
+  matchMediaUnused:null,setInterval:callback=>{intervals.push(callback);return intervals.length;},clearInterval:()=>{}
  });
  vm.runInContext(executable,context,{filename:'src/main.js (real body; injected imports)',timeout:1000});
  if(errors.length)throw new Error(`Unexpected main.js initialization errors: ${JSON.stringify(errors)}`);

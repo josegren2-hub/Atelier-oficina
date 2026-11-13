@@ -46,7 +46,7 @@ export function mountCommandCenter({getSnapshot=()=>({}),onChoose=()=>{}}={}) {
   function button(text,action,cls){const node=el('button',text,cls);node.type='button';node.addEventListener('click',action);return node;}
   function empty(title,description,parent=content){const block=el('div',undefined,'cc-empty');block.append(el('h3',title),el('p',description));parent.append(block);}
   function heading(title,description){const block=el('div',undefined,'cc-section-heading');block.append(el('h3',title));if(description)block.append(el('p',description,'cc-explainer'));content.append(block);}
-  function summary(items){const block=el('dl',undefined,items.length===2?'cc-summary cc-summary-pair':'cc-summary');for(const [label,value] of items){const item=el('div');item.append(el('dt',label),el('dd',value===null?'—':String(value)));block.append(item);}content.append(block);}
+  function summary(items){const block=el('dl',undefined,items.length===2?'cc-summary cc-summary-pair':'cc-summary');for(const [label,value] of items){const item=el('div');const text=value===null?'—':String(value);const numeric=value===null||(typeof value==='number')||/^[—\d]+$/.test(text);const dd=el('dd',text,numeric?'':'cc-summary-word');item.append(el('dt',label),dd);block.append(item);}content.append(block);}
   function render(){
     dialog.querySelector('h2').textContent={waiting:'Te espera',tasks:'Actividades',notifications:'Notificaciones',stats:'Estadísticas',agenda:'Agendas'}[section];
     dialog.querySelectorAll('[data-section]').forEach(node=>node.setAttribute('aria-current',node.dataset.section===section?'page':'false'));
@@ -57,7 +57,7 @@ export function mountCommandCenter({getSnapshot=()=>({}),onChoose=()=>{}}={}) {
     if(section==='waiting') renderWaiting();
     if(section==='tasks') renderTasks();
         if(section==='notifications') {
-      heading('Avisos y celular','Estado público de ntfy + avisos DEMO. Atelier no reenvía al tema real (el loop de la caja ya lo hace).');
+      heading('Avisos y celular','Estado público de ntfy + avisos DEMO. San Junipero no reenvía al tema real (el loop de la caja ya lo hace).');
       const snap=getSnapshot()||{};
       const health=avisosHealthLabel(mapSalud(snap.salud));
       summary([['Salud avisos',health.text],['Notificaciones DEMO',model.hasNotifications?model.notifications.length:null]]);
@@ -66,7 +66,7 @@ export function mountCommandCenter({getSnapshot=()=>({}),onChoose=()=>{}}={}) {
         content.append(el('p',`Te espera ≥24 h (${longWait.length}) · solo lectura`,'cc-note'));
         for(const w of longWait){
           const card=el('article',undefined,'cc-card');
-          card.append(el('span','Te espera','cc-badge'),el('h3',w.title),el('p',`Abrir ficha en Atelier: ${w.deepLink}`),el('small',dateText(w.waitingSince)));
+          card.append(el('span','Te espera','cc-badge'),el('h3',w.title),el('p',`Abrir ficha en San Junipero: ${w.deepLink}`),el('small',dateText(w.waitingSince)));
           const btn=el('button','Ver ficha');btn.type='button';btn.addEventListener('click',()=>{dialog.close();onChoose(w.id);});
           card.append(btn);content.append(card);
         }

@@ -23,6 +23,6 @@ test('Equipo HTML groups by area/floor with photo and status', () => {
 
 test('folded Equipo only shows toggle', () => {
   const html = renderEquipoHtml({bots, selected: null, folded: true});
-  assert.match(html, /☰ Equipo/);
+  assert.match(html, />Equipo</);
   assert.doesNotMatch(html, /MISSION CONTROL/);
 });

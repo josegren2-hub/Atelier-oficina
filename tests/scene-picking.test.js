@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import * as THREE from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {bots,floors} from '../src/data.js';
-import {fitVolumes,fitOrthographic} from '../src/camera-fit.js';
+import {fitVolumes,fitOrthographic,applyBottomChromePad} from '../src/camera-fit.js';
 import {createMovement,segmentClear,planRoute,BODY_RADIUS,PERSONAL_SPACE} from '../src/movement.js';
 import {createAvatarModels} from '../src/avatar-models.js';
 import * as layout from '../src/view-layout.js';
@@ -22,7 +22,7 @@ function withScene(width,height,run,{left=0,top=0}={}){
  const furnishingsText=readFileSync(new URL('../src/furnishings.js',import.meta.url),'utf8').replace(/^import .*;\n/gm,'').replace('export function','function').replaceAll('import.meta.env.BASE_URL',"'/'");
  const createFurnishings=new Function('THREE','RoundedBoxGeometry','GLTFLoader',`${furnishingsText};return createFurnishings;`)(THREE,RoundedBoxGeometry,class{load(){}});
  const source=readFileSync(new URL('../src/scene.js',import.meta.url),'utf8').replace(/^import .*;\n/gm,'').replace('export function','function');
- const deps={createMovement:()=>{movement=createMovement();return movement;},segmentClear,planRoute,BODY_RADIUS,PERSONAL_SPACE,THREE:engine,OrbitControls:Controls,RoomEnvironment:class{dispose(){}},bots,floors,createFurnishings,fitVolumes,fitOrthographic,...layout,attachDeskProps,createDeskProp,createAvatarModels};
+ const deps={createMovement:()=>{movement=createMovement();return movement;},segmentClear,planRoute,BODY_RADIUS,PERSONAL_SPACE,THREE:engine,OrbitControls:Controls,RoomEnvironment:class{dispose(){}},bots,floors,createFurnishings,fitVolumes,fitOrthographic,applyBottomChromePad,...layout,attachDeskProps,createDeskProp,mountFloorLabels:()=>({update(){},destroy(){}}),createAvatarModels};
  try{
   const createOffice=new Function(...Object.keys(deps),`${source};return createOffice;`)(...Object.values(deps));
   const selected=[],agendas=[],floorClicks=[];
@@ -42,6 +42,8 @@ function withScene(width,height,run,{left=0,top=0}={}){
 // are stubbed. Movement can advance independently to avoid rendering 1,000
 // identical frames while retaining its real routes and eventual seated state.
 const targetOf=object=>{let node=object;while(node&&!node.userData.bot&&!node.userData.agenda&&!Number.isInteger(node.userData.floorId))node=node.parent;return node;};
+// t354u: this harness mixes fake frame time with real performance.now(), so floor tweens never finish here; keep walking active during them for this geometry test only.
+globalThis.__atelierTestNoPause=true;
 for(const [width,height,top]of [[1037,700,0],[375,350.90625,465.6875]])test(`real plush picking ${width}×${height}: small mouse/touch targets while moving and seated`,()=>withScene(width,height,h=>{
  const {office,frames,advanceMovement,hosts,project,hitAt,click,selected,agendas,floorClicks,scene}=h;
  const torsoOf=host=>host.getObjectByName('Rounded stuffed body')??host.getObjectByName('Soft extruded silhouette')??host.getObjectByName('Round stuffed body');
@@ -76,7 +78,7 @@ for(const [width,height,top]of [[1037,700,0],[375,350.90625,465.6875]])test(`rea
   decorations.forEach(o=>o.visible=true);
   return {host,torso,center};
  }
- office.setView(4);frames(2);
+ office.setView(5);frames(2);
  office.setStatuses({mode:'demo',bots:bots.map(b=>({id:b.id,status:'working'}))});office.setDemo(true);frames(8);
  assert.equal(office.getActivity('ted').moving,true);verifyAvatar('ted','walking Ted');
  advanceMovement(1000);frames(45);
@@ -92,7 +94,7 @@ for(const [width,height,top]of [[1037,700,0],[375,350.90625,465.6875]])test(`rea
  let panel;scene.traverse(o=>{if(o.userData.agenda==='ted')panel=o;});
  const face=panel.children.find(o=>o.geometry?.type==='PlaneGeometry'),agendaPoint=project(face.getWorldPosition(new THREE.Vector3()));
  const beforeAgendaFloor=floorClicks.length;click({...agendaPoint,pointerType:'mouse'});assert.equal(agendas.at(-1),'ted');assert.equal(floorClicks.length,beforeAgendaFloor);
- const beforeFloor=floorClicks.length;click({...project(ted.parent.localToWorld(new THREE.Vector3(0,.07,9))),pointerType:'mouse'});assert.equal(floorClicks.length,beforeFloor+1);assert.equal(floorClicks.at(-1),4);
+ const beforeFloor=floorClicks.length;click({...project(ted.parent.localToWorld(new THREE.Vector3(0,.07,9))),pointerType:'mouse'});assert.equal(floorClicks.length,beforeFloor+1);assert.equal(floorClicks.at(-1),5);
  // Spread uses a different camera, scale and animated floor transforms.
  office.setMode('spread');frames(150);office.setStatuses({mode:'demo',bots:bots.map(b=>({id:b.id,status:'idle'}))});frames(20);
  assert.equal(office.getActivity('ceo').moving,true);verifyAvatar('ceo','walking Tommy in spread');

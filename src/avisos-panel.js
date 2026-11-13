@@ -38,9 +38,9 @@ export function mountAvisosPanel({
       <div>
         <p class="eyebrow">AVISOS AL CELULAR</p>
         <h2 id="avisos-dialog-title">ntfy · misma fuente que la oficina anterior</h2>
-        <p class="muted avisos-lead">El loop de la caja sigue enviando los avisos. Atelier no vuelve a mandarlos (así no hay duplicados). Aquí configuras la suscripción en <em>este</em> navegador y ves el estado público.</p>
+        <p class="muted avisos-lead">El loop de la caja sigue enviando los avisos. San Junipero no vuelve a mandarlos (así no hay duplicados). Aquí configuras la suscripción en <em>este</em> navegador y ves el estado público.</p>
       </div>
-      <button type="button" data-close aria-label="Cerrar">Cerrar ×</button>
+      <button type="button" data-close aria-label="Cerrar">✕</button>
     </div>
     <div class="avisos-body">
       <section class="avisos-block" data-health></section>
@@ -105,7 +105,7 @@ export function mountAvisosPanel({
     session.rememberCandidates(cands);
     waitingEl.replaceChildren();
     waitingEl.append(el('h3', 'Te espera · umbral 24 h'));
-    waitingEl.append(el('p', 'Misma regla que el loop (solo lectura aquí; no se envía ntfy desde Atelier).', 'muted small'));
+    waitingEl.append(el('p', 'Misma regla que el loop (solo lectura aquí; no se envía ntfy desde San Junipero).', 'muted small'));
     if (!cands.length) {
       waitingEl.append(el('p', 'Nadie lleva 24 h o más en Te espera ahora.', 'muted'));
     } else {
@@ -117,13 +117,13 @@ export function mountAvisosPanel({
         const open = el('button', 'Abrir ficha');
         open.type = 'button';
         open.addEventListener('click', () => { dialog.close(); onChoose(c.id); });
-        const copy = el('button', 'Copiar enlace Atelier');
+        const copy = el('button', 'Copiar enlace San Junipero');
         copy.type = 'button';
         copy.addEventListener('click', async () => {
           try {
             await navigator.clipboard.writeText(c.deepLink);
             copy.textContent = 'Copiado';
-            setTimeout(() => { copy.textContent = 'Copiar enlace Atelier'; }, 1500);
+            setTimeout(() => { copy.textContent = 'Copiar enlace San Junipero'; }, 1500);
           } catch {
             copy.textContent = 'No se pudo copiar';
           }
@@ -202,6 +202,8 @@ export function mountAvisosPanel({
       if (!dialog.open) dialog.showModal();
       dialog.querySelector('[data-close]')?.focus();
     },
+    close() { if (dialog.open) dialog.close(); },
+    isOpen: () => !!dialog.open,
     deepLinkFor: atelierDeepLink,
   };
 }

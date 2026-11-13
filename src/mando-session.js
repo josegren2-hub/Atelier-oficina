@@ -1,5 +1,6 @@
 /** Phase 2: read-only client for public mando.enc + tareas.enc from Oficina-bots. */
 import {SOURCE_CONTRACT} from './source-contract.js';
+import {clipPhrase} from './text-clip.js';
 import {assertEncEnvelope, decryptEncJson, deriveMandoKey, exportRawKey, importRawKey} from './crypto-mando.js';
 
 export const MANDO_ENDPOINTS = Object.freeze({
@@ -47,6 +48,25 @@ export function liveTaskText({botId, mandoBot, vivoStatus, tareas, mandoGenerado
   }
   if (mandoBot?.tarea) return {text: mandoBot.tarea, detail: ageLabel(mandoGenerado), source: 'mando.enc'};
   return null;
+}
+
+
+function sameSnippet(a, b) {
+  const x = String(a || '').trim();
+  const y = String(b || '').trim();
+  if (!x || !y) return false;
+  return x === y || x.startsWith(y) || y.startsWith(x);
+}
+
+/** Second-newest assistant snippet from mando.enc historial (newest-first). */
+export function previousTaskText(mandoBot, currentText) {
+  const hist = Array.isArray(mandoBot?.historial) ? mandoBot.historial : [];
+  const cur = currentText || mandoBot?.ultimo?.txt || '';
+  const prev = hist.find(h => h && typeof h.txt === 'string' && h.txt.trim() && !sameSnippet(h.txt, cur));
+  if (!prev) return null;
+  const when = hm(prev.t);
+  const txt = clipPhrase(prev.txt, 140);
+  return when ? `${txt} · ${when}` : txt;
 }
 
 export function waitingFromLive(snapshot) {
@@ -193,6 +213,10 @@ export function createMandoSession({
       // Prefer live encrypted phrase / supervisor task over public estado frase when unlocked.
       task: task?.text || liveBot.task || null,
       activity: task ? [task.text, task.detail].filter(Boolean).join(' · ') : liveBot.activity,
+      previousTask: unlocked ? previousTaskText(mandoBot, task?.text || liveBot.task) : (liveBot.previousTask || null),
+      mandoUso: unlocked ? (mandoBot?.uso || null) : null,
+      // t334u: short explained summary built by recolectar-mando.py rules (no model calls).
+      resumen: unlocked && typeof mandoBot?.resumen?.txt === 'string' ? mandoBot.resumen.txt : null,
       mandoUnlocked: unlocked,
     };
   }
@@ -202,5 +226,7 @@ export function createMandoSession({
     get unlocked() { return unlocked; },
     get mando() { return mando; },
     get tareas() { return tareas; },
+    get key() { return key; },
   };
 }
+

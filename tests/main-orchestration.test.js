@@ -7,7 +7,7 @@ import {createMainHarness,createMemoryStorage} from './helpers/main-harness.js';
 const teamSize=h=>h.all('#bot-list .bot').length;
 const field=(h,name)=>h.get(`[data-profile-field="${name}"]`).textContent;
 
-test('main: roster click opens profile immediately; close restores sixteen and the previous floor',()=>{
+test('main: roster click focuses camera and opens ficha (D12); close restores sixteen and keeps the camera on the bot floor (C28b)',()=>{
  const h=createMainHarness();
  assert.equal(teamSize(h),16);
  h.click('#demo'); // phase 1 defaults to live/offline; enter demo for example tasks
@@ -16,8 +16,8 @@ test('main: roster click opens profile immediately; close restores sixteen and t
  assert.equal(h.get('#detail').open,true);
  assert.equal(h.get('#detail').showModalCalls,1);
  assert.equal(h.get('#detail-title').textContent,'Ted');
- assert.equal(h.document.activeElement.id,'detail-close');
- assert.equal(h.scene.floor,4);
+ // D12 (Bloque 2): roster opens the floating ficha + camera, not the modal; no forced focus to detail-close.
+ assert.equal(h.scene.floor,5);
  assert.equal(h.scene.selected,'ted');
  assert.equal(teamSize(h),16);
  assert.equal(h.get('#roster-floor').value,'-1');
@@ -25,7 +25,7 @@ test('main: roster click opens profile immediately; close restores sixteen and t
  assert.match(field(h,'previous'),/^Ejemplo:/);
  h.click('#detail-close');
  assert.equal(h.get('#detail').open,false);
- assert.equal(h.scene.floor,-1);
+ assert.equal(h.scene.floor,5); // C28b: closing keeps the camera where it is
  assert.equal(h.scene.selected,null);
  assert.equal(teamSize(h),16);
  assert.equal(h.document.activeElement.dataset.botId,'ted');
@@ -53,7 +53,7 @@ test('main: filtered roster and search survive repeated profile open/cancel, wit
 
 test('main: both Ver todos actions clear search/floor filters and restore sixteen',()=>{
  const h=createMainHarness();
- h.change('#floor-jump',4);
+ h.change('#floor-jump',5);
  h.input('#search','Ted');
  h.click('[data-bot-id="ted"]');
  h.click('#detail-all');
@@ -82,12 +82,9 @@ test('main: scene and command callbacks share immediate profile opening without 
  assert.equal(h.get('#detail-title').textContent,'Julián');
  assert.equal(h.scene.floor,1);
  assert.equal(teamSize(h),16);
- h.click('#detail-agenda');
- assert.deepEqual(h.commandCalls.at(-1),['openAgenda','julian']);
- assert.equal(h.get('#detail').open,true);
- h.cancelDetail();
- assert.equal(h.document.activeElement.id,'canvas-container');
- assert.equal(h.scene.floor,-1);
+ h.click('#detail-agenda'); // C46a: opens the Pizarrón calendar and closes the ficha
+ assert.equal(h.get('#detail').open,false);
+ assert.equal(h.scene.floor,1); // C28b
  h.chooseFromCommand('ted');
  assert.equal(h.get('#detail').open,true);
  assert.equal(h.get('#detail-title').textContent,'Ted');
@@ -95,34 +92,30 @@ test('main: scene and command callbacks share immediate profile opening without 
  assert.equal(teamSize(h),16);
 });
 
-test('main: 2×2 pager reaches penthouse and returns, retaining profile origin on page two',()=>{
+test('main: Plantas shows all six floors on one page, including the penthouse',()=>{
  const h=createMainHarness();
  h.click('[data-view="spread"]');
  assert.equal(h.scene.mode,'spread');
  assert.equal(h.scene.floor,-1);
  assert.equal(h.get('#spread-picker').hidden,false);
- assert.equal(h.all('#spread-floors button').length,4);
- assert.match(h.get('#spread-page-label').textContent,/Página 1 de 2/);
- assert.equal(h.get('#spread-next').hidden,false);
- h.click('#spread-next');
- assert.equal(h.scene.floor,4);
- assert.equal(h.get('#floor-jump').value,'4');
- assert.match(h.get('#spread-page-label').textContent,/Página 2 de 2.*Piso 4/);
+ assert.equal(h.all('#spread-floors button').length,6);
+ assert.equal(h.get('#spread-page-label').textContent.trim(),'');assert.ok(h.get('#spread-page-label').hidden);
  assert.equal(h.get('#spread-next').hidden,true);
- assert.equal(h.get('#spread-previous').hidden,false);
- assert.equal(h.get('#spread-floors').hidden,true);
+ assert.equal(h.get('#spread-previous').hidden,true);
  assert.equal(teamSize(h),16);
- assert.equal(h.document.activeElement.id,'spread-previous');
- h.click('[data-bot-id="luna"]');
- assert.equal(h.scene.floor,0);
+ h.click('[data-bot-id="ted"]');
+ assert.equal(h.scene.floor,5);
  h.click('#detail-close');
- assert.equal(h.scene.floor,4);
- assert.match(h.get('#spread-page-label').textContent,/Página 2 de 2/);
- h.click('#spread-previous');
+ assert.equal(h.scene.floor,5); // C28b: stays on the bot floor
+ h.click('[data-view="spread"]');
  assert.equal(h.scene.floor,-1);
- assert.match(h.get('#spread-page-label').textContent,/Página 1 de 2/);
- assert.equal(h.get('#spread-floors').hidden,false);
- assert.equal(h.document.activeElement.id,'spread-next');
+ assert.equal(h.get('#spread-picker').hidden,false);
+ assert.equal(teamSize(h),16);
+ h.all('#spread-floors button')[3].click();
+ assert.equal(h.scene.floor,3);
+ assert.equal(teamSize(h),3); // roster follows the isolated floor
+ h.click('[data-view="spread"]');
+ assert.equal(h.scene.floor,-1);
  assert.equal(teamSize(h),16);
 });
 
@@ -137,7 +130,7 @@ test('main: stored night theme reaches checkbox and scene, survives flows and a 
  h.click('[data-bot-id="apps"]');h.cancelDetail();
  h.click('#command-open');
  h.click('#avatars-toggle');h.click('#avatars-close');
- h.click('[data-view="spread"]');h.click('#spread-next');h.click('#spread-previous');
+ h.click('[data-view="spread"]');
  h.click('#show-all');h.click('#reset');
  assert.equal(h.get('#night').checked,true);
  assert.equal(h.scene.night,true);

@@ -1,0 +1,550 @@
+{
+  "moved665": [
+    {
+      "name": "Luna",
+      "a": [
+        327.4,
+        823.8
+      ],
+      "b": [
+        327.4,
+        823.8
+      ],
+      "dist": 0,
+      "inViewA": true,
+      "inViewB": true,
+      "emFont": "12px",
+      "imgW": "30px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Emiliano",
+      "a": [
+        202.8,
+        800
+      ],
+      "b": [
+        202.8,
+        800
+      ],
+      "dist": 0,
+      "inViewA": true,
+      "inViewB": true,
+      "emFont": "12px",
+      "imgW": "30px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Valery",
+      "a": [
+        170,
+        800
+      ],
+      "b": [
+        170,
+        800
+      ],
+      "dist": 0,
+      "inViewA": true,
+      "inViewB": true,
+      "emFont": "12px",
+      "imgW": "30px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Julián",
+      "a": [
+        383.2,
+        459.1
+      ],
+      "b": [
+        383.2,
+        459.1
+      ],
+      "dist": 0,
+      "inViewA": true,
+      "inViewB": true,
+      "emFont": "12px",
+      "imgW": "30px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Inés",
+      "a": [
+        341.2,
+        525
+      ],
+      "b": [
+        341.2,
+        525
+      ],
+      "dist": 0,
+      "inViewA": true,
+      "inViewB": true,
+      "emFont": "12px",
+      "imgW": "30px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Tommy",
+      "a": [
+        0,
+        0
+      ],
+      "b": [
+        0,
+        0
+      ],
+      "dist": 0,
+      "inViewA": false,
+      "inViewB": false,
+      "emFont": "12px",
+      "imgW": "30px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Rodrigo",
+      "a": [
+        0,
+        0
+      ],
+      "b": [
+        0,
+        0
+      ],
+      "dist": 0,
+      "inViewA": false,
+      "inViewB": false,
+      "emFont": "12px",
+      "imgW": "30px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Joss",
+      "a": [
+        0,
+        0
+      ],
+      "b": [
+        0,
+        0
+      ],
+      "dist": 0,
+      "inViewA": false,
+      "inViewB": false,
+      "emFont": "12px",
+      "imgW": "30px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Charly",
+      "a": [
+        0,
+        0
+      ],
+      "b": [
+        0,
+        0
+      ],
+      "dist": 0,
+      "inViewA": false,
+      "inViewB": false,
+      "emFont": "12px",
+      "imgW": "30px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Luca",
+      "a": [
+        0,
+        0
+      ],
+      "b": [
+        0,
+        0
+      ],
+      "dist": 0,
+      "inViewA": false,
+      "inViewB": false,
+      "emFont": "12px",
+      "imgW": "30px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Rulo",
+      "a": [
+        0,
+        0
+      ],
+      "b": [
+        0,
+        0
+      ],
+      "dist": 0,
+      "inViewA": false,
+      "inViewB": false,
+      "emFont": "12px",
+      "imgW": "30px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Naim",
+      "a": [
+        0,
+        0
+      ],
+      "b": [
+        0,
+        0
+      ],
+      "dist": 0,
+      "inViewA": false,
+      "inViewB": false,
+      "emFont": "12px",
+      "imgW": "30px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Mateo",
+      "a": [
+        0,
+        0
+      ],
+      "b": [
+        0,
+        0
+      ],
+      "dist": 0,
+      "inViewA": false,
+      "inViewB": false,
+      "emFont": "12px",
+      "imgW": "30px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Dany",
+      "a": [
+        0,
+        0
+      ],
+      "b": [
+        0,
+        0
+      ],
+      "dist": 0,
+      "inViewA": false,
+      "inViewB": false,
+      "emFont": "12px",
+      "imgW": "30px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Tadeo",
+      "a": [
+        0,
+        0
+      ],
+      "b": [
+        0,
+        0
+      ],
+      "dist": 0,
+      "inViewA": false,
+      "inViewB": false,
+      "emFont": "12px",
+      "imgW": "30px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Ted",
+      "a": [
+        0,
+        0
+      ],
+      "b": [
+        0,
+        0
+      ],
+      "dist": 0,
+      "inViewA": false,
+      "inViewB": false,
+      "emFont": "12px",
+      "imgW": "30px",
+      "cls": "v17pin leible pausa"
+    }
+  ],
+  "moved390": [
+    {
+      "name": "Luna",
+      "a": [
+        185.2,
+        633.6
+      ],
+      "b": [
+        185.2,
+        633.6
+      ],
+      "dist": 0,
+      "inViewA": true,
+      "inViewB": true,
+      "emFont": "11px",
+      "imgW": "28px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Emiliano",
+      "a": [
+        103,
+        619.3
+      ],
+      "b": [
+        103,
+        619.3
+      ],
+      "dist": 0,
+      "inViewA": true,
+      "inViewB": true,
+      "emFont": "11px",
+      "imgW": "28px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Valery",
+      "a": [
+        83.8,
+        619.3
+      ],
+      "b": [
+        83.8,
+        619.3
+      ],
+      "dist": 0,
+      "inViewA": true,
+      "inViewB": true,
+      "emFont": "11px",
+      "imgW": "28px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Julián",
+      "a": [
+        218.8,
+        403.4
+      ],
+      "b": [
+        218.8,
+        403.4
+      ],
+      "dist": 0,
+      "inViewA": true,
+      "inViewB": true,
+      "emFont": "11px",
+      "imgW": "28px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Inés",
+      "a": [
+        193.8,
+        444.6
+      ],
+      "b": [
+        193.8,
+        444.6
+      ],
+      "dist": 0,
+      "inViewA": true,
+      "inViewB": true,
+      "emFont": "11px",
+      "imgW": "28px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Tommy",
+      "a": [
+        0,
+        0
+      ],
+      "b": [
+        0,
+        0
+      ],
+      "dist": 0,
+      "inViewA": false,
+      "inViewB": false,
+      "emFont": "11px",
+      "imgW": "28px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Rodrigo",
+      "a": [
+        0,
+        0
+      ],
+      "b": [
+        0,
+        0
+      ],
+      "dist": 0,
+      "inViewA": false,
+      "inViewB": false,
+      "emFont": "11px",
+      "imgW": "28px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Joss",
+      "a": [
+        0,
+        0
+      ],
+      "b": [
+        0,
+        0
+      ],
+      "dist": 0,
+      "inViewA": false,
+      "inViewB": false,
+      "emFont": "11px",
+      "imgW": "28px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Charly",
+      "a": [
+        0,
+        0
+      ],
+      "b": [
+        0,
+        0
+      ],
+      "dist": 0,
+      "inViewA": false,
+      "inViewB": false,
+      "emFont": "11px",
+      "imgW": "28px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Luca",
+      "a": [
+        0,
+        0
+      ],
+      "b": [
+        0,
+        0
+      ],
+      "dist": 0,
+      "inViewA": false,
+      "inViewB": false,
+      "emFont": "11px",
+      "imgW": "28px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Rulo",
+      "a": [
+        0,
+        0
+      ],
+      "b": [
+        0,
+        0
+      ],
+      "dist": 0,
+      "inViewA": false,
+      "inViewB": false,
+      "emFont": "11px",
+      "imgW": "28px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Naim",
+      "a": [
+        0,
+        0
+      ],
+      "b": [
+        0,
+        0
+      ],
+      "dist": 0,
+      "inViewA": false,
+      "inViewB": false,
+      "emFont": "11px",
+      "imgW": "28px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Mateo",
+      "a": [
+        0,
+        0
+      ],
+      "b": [
+        0,
+        0
+      ],
+      "dist": 0,
+      "inViewA": false,
+      "inViewB": false,
+      "emFont": "11px",
+      "imgW": "28px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Dany",
+      "a": [
+        0,
+        0
+      ],
+      "b": [
+        0,
+        0
+      ],
+      "dist": 0,
+      "inViewA": false,
+      "inViewB": false,
+      "emFont": "11px",
+      "imgW": "28px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Tadeo",
+      "a": [
+        0,
+        0
+      ],
+      "b": [
+        0,
+        0
+      ],
+      "dist": 0,
+      "inViewA": false,
+      "inViewB": false,
+      "emFont": "11px",
+      "imgW": "28px",
+      "cls": "v17pin leible pausa"
+    },
+    {
+      "name": "Ted",
+      "a": [
+        0,
+        0
+      ],
+      "b": [
+        0,
+        0
+      ],
+      "dist": 0,
+      "inViewA": false,
+      "inViewB": false,
+      "emFont": "11px",
+      "imgW": "28px",
+      "cls": "v17pin leible pausa"
+    }
+  ]
+}
