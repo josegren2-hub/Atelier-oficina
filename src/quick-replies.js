@@ -35,19 +35,8 @@ export function mountQuickReplies(container, {getBot, onToast} = {}) {
     const unlocked = b.mandoUnlocked === true;
     const waiting = b.status === 'review' && !b.stale;
 
-    if (unlocked && b.agente) {
-      const chat = document.createElement('a');
-      chat.className = 'mir';
-      chat.href = chatHref(b.agente);
-      chat.textContent = 'Abrir chat →';
-      chat.addEventListener('click', (e) => {
-        e.preventDefault();
-        copyAndOpenChat({agente: b.agente, text: undefined}).then((r) => {
-          if (!r.ok) onToast?.('No se pudo abrir el chat en este dispositivo.');
-        });
-      });
-      root.appendChild(chat);
-    } else if (!unlocked) {
+    // The official «Abrir chat» control lives next to «Ir al avatar» in #detail-chat.
+    if (!unlocked) {
       const lock = document.createElement('p');
       lock.className = 'muted';
       lock.textContent = 'Chat y respuestas rápidas con el mando desbloqueado.';
@@ -74,6 +63,7 @@ export function mountQuickReplies(container, {getBot, onToast} = {}) {
       }
       root.appendChild(wrap);
     }
+    root.hidden = !root.childElementCount;
   }
 
   return {refresh, root};

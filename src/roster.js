@@ -20,10 +20,12 @@ export function botProfile(snapshot,bot,movement=null) {
  const taskText=text(bot.task);
  const activityText=text(bot.activity);
  const unlocked=bot.mandoUnlocked===true;
+ const locked=!demo&&!unlocked;
  let currentTask;
  if(!known) currentTask='No disponible · fuente sin señal.';
- else if(!demo&&text(bot.resumen)) currentTask=text(bot.resumen);
+ else if(locked) currentTask='Solo con el mando desbloqueado';
  else if(taskText) currentTask=taskText+(bot.liveTask?.detail?` · ${bot.liveTask.detail}`:'');
+ else if(text(bot.resumen)) currentTask=text(bot.resumen);
  else if(bot.status==='working') currentTask=demo?'Sin tarea asignada en este ejemplo.':'Trabajando'; // never "sin datos" while working when live
  else if(demo) currentTask='Sin tarea asignada en este ejemplo.';
  else currentTask='No se ha recibido una tarea actual.';
@@ -48,7 +50,7 @@ export function botProfile(snapshot,bot,movement=null) {
   active,
   activity:demo?`Movimiento de ejemplo: ${text(movement?.label)||activityText||'Preparando postura de demostración'}`:known?(activityText||'No se ha recibido una descripción de actividad.'):'No hay actividad real recibida.',
   currentTask,
-  previousTask:known?(text(bot.previousTask)||(demo?'Sin tarea anterior en este ejemplo.':'No se ha recibido una tarea anterior.')):'No disponible · no hay historial recibido.',
+  previousTask:!known?'No disponible · no hay historial recibido.':locked?'Solo con el mando desbloqueado':(text(bot.previousTask)||(demo?'Sin tarea anterior en este ejemplo.':'No se ha recibido una tarea anterior.')),
   lastSignal:!demo&&text(bot.lastSignal)?new Date(bot.lastSignal).toLocaleString('es'):'Ninguna señal real recibida.',
   waitingNote,
   authorization:auth,

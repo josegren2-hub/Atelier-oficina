@@ -29,8 +29,8 @@ test('normalizeUso keeps percentages only, sorts, never invents rows', () => {
 
 test('usoLine states never invent a number', () => {
   assert.equal(usoLine({state: 'locked'}, 'ted'), 'Solo con el mando desbloqueado');
-  assert.equal(usoLine({state: 'missing'}, 'ted'), 'Aún sin datos');
-  assert.equal(usoLine({state: 'ok', uso: {bots: [{id: 'luna', pct: 10}]}}, 'ted'), 'Aún sin datos');
+  assert.equal(usoLine({state: 'missing'}, 'ted'), 'Sin dato de uso todavía');
+  assert.equal(usoLine({state: 'ok', uso: {bots: [{id: 'luna', pct: 10}]}}, 'ted'), 'Sin dato de uso todavía');
   assert.equal(usoLine({state: 'ok', uso: {bots: [{id: 'ted', pct: 12}]}}, 'ted'), 'Uso esta semana: 12 %');
 });
 
@@ -61,10 +61,11 @@ test('formatMandoUso reports counts and never invents a percentage', () => {
   assert.ok(!String(formatMandoUso({hoy: {mensajes: 19}, '7d': {mensajes: 395}})).includes('%'));
 });
 
-test('displayUsoLine prefers uso.enc share, else mando counts, else the empty label', () => {
+test('displayUsoLine shows only the weekly percentage, never message counts', () => {
   const enc = {state: 'ok', uso: {bots: [{id: 'ted', pct: 12}]}};
   assert.equal(displayUsoLine(enc, 'ted', {hoy: {mensajes: 1}, '7d': {mensajes: 2}}), 'Uso esta semana: 12 %');
-  assert.equal(displayUsoLine({state: 'missing'}, 'ted', {hoy: {mensajes: 0}, '7d': {mensajes: 5}}), 'Hoy: 0 mensajes · 7 días: 5');
-  assert.equal(displayUsoLine({state: 'missing'}, 'ted', null), 'Aún sin datos');
+  assert.equal(displayUsoLine({state: 'missing'}, 'ted', {hoy: {mensajes: 0}, '7d': {mensajes: 5}}), 'Sin dato de uso todavía');
+  assert.equal(displayUsoLine({state: 'missing'}, 'ted', null), 'Sin dato de uso todavía');
   assert.equal(displayUsoLine({state: 'locked'}, 'ted', null), 'Solo con el mando desbloqueado');
+  assert.doesNotMatch(displayUsoLine({state: 'missing'}, 'ted', {hoy: {mensajes: 80}, '7d': {mensajes: 471}}), /mensajes/);
 });

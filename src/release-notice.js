@@ -1,4 +1,4 @@
-export const RELEASE='0.22.2';
+export const RELEASE='0.22.3';
 export async function checkRelease(fetcher=fetch){
  const response=await fetcher(`${import.meta.env?.BASE_URL??'./'}release.json?check=${Date.now()}`,{cache:'no-store',credentials:'omit'});
  if(!response.ok)throw new Error('No se pudo comprobar la versión');

@@ -8,6 +8,7 @@ import {mountCommandCenter} from './command-center.js';
 import {filterRoster,botProfile} from './roster.js';
 import {readNightPreference,saveNightPreference} from './theme-state.js';
 import {createMandoSession} from './mando-session.js';
+import {openArchivero, resetArchiveroCache} from './archivero-ui.js';
 import {mountEquipoPanel} from './equipo-panel.js';
 import {mountSelectionLabels} from './selection-labels.js';
 import {mountHistoryBack} from './history-back.js';
@@ -527,7 +528,7 @@ async function bootOffice(){
  bootOffice.busy=true;
  try{
   const create=globalThis.__createOffice||(await import('./scene.js')).createOffice;
-  office=create($('#canvas-container'),choose,stats=>{$('#model-status').textContent=`Avatares: ${stats.loaded}/16${stats.failed?' · No se pudieron cargar '+stats.failed:''}`;},id=>openAgendaCalendar(id),id=>{if(id!==floor)setFloor(id);});
+  office=create($('#canvas-container'),choose,stats=>{$('#model-status').textContent=`Avatares: ${stats.loaded}/16${stats.failed?' · No se pudieron cargar '+stats.failed:''}`;},id=>openAgendaCalendar(id),id=>{if(id!==floor)setFloor(id);},id=>openArchivero(id,mandoSession));
   globalThis.__atelierOffice=office;
   applyDaylight();
   office.setDemo(false);
@@ -558,6 +559,7 @@ paintMando();
 $('#mando-unlock')?.addEventListener('click',()=>{
  if(mandoSession.unlocked){
   mandoSession.lock();
+  resetArchiveroCache();
   if(snapshot.mode==='live')applySnapshot({mode:snapshot.mode,source:snapshot.source,lastSignal:snapshot.lastSignal,salud:snapshot.salud??null,bots:snapshot.bots.map(b=>({...b}))});
   else paintMando();
   $('#refresh-feedback').textContent='Mando bloqueado en este navegador.';

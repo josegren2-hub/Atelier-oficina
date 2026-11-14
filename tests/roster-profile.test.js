@@ -40,11 +40,25 @@ test('disconnected and stale profiles suppress tasks/history, even with stale fi
  }
 });
 test('future live profiles never manufacture history from a status',()=>{
- const profile=botProfile({mode:'live',source:'Test source'},{...bots[0],status:'working',task:'Received task'});
+ const locked=botProfile({mode:'live',source:'Test source'},{...bots[0],status:'working',task:'Received task',mandoUnlocked:false});
+ assert.equal(locked.currentTask,'Solo con el mando desbloqueado');
+ assert.equal(locked.previousTask,'Solo con el mando desbloqueado');
+ assert.doesNotMatch(locked.source,/DEMO/);
+ const profile=botProfile({mode:'live',source:'Test source'},{...bots[0],status:'working',task:'Received task',mandoUnlocked:true});
  assert.equal(profile.currentTask,'Received task');
  assert.equal(profile.previousTask,'No se ha recibido una tarea anterior.');
  assert.equal(profile.activity,'No se ha recibido una descripción de actividad.');
  assert.doesNotMatch(profile.source,/DEMO/);
+});
+test('unlocked current task prefers the live phrase over a stale mando summary',()=>{
+ const profile=botProfile({mode:'live',source:'Test source'},{
+  ...bots[0],status:'working',mandoUnlocked:true,
+  task:'Frase viva',liveTask:{text:'Frase viva',detail:'en vivo · desde 10:05'},
+  resumen:'Resumen viejo de la mañana',
+ });
+ assert.match(profile.currentTask,/Frase viva/);
+ assert.match(profile.currentTask,/en vivo/);
+ assert.doesNotMatch(profile.currentTask,/Resumen viejo/);
 });
 test('night preference survives navigation/reload and storage failures are harmless',()=>{
  const values=new Map();const storage={getItem:key=>values.get(key),setItem:(key,value)=>values.set(key,value)};

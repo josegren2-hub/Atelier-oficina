@@ -65,6 +65,41 @@ export function createFurnishings(){
  function screen(g,x,y,z,w=1){box(g,x,y,z,w,.62,.065,M.dark,true);const face=new THREE.Mesh(new THREE.PlaneGeometry(w-.07,.54),dashboardMaterial);face.position.set(x,y,z+.037);g.add(face);box(g,x,y-.4,z,.06,.3,.06,M.steel);box(g,x,y-.54,z,.4,.035,.25,M.steel);box(g,x+w*.38,y-.285,z+.038,.017,.006,.004,mat('monitor-indicator',0x8fc5bb));}
  function lamp(g,x,z,y=1.1){cyl(g,x,y+.02,z,.17,.035,M.gold);cyl(g,x,y+.32,z,.025,.6,M.gold);const l=new THREE.Mesh(new THREE.ConeGeometry(.22,.14,20,1,true),M.gold);l.position.set(x,y+.64,z);g.add(l);sphere(g,x,y+.58,z,.12,M.glow,[1,.35,1]);}
  function desk(g,x,z,angle=0,double=false){const d=group(g,x,z,angle);contact(d,3.4,3.1,.4);box(d,0,1.08,0,2.4,.14,1.15,M.ivory,true);for(const dx of [-.92,.92])box(d,dx,.55,0,.07,1.03,.95,M.steel);box(d,.78,.55,0,.48,.95,.86,M.ivory,true);for(const y of [.34,.61,.88])box(d,.78,y,.439,.35,.018,.015,M.steel);screen(d,double?-.49:0,1.62,-.25,double?.85:1.03);if(double)screen(d,.49,1.62,-.25,.85);box(d,0,1.17,.25,.7,.025,.22,M.steel,true);for(let row=0;row<3;row++)for(let col=0;col<12;col++)box(d,-.305+col*.055,1.186,.18+row*.06,.044,.008,.045,M.ivory);box(d,0,1.186,.342,.28,.008,.025,M.ivory);box(d,.52,1.17,.27,.13,.05,.19,M.dark,true);cyl(d,-.86,1.25,.28,.075,.18,M.ivory);lamp(d,-.89,-.3);chair(d,0,1.05);d.scale.set(1.22,1.12,1.18);return d;}
+ function archivero(g,x,z,angle=0,botId=null){
+  const a=group(g,x,z,angle);a.userData.archivero=botId||true;
+  a.scale.setScalar(1.25);
+  const body=mat('archivero-body',0xd4dbe3,.5,.14);
+  const face=mat('archivero-face',0xc5ced8,.42,.16);
+  const accent=mat('archivero-accent',0xbcd9ec,.2,.12);
+  accent.emissive=new THREE.Color(0xbcd9ec);accent.emissiveIntensity=1.7;accent.toneMapped=false;
+  contact(a,1.15,.95);
+  box(a,0,.92,0,.62,1.34,.56,body,true);
+  box(a,0,1.62,0,.64,.08,.58,face,true);
+  box(a,0,1.574,0.255,0.50,0.010,0.050,accent);
+  box(a,0.255,1.574,0,0.050,0.010,0.50,accent);
+  box(a,-0.255,1.574,0,0.050,0.010,0.50,accent);
+  box(a,0,1.658,0.205,0.48,0.010,0.058,accent);
+  box(a,0,1.658,-0.205,0.48,0.010,0.058,accent);
+  box(a,0.205,1.658,0,0.058,0.010,0.40,accent);
+  box(a,-0.205,1.658,0,0.058,0.010,0.40,accent);
+  for(const y of [.48,.84,1.20]){
+   box(a,0,y,.285,.52,.30,.07,face,true);
+   box(a,0,y,.328,.16,.018,.022,M.steel);
+  }
+  box(a,0,.24,0,.60,.10,.54,M.steel,true);
+  return a;
+ }
+ function besideDesk(g,x,z,angle=0,sides=1,botIds=null){
+  const dist=2.14, back=-0.12;
+  const list=(sides===true||sides==='both')?[-1,1]:(Array.isArray(sides)?sides:[sides]);
+  const ids=Array.isArray(botIds)?botIds:[botIds,botIds];
+  list.forEach((side,i)=>{
+   const lx=side*dist, lz=back;
+   const wx=x+Math.cos(angle)*lx-Math.sin(angle)*lz;
+   const wz=z+Math.sin(angle)*lx+Math.cos(angle)*lz;
+   archivero(g,wx,wz,angle,ids[i]||botIds||null);
+  });
+ }
  function sofa(g,x,z,angle=0){const s=group(g,x,z,angle);s.userData.assetSlot=true;sofaSlots.push(s);contact(s,4.4,2.4,.1);box(s,0,.28,0,3.5,.36,1.28,M.dark,true);box(s,0,.82,-.5,3.5,.96,.25,M.fabric,true);for(const dx of [-1.6,1.6])box(s,dx,.65,0,.33,.68,1.28,M.fabric,true);for(const dx of [-1,0,1]){box(s,dx,.56,.06,.95,.25,1.1,M.fabric,true);box(s,dx,.95,-.29,.9,.6,.19,M.fabric,true);}box(s,.95,1,.0,.48,.45,.18,mat('mustard',0xc09c53),true);const clothGeo=new THREE.PlaneGeometry(.7,1.4,8,20);const pp=clothGeo.attributes.position;for(let i=0;i<pp.count;i++){const u=pp.getX(i),v=(pp.getY(i)+.7)/1.4;pp.setXYZ(i,-.9+u,.69-Math.max(0,v-.65)*1.3+Math.sin(u*35)*.018,-.3+v*1.3);}clothGeo.computeVertexNormals();const clothMat=mat('throw',0xcab88e,.95);clothMat.side=THREE.DoubleSide;const cloth=new THREE.Mesh(clothGeo,clothMat);cloth.castShadow=true;s.add(cloth);installSofa(s);return s;}
  function rug(g,x,z,w,d){const border=mat('rug-border',0x787874,.99);border.map=fabric.map;border.bumpMap=fabric.bumpMap;border.bumpScale=.01;box(g,x,.255,z,w,.035,d,border,true);const pile=mat('rug-pile',0xb4b3b0,.99);pile.map=fabric.map;pile.bumpMap=fabric.bumpMap;pile.bumpScale=.018;box(g,x,.277,z,w-.14,.013,d-.14,pile,true);}
  function coffeeTable(g,x,z){box(g,x,.55,z,2,.13,1.15,M.stone,true);for(const dx of [-.7,.7])box(g,x+dx,.32,z,.1,.45,.6,M.steel);box(g,x-.4,.65,z,.65,.05,.45,M.ivory);box(g,x-.36,.69,z+.02,.5,.035,.36,M.oak);cyl(g,x+.55,.78,z,.12,.35,M.gold);sphere(g,x+.55,1.02,z,.2,M.green,[1,.6,1]);}
@@ -74,6 +109,6 @@ export function createFurnishings(){
  function pendant(g,x,z,r=1,y=3.3){const ring=new THREE.Mesh(new THREE.TorusGeometry(r,.035,8,48),M.glow);ring.rotation.x=Math.PI/2;ring.position.set(x,y,z);g.add(ring);for(const dx of [-r*.7,r*.7])cyl(g,x+dx,y+.3,z,.012,.6,M.gold);}
  function mic(g,x,z){cyl(g,x,1.1,z,.12,.025,M.dark);cyl(g,x,1.35,z,.018,.5,M.steel);const head=cyl(g,x,1.65,z,.065,.22,M.dark);head.rotation.x=.5;}
  function label(g,text,x,y,z,w=4){const canvas=document.createElement('canvas');canvas.width=768;canvas.height=128;const ctx=canvas.getContext('2d');ctx.fillStyle='#292f37';ctx.fillRect(0,0,768,128);ctx.fillStyle='#e8d6b1';ctx.font='500 40px sans-serif';ctx.textAlign='center';ctx.fillText(text,384,78);const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;const a=new THREE.Mesh(new THREE.PlaneGeometry(w,w/6),new THREE.MeshBasicMaterial({map:tex}));a.position.set(x,y,z);g.add(a);return a;}
- function batch(root,skip=new Set()) {root.updateMatrixWorld(true);const inv=root.matrixWorld.clone().invert();const buckets=new Map();function visit(n){if(skip.has(n)||n.userData.assetSlot)return;for(const child of [...n.children]){if(child.isMesh&&child.geometry===boxGeo&&!child.material.transparent){const key=child.material;const b=buckets.get(key)??[];b.push(child);buckets.set(key,b);}else visit(child);}}visit(root);for(const[m,list]of buckets){if(list.length<2)continue;const inst=new THREE.InstancedMesh(boxGeo,m,list.length);list.forEach((a,i)=>{inst.setMatrixAt(i,inv.clone().multiply(a.matrixWorld));a.removeFromParent();});inst.castShadow=true;inst.receiveShadow=true;root.add(inst);}}
- return {M,mat,box,cyl,sphere,group,plant,tree,chair,screen,lamp,desk,sofa,rug,coffeeTable,library,roundTable,partition,pendant,mic,label,batch};
+ function batch(root,skip=new Set()) {root.updateMatrixWorld(true);const inv=root.matrixWorld.clone().invert();const buckets=new Map();function visit(n){if(skip.has(n)||n.userData.assetSlot||n.userData.archivero)return;for(const child of [...n.children]){if(child.isMesh&&child.geometry===boxGeo&&!child.material.transparent){const key=child.material;const b=buckets.get(key)??[];b.push(child);buckets.set(key,b);}else visit(child);}}visit(root);for(const[m,list]of buckets){if(list.length<2)continue;const inst=new THREE.InstancedMesh(boxGeo,m,list.length);list.forEach((a,i)=>{inst.setMatrixAt(i,inv.clone().multiply(a.matrixWorld));a.removeFromParent();});inst.castShadow=true;inst.receiveShadow=true;root.add(inst);}}
+ return {M,mat,box,cyl,sphere,group,plant,tree,chair,screen,lamp,desk,archivero,besideDesk,sofa,rug,coffeeTable,library,roundTable,partition,pendant,mic,label,batch};
 }

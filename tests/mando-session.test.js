@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
 import {bytesToB64} from '../src/crypto-mando.js';
-import {createMandoSession, liveTaskText, waitingFromLive, authorizationItems, previousTaskText} from '../src/mando-session.js';
+import {createMandoSession, liveTaskText, waitingFromLive, authorizationItems, previousTaskText, isProcessPhrase, humanProjectName} from '../src/mando-session.js';
 
 const subtle = webcrypto.subtle;
 
@@ -15,9 +15,18 @@ async function makeEnc(pass, payload, saltBytes = null, iter = 310000) {
   return {enc:{v:1,kdf:'PBKDF2-SHA256',iter,salt:bytesToB64(salt),iv:bytesToB64(iv),ct:bytesToB64(ct)}, salt};
 }
 
-test('liveTaskText prefers tareas.enc frase then ultimo then mando', () => {
-  assert.equal(liveTaskText({botId:'a',vivoStatus:'working',tareas:{bots:{a:{frase:'Frase viva',desde:'2026-01-01T00:00:00Z'}}},mandoBot:{tarea:'sup'}}).text, 'Frase viva');
-  assert.equal(liveTaskText({botId:'a',vivoStatus:'working',tareas:{bots:{a:{ultimo:{txt:'último',t:'2026-01-01T00:00:00Z'}}}},mandoBot:{tarea:'sup'}}).text, 'último');
+test('isProcessPhrase rejects commands and scripts', () => {
+  assert.equal(isProcessPhrase('node cli.js · atelier-trabajo'), true);
+  assert.equal(isProcessPhrase('Comando en terminal'), true);
+  assert.equal(isProcessPhrase('Revisé la ficha de Tadeo'), false);
+  assert.equal(humanProjectName('node cli.js · atelier-trabajo'), 'Oficina Atelier');
+});
+
+test('liveTaskText prefers the last chat message, then a readable title, then a human project', () => {
+  assert.equal(liveTaskText({botId:'a',vivoStatus:'working',tareas:{bots:{a:{frase:'node cli.js · atelier-trabajo',ultimo:{txt:'Revisé la ficha',t:'2026-01-01T00:00:00Z'}}}},mandoBot:{tarea:'sup'}}).text, 'Revisé la ficha');
+  assert.equal(liveTaskText({botId:'a',vivoStatus:'idle',tareas:{bots:{a:{ultimo:{txt:'último en pausa',t:'2026-01-01T00:00:00Z'}}}},mandoBot:{tarea:'sup'}}).text, 'último en pausa');
+  assert.equal(liveTaskText({botId:'a',vivoStatus:'working',tareas:{bots:{a:{frase:'node cli.js · atelier-trabajo'}}},mandoBot:{}}).text, 'Oficina Atelier');
+  assert.equal(liveTaskText({botId:'a',vivoStatus:'working',tareas:{bots:{a:{frase:'Comando en terminal'}}},mandoBot:{}}).text, 'Trabajando');
   assert.equal(liveTaskText({botId:'a',vivoStatus:'working',tareas:{bots:{}},mandoBot:{tarea:'sup'},mandoGenerado:new Date().toISOString()}).text, 'sup');
   assert.equal(liveTaskText({botId:'a',vivoStatus:'working',tareas:{bots:{}},mandoBot:null}).text, 'Trabajando');
 });
@@ -48,8 +57,8 @@ test('session unlocks, remembers, enriches, and locks without leaking storage ke
   assert.equal(snap.unlocked, true);
   assert.ok(store.get('atelierMandoClave'));
   const enriched = session.enrichBot({id:'ted',name:'Ted',status:'working',task:null,stale:false});
-  assert.equal(enriched.task, 'Frase de ted');
-  assert.equal(enriched.liveTask.source, 'tareas.enc');
+  assert.equal(enriched.task, 'Hacer A');
+  assert.equal(enriched.liveTask.source, 'mando.enc');
   const waiting = session.enrichBot({id:'ted',name:'Ted',status:'review',task:null,stale:false});
   assert.equal(waiting.pendiente, 'OK?');
   assert.deepEqual(waiting.authorization, ['OK?']);
@@ -72,6 +81,11 @@ test('previousTaskText uses the next historial snippet, not the current one', ()
   assert.match(text, /Tarea previa del bot/);
   assert.match(text, /09:30/);
   assert.equal(previousTaskText({historial: [{t: '2026-11-12T20:00:00-06:00', txt: 'Solo una'}]}, 'Solo una'), null);
+  const fromTareas = previousTaskText(bot, 'Mensaje actual largo', {anterior:{txt:'Frase anterior en vivo',t:'2026-11-13T11:00:00-06:00'}});
+  assert.match(fromTareas, /Frase anterior en vivo/);
+  const skipCmd = previousTaskText(bot, 'Mensaje actual largo', {anterior:{txt:'Comando en terminal',t:'2026-11-13T10:05:00-06:00'}});
+  assert.match(skipCmd, /Tarea previa del bot/);
+  assert.doesNotMatch(skipCmd || '', /Comando en terminal|cli\.js|node /);
 });
 
 test('enrichBot exposes previousTask and mandoUso when unlocked', async () => {

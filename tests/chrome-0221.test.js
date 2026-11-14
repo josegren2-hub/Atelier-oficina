@@ -47,7 +47,7 @@ test('glass blur is on the panel, sheets are not fullscreen', () => {
   assert.match(css, /\.mcpanel\.plegado\{[^}]*left:-9999px/);
 });
 
-test('package is 0.22.2', () => {
+test('package is 0.22.3', () => {
   const pkg = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-  assert.equal(pkg.version, '0.22.2');
+  assert.equal(pkg.version, '0.22.3');
 });

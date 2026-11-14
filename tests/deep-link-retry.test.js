@@ -18,7 +18,7 @@ test('paintSource updates footer for live mode',()=>{
   assert.match(main,/team-disclaimer/);
 });
 
-test('version bumped to 0.22.2 in package',()=>{
+test('version bumped to 0.22.3 in package',()=>{
   const pkg=JSON.parse(readFileSync(join(root,'../package.json'),'utf8'));
-  assert.equal(pkg.version,'0.22.2');
+  assert.equal(pkg.version,'0.22.3');
 });

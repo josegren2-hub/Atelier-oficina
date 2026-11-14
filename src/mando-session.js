@@ -33,20 +33,80 @@ function ageLabel(generado) {
 
 function hm(value) {
   const d = new Date(value);
-  return Number.isNaN(+d) ? '' : d.toLocaleTimeString('es-MX', {hour: '2-digit', minute: '2-digit', timeZone: 'America/Chihuahua'});
+  if (Number.isNaN(+d)) return '';
+  const tz = 'America/Chihuahua';
+  const sameDay = d.toLocaleDateString('es-MX', {timeZone: tz}) === new Date().toLocaleDateString('es-MX', {timeZone: tz});
+  const time = d.toLocaleTimeString('es-MX', {hour: '2-digit', minute: '2-digit', timeZone: tz});
+  if (sameDay) return time;
+  return d.toLocaleString('es-MX', {day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: tz});
 }
 
-/** Same priority as Oficina-bots v16.19 __tareaViva (plain text). */
+/** True if the text names a command or script, not a human task. */
+export function isProcessPhrase(text) {
+  const s = String(text || '').trim();
+  if (!s) return true;
+  const low = s.toLowerCase();
+  if (low.startsWith('comando en terminal')) return true;
+  if (/\.(js|mjs|cjs|py|sh|ts|tsx|jsx)(\s|$|·|,)/i.test(s)) return true;
+  if (/^(node|python3?|npm|npx|pnpm|yarn|bun|bash|sh|dash|zsh|git|vite|ffmpeg|curl|wget|pip3?|blender)\b/i.test(s)) return true;
+  return false;
+}
+
+const PROJECT_NAMES = Object.freeze([
+  ['atelier-trabajo', 'Oficina Atelier'],
+  ['oficina-bots', 'Oficina 3D'],
+  ['ofi-pub', 'Oficina 3D'],
+  ['remotion-tinta-rosa', 'Video Tinta Rosa'],
+  ['github-tinta-rosa', 'Tinta Rosa web'],
+  ['tinta-rosa', 'Tinta Rosa web'],
+  ['uach-moodle', 'Moodle UACH'],
+  ['habitflow', 'App HabitFlow'],
+  ['juridico', 'Jurídico'],
+  ['expediente', 'Jurídico'],
+  ['finanzas', 'Finanzas'],
+  ['calendario', 'Calendario'],
+  ['substack', 'Substack'],
+  ['podcast', 'Podcast'],
+  ['blender', 'Render 3D'],
+  ['moodle', 'Moodle UACH'],
+  ['salud', 'Salud'],
+  ['libro', 'Libro'],
+  ['redes', 'Redes'],
+  ['videos', 'Videos'],
+]);
+
+/** Human project name from a process phrase or folder slug; never returns a command. */
+export function humanProjectName(text) {
+  const s = String(text || '').trim();
+  if (!s) return null;
+  const low = s.toLowerCase();
+  for (const [key, name] of PROJECT_NAMES) {
+    if (low.includes(key)) return name;
+  }
+  if (!isProcessPhrase(s) && !/[/\\]/.test(s) && s.length <= 40) return s;
+  return null;
+}
+
+/** Ahora: último mensaje del chat, si no un título legible, si no el nombre humano del proyecto. */
 export function liveTaskText({botId, mandoBot, vivoStatus, tareas, mandoGenerado} = {}) {
   const working = vivoStatus === 'working' || vivoStatus === 'trabajando';
   const row = tareas?.bots?.[botId];
-  if (row?.frase) return {text: row.frase, detail: `en vivo · desde ${hm(row.desde)}`, source: 'tareas.enc'};
-  if (working) {
-    if (row?.ultimo?.txt) return {text: row.ultimo.txt, detail: `su último mensaje, ${hm(row.ultimo.t)}`, source: 'tareas.enc'};
-    if (mandoBot?.tarea) return {text: mandoBot.tarea, detail: ageLabel(mandoGenerado), source: 'mando.enc'};
-    return {text: 'Trabajando', detail: row?.ultimo ? `desde ${hm(row.ultimo.t)}` : '', source: 'estado'};
+  const ultimo = row?.ultimo?.txt;
+  if (ultimo && !isProcessPhrase(ultimo)) {
+    return {text: clipPhrase(ultimo, 80), detail: `su último mensaje, ${hm(row.ultimo.t)}`, source: 'tareas.enc'};
   }
-  if (mandoBot?.tarea) return {text: mandoBot.tarea, detail: ageLabel(mandoGenerado), source: 'mando.enc'};
+  if (mandoBot?.tarea && !isProcessPhrase(mandoBot.tarea)) {
+    return {text: mandoBot.tarea, detail: ageLabel(mandoGenerado), source: 'mando.enc'};
+  }
+  const resumen = typeof mandoBot?.resumen?.txt === 'string' ? mandoBot.resumen.txt.trim() : '';
+  if (resumen && !isProcessPhrase(resumen)) {
+    return {text: clipPhrase(resumen, 80), detail: ageLabel(mandoGenerado), source: 'mando.enc'};
+  }
+  const project = humanProjectName(row?.frase);
+  if (project) {
+    return {text: project, detail: row?.desde ? `desde ${hm(row.desde)}` : '', source: 'tareas.enc'};
+  }
+  if (working) return {text: 'Trabajando', detail: '', source: 'estado'};
   return null;
 }
 
@@ -58,14 +118,27 @@ function sameSnippet(a, b) {
   return x === y || x.startsWith(y) || y.startsWith(x);
 }
 
-/** Second-newest assistant snippet from mando.enc historial (newest-first). */
-export function previousTaskText(mandoBot, currentText) {
+/** Prefer tareas.enc anterior (kept by estado-vivo as the last Ahora), then mando.enc historial. */
+function humanSnippet(raw, current) {
+  if (!raw || typeof raw !== 'string') return null;
+  const txt = raw.trim();
+  if (!txt || isProcessPhrase(txt) || sameSnippet(txt, current)) return null;
+  return clipPhrase(txt, 80);
+}
+
+export function previousTaskText(mandoBot, currentText, tareasRow) {
+  const cur = currentText || '';
+  const ant = tareasRow?.anterior;
+  const fromAnt = humanSnippet(ant?.txt, cur);
+  if (fromAnt) {
+    const when = hm(ant.t);
+    return when ? `${fromAnt} · ${when}` : fromAnt;
+  }
   const hist = Array.isArray(mandoBot?.historial) ? mandoBot.historial : [];
-  const cur = currentText || mandoBot?.ultimo?.txt || '';
-  const prev = hist.find(h => h && typeof h.txt === 'string' && h.txt.trim() && !sameSnippet(h.txt, cur));
+  const prev = hist.find(h => humanSnippet(h?.txt, cur));
   if (!prev) return null;
+  const txt = humanSnippet(prev.txt, cur);
   const when = hm(prev.t);
-  const txt = clipPhrase(prev.txt, 140);
   return when ? `${txt} · ${when}` : txt;
 }
 
@@ -213,7 +286,7 @@ export function createMandoSession({
       // Prefer live encrypted phrase / supervisor task over public estado frase when unlocked.
       task: task?.text || liveBot.task || null,
       activity: task ? [task.text, task.detail].filter(Boolean).join(' · ') : liveBot.activity,
-      previousTask: unlocked ? previousTaskText(mandoBot, task?.text || liveBot.task) : (liveBot.previousTask || null),
+      previousTask: unlocked ? previousTaskText(mandoBot, task?.text || liveBot.task, tareas?.bots?.[liveBot.id]) : (liveBot.previousTask || null),
       mandoUso: unlocked ? (mandoBot?.uso || null) : null,
       // t334u: short explained summary built by recolectar-mando.py rules (no model calls).
       resumen: unlocked && typeof mandoBot?.resumen?.txt === 'string' ? mandoBot.resumen.txt : null,

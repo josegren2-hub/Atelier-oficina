@@ -78,9 +78,9 @@ export async function loadUsoEnc({url, key, fetchImpl = fetch, subtle, bots = of
 
 export function usoLine(state, botId) {
   if (!state || state.state === 'locked') return 'Solo con el mando desbloqueado';
-  if (state.state === 'missing' || !state.uso) return 'Aún sin datos';
+  if (state.state === 'missing' || !state.uso) return 'Sin dato de uso todavía';
   const row = state.uso.bots.find(b => b.id === botId);
-  if (!row) return 'Aún sin datos';
+  if (!row) return 'Sin dato de uso todavía';
   const n = Number.isInteger(row.pct) ? String(row.pct) : String(Math.round(row.pct * 10) / 10);
   return `Uso esta semana: ${n} %`;
 }
@@ -131,12 +131,7 @@ export function formatMandoUso(uso) {
   return `Hoy: ${h} mensajes · 7 días: ${s}`;
 }
 
-/** Prefer uso.enc weekly share when present; otherwise the mando counts. */
-export function displayUsoLine(state, botId, mandoUso) {
-  if (state?.state === 'ok' && state.uso?.bots?.some(b => b.id === botId)) {
-    return usoLine(state, botId);
-  }
-  const fallback = formatMandoUso(mandoUso);
-  if (fallback) return fallback;
+/** Only the approved weekly percentage. Never message counts. */
+export function displayUsoLine(state, botId, _mandoUso) {
   return usoLine(state, botId);
 }
