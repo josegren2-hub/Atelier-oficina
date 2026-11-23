@@ -55,15 +55,32 @@ export function waitingAlertCandidates(bots = [], now = Date.now()) {
 
 export function mapSalud(salud) {
   if (!salud || typeof salud !== 'object') {
-    return {avisosConfig: null, avisosOk: null, avisosError: null, latido: null, mando: null};
+    return {avisosConfig: null, avisosOk: null, avisosError: null, latido: null, mando: null, avisosMotivo: null, avisosReintenta: null, avisosCodigo: null, avisosCupoRestante: null, avisosCupoTotal: null};
   }
+  const motivo = typeof salud.avisos_motivo === 'string' && salud.avisos_motivo.trim() && !/https?:|\/|tema/i.test(salud.avisos_motivo)
+    ? salud.avisos_motivo.trim().slice(0, 120) : null;
   return {
     avisosConfig: typeof salud.avisos_config === 'boolean' ? salud.avisos_config : null,
     avisosOk: typeof salud.avisos_ok === 'string' ? salud.avisos_ok : null,
     avisosError: typeof salud.avisos_error === 'string' ? salud.avisos_error : null,
     latido: typeof salud.latido === 'string' ? salud.latido : null,
     mando: typeof salud.mando === 'string' ? salud.mando : null,
+    avisosMotivo: motivo,
+    avisosReintenta: typeof salud.avisos_reintenta === 'string' ? salud.avisos_reintenta : null,
+    avisosCodigo: typeof salud.avisos_codigo === 'number' && Number.isFinite(salud.avisos_codigo) ? salud.avisos_codigo : null,
+    avisosCupoRestante: typeof salud.avisos_cupo_restante === 'number' && Number.isFinite(salud.avisos_cupo_restante) ? salud.avisos_cupo_restante : null,
+    avisosCupoTotal: typeof salud.avisos_cupo_total === 'number' && Number.isFinite(salud.avisos_cupo_total) ? salud.avisos_cupo_total : null,
   };
+}
+
+export function horaAviso(iso) {
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return '';
+  try {
+    return new Date(t).toLocaleString('es-MX', {timeZone: 'America/Chihuahua', hour: 'numeric', minute: '2-digit'});
+  } catch {
+    return '';
+  }
 }
 
 export function avisosHealthLabel(saludMapped, now = Date.now()) {
@@ -73,6 +90,10 @@ export function avisosHealthLabel(saludMapped, now = Date.now()) {
   const ok = s.avisosOk ? Date.parse(s.avisosOk) : NaN;
   const er = s.avisosError ? Date.parse(s.avisosError) : NaN;
   if (Number.isFinite(er) && (!Number.isFinite(ok) || er > ok)) {
+    const hora = horaAviso(s.avisosReintenta);
+    const cupo = typeof s.avisosMotivo === 'string' && s.avisosMotivo.includes('cupo');
+    if (cupo && hora) return {tone: 'warn', text: `El cupo diario de avisos de esta red se acabó. Se reintenta a las ${hora}.`};
+    if (hora) return {tone: 'warn', text: `El último aviso al celular falló. Se reintenta a las ${hora}.`};
     return {tone: 'warn', text: 'El último aviso al celular falló; el loop reintenta solo.'};
   }
   if (Number.isFinite(ok)) {

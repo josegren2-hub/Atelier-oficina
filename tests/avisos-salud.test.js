@@ -14,6 +14,10 @@ test('mapOficinaEstado passes public salud without topic', () => {
       avisos_ok: '2026-11-07T16:51:28-06:00',
       avisos_error: null,
       avisos_config: true,
+      avisos_motivo: 'cupo diario de esta red agotado',
+      avisos_reintenta: '2026-11-23T23:21:31-06:00',
+      avisos_codigo: 42908,
+      avisos_cupo_restante: 0,
       tema: 'NO-DEBE-PASAR',
     },
   };
@@ -21,6 +25,11 @@ test('mapOficinaEstado passes public salud without topic', () => {
   assert.equal(mapped.salud.avisos_config, true);
   assert.equal(mapped.salud.avisos_ok, '2026-11-07T16:51:28-06:00');
   assert.equal(mapped.salud.tema, undefined);
+  assert.equal(mapped.salud.avisos_motivo, 'cupo diario de esta red agotado');
+  assert.equal(mapped.salud.avisos_reintenta, '2026-11-23T23:21:31-06:00');
+  assert.equal(mapped.salud.avisos_codigo, 42908);
+  assert.equal(mapped.salud.avisos_cupo_restante, 0);
   const live = validateSnapshot(mapped, known, Date.parse('2026-11-09T12:30:00-06:00'));
   assert.equal(live.salud.avisos_config, true);
+  assert.equal(live.salud.avisos_motivo, 'cupo diario de esta red agotado');
 });

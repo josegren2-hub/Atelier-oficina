@@ -8,6 +8,7 @@ import {
   waitingAlertCandidates,
   mapSalud,
   avisosHealthLabel,
+  horaAviso,
   sendThrowawayTest,
   createNtfySession,
   NTFY_LS_KEY,
@@ -86,4 +87,25 @@ test('sendThrowawayTest refuses real-looking topics and requires confirm', async
 test('hoursWaiting null on bad dates', () => {
   assert.equal(hoursWaiting('nope'), null);
   assert.ok(hoursWaiting('2020-01-01T00:00:00Z') > 24);
+});
+
+test('s12: cupo diario explains the failed send and never leaks a topic', () => {
+  const raw = {
+    avisos_config: true,
+    avisos_ok: '2026-11-07T16:51:28-06:00',
+    avisos_error: '2026-11-15T20:46:20-06:00',
+    avisos_motivo: 'cupo diario de esta red agotado',
+    avisos_reintenta: '2026-11-23T23:21:31-06:00',
+    avisos_codigo: 42908,
+    tema: 'NO-DEBE-PASAR',
+  };
+  const s = mapSalud(raw);
+  assert.equal(s.avisosMotivo, 'cupo diario de esta red agotado');
+  assert.ok(!('tema' in s));
+  const label = avisosHealthLabel(s, Date.parse('2026-11-23T12:00:00-06:00'));
+  assert.equal(label.tone, 'warn');
+  assert.match(label.text, /cupo diario de avisos de esta red se acabó/);
+  assert.match(label.text, /11:21/);
+  assert.doesNotMatch(label.text, /NO-DEBE-PASAR|ntfy\.sh|42908/);
+  assert.equal(horaAviso('2026-11-23T23:21:31-06:00'), '11:21 p.m.');
 });

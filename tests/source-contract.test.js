@@ -8,6 +8,7 @@ const payload=()=>({schemaVersion:1,source:'Synthetic test provider',mode:'live'
 test('phase 1 enables the public Oficina-bots estado.json source',()=>{
  assert.equal(SOURCE_CONTRACT.enabled,true);
  assert.match(SOURCE_CONTRACT.endpoint,/Oficina-bots\/estado\.json$/);
+ assert.equal(SOURCE_CONTRACT.sourceLabel,'San Junipero Corp');
  assert.equal(SOURCE_CONTRACT.maxSignalAgeMs,45*60*1000);
 });
 

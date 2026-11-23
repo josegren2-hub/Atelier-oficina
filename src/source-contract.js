@@ -5,7 +5,7 @@
 export const SOURCE_CONTRACT = Object.freeze({
   enabled: true,
   endpoint: 'https://josegren2-hub.github.io/Oficina-bots/estado.json',
-  sourceLabel: 'Oficina-bots · estado.json público',
+  sourceLabel: 'San Junipero Corp',
   /** Unknown only when the feed (actualizado / salud.latido) is older than this. */
   maxSignalAgeMs: 45 * 60 * 1000,
   maxFutureSkewMs: 60 * 1000,

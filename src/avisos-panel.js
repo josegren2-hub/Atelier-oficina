@@ -6,6 +6,7 @@ import {
   mapSalud,
   avisosHealthLabel,
   atelierDeepLink,
+  horaAviso,
 } from './ntfy-session.js';
 import {avatarPhotoUrl} from './avatar-photo.js';
 
@@ -35,7 +36,13 @@ export function plainAvisosState(saludMapped, now = Date.now()) {
   const base = avisosHealthLabel(s, now);
   if (s.avisosConfig === false) return {tone: 'warn', text: 'Los avisos al celular no están activados en la caja.'};
   if (s.avisosConfig == null) return {tone: 'muted', text: 'Todavía no hay dato de cómo van los avisos.'};
-  if (base.tone === 'warn') return {tone: 'warn', text: 'El último aviso no llegó. La caja lo vuelve a intentar sola.'};
+  if (base.tone === 'warn') {
+    const hora = horaAviso(s.avisosReintenta);
+    const cupo = typeof s.avisosMotivo === 'string' && s.avisosMotivo.includes('cupo');
+    if (cupo && hora) return {tone: 'warn', text: `El cupo diario de avisos de esta red se acabó. Se reintenta a las ${hora}.`};
+    if (hora) return {tone: 'warn', text: `El último aviso no llegó. Se reintenta a las ${hora}.`};
+    return {tone: 'warn', text: 'El último aviso no llegó. La caja lo vuelve a intentar sola.'};
+  }
   if (s.avisosOk) return {tone: 'ok', text: 'Los avisos están llegando bien.'};
   return {tone: 'ok', text: 'Todo listo; todavía no ha hecho falta mandar ningún aviso.'};
 }
