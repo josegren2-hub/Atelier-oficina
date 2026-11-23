@@ -1753,3 +1753,85 @@ dialog.avisos-dialog,dialog.pizarron-dialog,.cc-dialog,.resumen-dialog,#mando-di
 .v17pin{will-change:transform}
 
 .sw-update-banner{position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:80;padding:8px 14px;border-radius:4px;font:700 12px/1.3 system-ui,sans-serif;color:#0c1824;background:#bcd9ec;border:1px solid #a9c6da;box-shadow:0 4px 16px #0005;pointer-events:none}
+
+/* s10 (auditoría t400u, Bloque 1 · arreglos) */
+/* Más: todos los botones a lo ancho y alineados (Centro de mando y Luz ya no se desplazan) */
+#mas-panel .mas-body #command-open,#mas-panel .mas-body #light-mode{margin-left:0!important;width:100%;justify-self:stretch}
+/* Mando abierto: hoja con estado + Bloquear con confirmación */
+#mando-dialog .mando-abierto{display:grid;gap:10px;margin-top:6px}
+#mando-dialog .mando-abierto[hidden],#mando-dialog .mando-confirmar[hidden],#mando-dialog form[hidden]{display:none!important}
+#mando-dialog .mando-abierto-txt{margin:0;color:var(--sj-txt,#e8edf5);font-size:13px;line-height:1.4}
+#mando-dialog .mando-confirmar{border:1px solid rgba(188,217,236,.38);border-radius:4px;padding:10px 12px;background:rgba(188,217,236,.06)}
+#mando-dialog .mando-confirmar p{margin:0 0 8px;font-size:13px;line-height:1.4}
+/* Centro de mando: las pestañas bajan de renglón en el teléfono (ninguna queda cortada) */
+@media(max-width:600px){
+  .cc-dialog .cc-nav{flex-wrap:wrap!important;overflow:visible!important}
+}
+/* Solo lista: la barra de botones baja de renglón en vez de cortarse */
+.sj-lh-act,.sj-cnts{flex-wrap:wrap!important;overflow:visible!important}
+/* Solo lista: ficha completa dentro de la pantalla, con scroll propio si hace falta */
+#lista-ficha.lista-ficha-card{top:auto!important;bottom:calc(16px + env(safe-area-inset-bottom,0px))!important;max-height:calc(100dvh - 32px)!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+/* Mando en Solo lista: hoja propia con campo oculto (sin ventanita del navegador) */
+#lista-mando-hoja{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:62;width:min(340px,calc(100vw - 24px));padding:14px;border-radius:4px;background:var(--sj-glass,rgba(14,17,24,.92))!important;backdrop-filter:var(--sj-blur,blur(20px));-webkit-backdrop-filter:var(--sj-blur,blur(20px));border:1px solid var(--sj-line,rgba(188,217,236,.38));color:var(--sj-txt,#e8edf5);font-family:var(--sj-sans,Inter,system-ui,sans-serif);box-shadow:0 16px 48px #0008}
+#lista-mando-hoja[hidden]{display:none!important}
+#lista-mando-hoja h3{margin:0 0 6px}
+#lista-mando-hoja p{margin:0 0 8px;font-size:12.5px;line-height:1.4}
+#lista-mando-hoja input[type=password]{width:100%;box-sizing:border-box;margin:4px 0 8px;padding:9px 10px;border-radius:4px;border:1px solid var(--sj-line,#72869a);background:rgba(255,255,255,.06);color:inherit;font:inherit}
+#lista-mando-hoja .fila{display:flex;flex-wrap:wrap;gap:6px}
+#lista-mando-veil{position:fixed;inset:0;z-index:61;background:rgba(8,12,18,.28)}
+#lista-mando-veil[hidden]{display:none}
+/* s10: [hidden] gana sobre el estilo de botón (Instalar como app solo aparece si el navegador lo ofrece) */
+#install-app[hidden],#mando-lock[hidden],.mas-body button[hidden]{display:none!important}
+#mando-dialog .mando-abierto{padding:0 22px 22px}
+#lista-mando-hoja [hidden]{display:none!important}
+
+/* ===== s11 (Rob t403 «Todo»): bocetos A, B, C y D ===== */
+/* A · Avisos al celular */
+.avisos-dialog [hidden]{display:none!important}
+.avisos-dialog .avisos-body{display:flex;flex-direction:column;gap:8px;padding:10px 14px 16px}
+.avisos-block.avisos-estado.warn{border-color:#f0b27a88!important}
+.avisos-estado-txt{margin:0 0 4px;font-size:13px;line-height:1.4}
+.avisos-bot{display:flex;gap:10px;align-items:flex-start}
+.avisos-bot img.av{width:28px;height:28px;border-radius:50%;object-fit:cover;flex:none;background:#2a3544;border:1.5px solid #bcd9ec}
+.avisos-bot-meta{flex:1;min-width:0}
+.avisos-hist>summary{cursor:pointer;list-style:none;display:flex;flex-direction:column;gap:2px}
+.avisos-hist>summary::-webkit-details-marker{display:none}
+.avisos-hist .avisos-hist-t{font-size:13px;font-weight:600}
+.avisos-hist .avisos-hist-t::after{content:" ›";opacity:.7}
+.avisos-hist[open] .avisos-hist-t::after{content:" ⌄"}
+.avisos-form{display:flex;flex-direction:column;gap:6px}
+/* C · Te esperan en el Pizarrón + numerito */
+.pizarron-dialog .pz-esp{border:1px solid rgba(188,217,236,.55);border-radius:4px;padding:8px 10px;margin:4px 0 10px;background:#ffffff06}
+.pizarron-dialog .pz-esp h4{margin:0 0 4px}
+.pizarron-dialog .pz-card{display:flex;gap:8px;align-items:flex-start;padding:8px;margin-top:6px;border:1px solid #ffffff14;border-radius:4px;background:#ffffff08}
+.pizarron-dialog .pz-card img.av{width:28px;height:28px;border-radius:50%;object-fit:cover;flex:none;background:#2a3544;border:1.5px solid var(--st-review,#e8b04a)}
+.pizarron-dialog .pz-card-m{flex:1;min-width:0}
+.pizarron-dialog .pz-card-m p.s{margin:2px 0 0}
+.pizarron-dialog .pz-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+#dock-paneles{position:relative}
+#dock .dock-badge{position:absolute;top:3px;left:calc(50% + 4px);font:700 8.5px var(--sj-sans,system-ui);font-style:normal;background:var(--st-review,#e8b04a);color:#0c1824;border-radius:9px;padding:1px 4px;line-height:1.3;pointer-events:none}
+.wait-badge[hidden]{display:none!important}
+#pizarron-open .team-badge{position:static;display:inline-block;margin-left:6px;font:700 9px var(--sj-sans,system-ui);font-style:normal;background:var(--st-review,#e8b04a);color:#0c1824;border-radius:9px;padding:1px 5px;vertical-align:1px}
+.resumen-esperan{margin:2px 0 6px;font-size:13px}
+.resumen-esperan{margin-bottom:12px!important}
+.resumen-esperan .resumen-ir{color:#bcd9ec;text-decoration:none;display:inline-block;padding:12px 0;margin:-12px 0}
+/* D · áreas de toque de 44 px en teléfono, sin cambiar el dibujo (borde invisible) */
+@media (max-width:760px){
+  #mas-open,#floors>button,#view-modes>button,#vista-toolbar .controls>button,
+  .sj-x,.icon-btn,.pizarron-dialog .lcerrar,.resumen-dialog [data-close],.avisos-dialog [data-close],.cc-dialog [data-close],
+  #ficha-flotante [data-full]{position:relative}
+  #mas-open::after,#floors>button::after,#view-modes>button::after,#vista-toolbar .controls>button::after,
+  .sj-x::after,.icon-btn::after,.pizarron-dialog .lcerrar::after,.resumen-dialog [data-close]::after,.avisos-dialog [data-close]::after,.cc-dialog [data-close]::after,
+  #ficha-flotante [data-full]::after{content:"";position:absolute;background:transparent}
+  /* Más y botones de cerrar: 44 × 44 centrado */
+  #mas-open::after,.sj-x::after,.icon-btn::after,.pizarron-dialog .lcerrar::after,.resumen-dialog [data-close]::after,.avisos-dialog [data-close]::after,.cc-dialog [data-close]::after{left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+  /* Pisos: la fila se desliza, así que gana aire arriba y abajo sin moverse */
+  #floors{padding-top:9px!important;padding-bottom:9px!important;margin-top:-9px!important;margin-bottom:-9px!important}
+  #floors>button::after{left:-3px;right:-3px;top:50%;height:max(100%,44px);transform:translateY(-50%)}
+  /* Vistas (24 alto) y girar/zoom (28 alto): 11 px entre filas; las vistas crecen hacia arriba y los controles hacia abajo */
+  #view-modes{overflow:visible!important}
+  #view-modes>button::after{left:-2px;right:-2px;bottom:-5px;height:max(calc(100% + 20px),44px)}
+  #vista-toolbar .controls>button::after{left:-2px;right:-2px;top:-5px;height:max(calc(100% + 16px),44px)}
+  #ficha-flotante [data-full]::after{left:0;right:0;top:50%;height:max(100%,44px);transform:translateY(-50%)}
+}
+.cc-dialog .cc-nav button[aria-current=page]{border-color:var(--sj-gold,#bcd9ec)!important;color:var(--sj-gold,#bcd9ec)!important}

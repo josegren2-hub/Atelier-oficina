@@ -93,8 +93,7 @@ export function bindChromeNow() {
   bindPress($('#avatars-toggle'), () => sheets.toggle('avatares'));
   bindPress($('#pizarron-open'), () => sheets.open('pizarron'));
   bindPress($('#avisos-open'), () => sheets.open('avisos'));
-  bindPress($('#notifications-open'), () => sheets.open('avisos'));
-  /* pending-open stays in main so it can open the waiting tab */
+  /* s11 (boceto A): un solo «Avisos al celular» (avisos-open); «Pendientes» y «Notificaciones» ya no existen (boceto C → Pizarrón). */
 }
 
 export {setEquipoFallback};

@@ -104,6 +104,7 @@ function paint() {
   document.getElementById('lista-source').textContent =
     snapshot.mode === 'live' ? 'En vivo' : 'Sin conexión';
   document.getElementById('lista-source').classList.toggle('off', snapshot.mode !== 'live');
+  paintMandoBtn();
   document.getElementById('lista-racha').textContent = 'Racha ' + (snapshot.racha?.dias ?? '–');
   document.getElementById('lista-racha').title = rachaText(snapshot.racha);
   stale.refresh(snapshot);
@@ -267,11 +268,58 @@ document.getElementById('lista-back').onclick = goTo3d;
   });
 })();
 document.getElementById('lista-resumen').onclick = () => resumen.open();
-document.getElementById('lista-mando').onclick = () => {
-  // Reuse 3D page mando by switching? Simpler: prompt unlock via same dialog markup
-  const pass = prompt('Frase de mando (solo en este navegador):');
-  if (pass) mandoSession.unlock(pass, {remember: true}).then(() => { enrich(); refreshUso(); paint(); });
-};
+/* s10: el Mando en Solo lista usa una hoja propia con campo oculto (nunca la ventanita del
+ * navegador, que mostraba la frase en claro) y pide confirmación antes de bloquear. */
+function paintMandoBtn() {
+  const b = document.getElementById('lista-mando');
+  if (!b) return;
+  b.textContent = mandoSession.unlocked ? 'Mando abierto' : 'Desbloquear mando';
+  b.setAttribute('aria-pressed', String(!!mandoSession.unlocked));
+}
+function closeMandoHoja() {
+  const h = document.getElementById('lista-mando-hoja');
+  const v = document.getElementById('lista-mando-veil');
+  if (h) { h.hidden = true; h.innerHTML = ''; }
+  if (v) v.hidden = true;
+}
+function openMandoHoja() {
+  let v = document.getElementById('lista-mando-veil');
+  if (!v) { v = document.createElement('div'); v.id = 'lista-mando-veil'; v.addEventListener('click', closeMandoHoja); document.body.appendChild(v); }
+  let h = document.getElementById('lista-mando-hoja');
+  if (!h) { h = document.createElement('section'); h.id = 'lista-mando-hoja'; h.setAttribute('role', 'dialog'); h.setAttribute('aria-label', 'Mando'); document.body.appendChild(h); bindSwipeToClose(h, closeMandoHoja); }
+  closeListaFicha();
+  if (mandoSession.unlocked) {
+    h.innerHTML = `<h3>Mando abierto</h3><p>Ves tareas, agenda y uso en este teléfono.</p>
+      <div class="fila" data-paso1><button type="button" class="btn-slim" data-bloquear>Bloquear</button><button type="button" class="btn-slim" data-cerrar>Cerrar</button></div>
+      <div data-paso2 hidden><p>¿Bloquear el mando y olvidar la frase en este teléfono? Tendrás que escribirla otra vez.</p>
+      <div class="fila"><button type="button" class="btn-slim" data-si>Sí, bloquear</button><button type="button" class="btn-slim" data-cerrar>Cancelar</button></div></div>`;
+    h.querySelector('[data-bloquear]').onclick = () => { h.querySelector('[data-paso1]').hidden = true; h.querySelector('[data-paso2]').hidden = false; };
+    h.querySelector('[data-si]').onclick = () => { mandoSession.lock(); closeMandoHoja(); snapshot = {...snapshot, mandoUnlocked: false}; refresh(); paintMandoBtn(); };
+  } else {
+    h.innerHTML = `<h3>Desbloquear mando</h3><p>Escribe tu frase de mando. Se descifra solo en este teléfono.</p>
+      <label for="lista-mando-pass">Frase de mando</label>
+      <input id="lista-mando-pass" type="password" autocomplete="current-password" spellcheck="false">
+      <p data-error role="alert"></p>
+      <div class="fila"><button type="button" class="btn-slim" data-ok>Desbloquear</button><button type="button" class="btn-slim" data-cerrar>Cancelar</button></div>`;
+    const inp = h.querySelector('#lista-mando-pass');
+    const err = h.querySelector('[data-error]');
+    const go = () => {
+      const pass = inp.value;
+      if (!pass) { err.textContent = 'Escribe la frase.'; return; }
+      err.textContent = 'Desbloqueando…';
+      mandoSession.unlock(pass, {remember: true})
+        .then(() => { inp.value = ''; closeMandoHoja(); enrich(); refreshUso(); paint(); })
+        .catch(() => { err.textContent = 'No se pudo desbloquear. Revisa la frase.'; });
+    };
+    h.querySelector('[data-ok]').onclick = go;
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); go(); } });
+    setTimeout(() => inp.focus(), 50);
+  }
+  h.querySelectorAll('[data-cerrar]').forEach(b => { b.onclick = closeMandoHoja; });
+  v.hidden = false;
+  h.hidden = false;
+}
+document.getElementById('lista-mando').onclick = openMandoHoja;
 
 async function refresh() {
   try {

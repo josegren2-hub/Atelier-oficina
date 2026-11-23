@@ -18,7 +18,7 @@ test('PWA identity uses absolute /Atelier-oficina/ paths and SW scope', () => {
   assert.match(manifest, /"id": "\/Atelier-oficina\/"/);
   assert.match(manifest, /"start_url": "\/Atelier-oficina\/"/);
   assert.match(manifest, /"scope": "\/Atelier-oficina\/"/);
-  assert.match(manifest, /\/Atelier-oficina\/icon-192\.png/);
+  assert.match(manifest, /\/Atelier-oficina\/icon-sja-192\.png/); /* 0.22.5: ícono SJ azul ya vive en el código */
   assert.match(boot, /import\.meta\.env\.BASE_URL/);
   assert.match(boot, /serviceWorker\.register/);
   assert.match(boot, /swScope|scope/);
@@ -47,7 +47,7 @@ test('glass blur is on the panel, sheets are not fullscreen', () => {
   assert.match(css, /\.mcpanel\.plegado\{[^}]*left:-9999px/);
 });
 
-test('package is 0.22.4', () => {
+test('package is 0.22.5', () => {
   const pkg = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-  assert.equal(pkg.version, '0.22.4');
+  assert.equal(pkg.version, '0.22.5');
 });

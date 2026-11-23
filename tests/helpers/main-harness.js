@@ -15,7 +15,7 @@ import {SOURCE_CONTRACT} from '../../src/source-contract.js';
 import {avatarPhotoUrl} from '../../src/avatar-photo.js';
 import {DEPARTMENTS, departmentOf} from '../../src/departments.js';
 import * as daylight from '../../src/daylight.js';
-import {isPostponed} from '../../src/local-waiting.js';
+import {isPostponed, filterWaiting, postpone} from '../../src/local-waiting.js';
 import {rachaText} from '../../src/resumen-panel.js';
 import {createSheetManager, bindSwipeToClose} from '../../src/ui-sheets.js';
 
@@ -179,6 +179,8 @@ export function createMainHarness({storage=createMemoryStorage()}={}){
   resolveLighting:(...a)=>daylight.resolveLighting(...a),
   cycleLightPref:daylight.cycleLightPref,
   isPostponed,
+  filterWaiting,
+  postpone,
   rachaText,
   mountQuickReplies:()=>({refresh(){},root:{}}),
   mountFichaLocal:()=>({refresh(){},root:{}}),

@@ -5,7 +5,7 @@ const piz=readFileSync(new URL('../src/pizarron.js',import.meta.url),'utf8');
 const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
 test('C46c: Julián board is work-only, same calendar, non-modal; agenda options route to it',()=>{
  assert.match(piz,/Pizarrón de Julián/);assert.match(piz,/Solo agenda de trabajo/);
- assert.match(piz,/if \(!jul\) \{\n      h \+= '<h4>Te esperan<\/h4>'/);
+ assert.match(piz,/if \(!jul\) h \+= esperanHtml\(d\.esp \|\| \[\]\);/); /* s11: «Te esperan» arriba, solo en el pizarrón de Rob */
  assert.doesNotMatch(piz,/showModal/);
  assert.match(main,/pizarronWho=id==='julian'\?'julian':'ted'/);
  assert.match(main,/bindPizarronOutsideTap/);

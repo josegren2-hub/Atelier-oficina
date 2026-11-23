@@ -50,7 +50,7 @@ export function todayMessageRows(mando, byId = {}) {
   return rows.map(r => ({...r, bar: r.total / max}));
 }
 
-export function mountResumenPanel({getSnapshot, getMando, onChoose, container = document.body} = {}) {
+export function mountResumenPanel({getSnapshot, getMando, onChoose, onPizarron, container = document.body} = {}) {
   const dialog = document.createElement('dialog');
   dialog.id = 'resumen-dialog';
   dialog.className = 'resumen-dialog';
@@ -59,6 +59,8 @@ export function mountResumenPanel({getSnapshot, getMando, onChoose, container = 
   const body = dialog.querySelector('.resumen-body');
   dialog.querySelector('[data-close]').addEventListener('click', () => dialog.close());
   dialog.addEventListener('click', (e) => {
+    if (e.target === dialog) { dialog.close(); return; } /* s10: tocar fuera (el fondo) cierra, como las demás hojas */
+    if (e.target.closest('[data-goto-pizarron]')) { e.preventDefault(); dialog.close(); onPizarron?.(); return; }
     const f = e.target.closest('[data-bot]');
     if (f) { dialog.close(); onChoose?.(f.dataset.bot); }
   });
@@ -70,6 +72,11 @@ export function mountResumenPanel({getSnapshot, getMando, onChoose, container = 
     const waiting = filterWaiting(bots);
     const byId = Object.fromEntries(bots.map(b => [b.id, b]));
     let html = `<p class="v16racha">${esc(rachaText(snap.racha))}</p>`;
+    // s11 (boceto C): «Te esperan» vive en el Pizarrón; aquí queda una sola línea que lleva allá.
+    html += '<h4>Te esperan</h4>';
+    html += waiting.length
+      ? `<p class="resumen-esperan">${waiting.length === 1 ? '1 bot te espera' : `${waiting.length} bots te esperan`} · <a href="#" role="button" class="resumen-ir" data-goto-pizarron>ver en el Pizarrón ›</a></p>`
+      : '<p class="muted">Nadie te espera ahora.</p>';
     const usoState = getUsoState();
     html += '<h4>Uso</h4>';
     if (!mando || usoState.state === 'locked') html += '<p class="muted">Solo con el mando desbloqueado.</p>';
@@ -94,10 +101,6 @@ export function mountResumenPanel({getSnapshot, getMando, onChoose, container = 
       } else html += '<p class="muted">Aún sin datos.</p>';
     }
 
-    html += '<h4>Atorado (te espera)</h4>';
-    html += waiting.length
-      ? waiting.map(b => `<button type="button" class="resumen-row" data-bot="${esc(b.id)}"><span class="status-dot status-review"></span><b>${esc(b.name)}</b> <span class="muted">${esc(hace(b.waitingSince))}</span></button>`).join('')
-      : '<p class="muted">Nada atorado.</p>';
 
     for (const [dep, ids] of Object.entries(DEPARTMENTS)) {
       html += `<h4>${esc(dep)}</h4>`;

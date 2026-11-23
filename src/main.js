@@ -21,7 +21,7 @@ import {mountFichaLocal} from './ficha-local.js';
 import {mountResumenPanel, rachaText} from './resumen-panel.js';
 import {mountStaleBanner} from './stale-banner.js';
 import {readLightPref, saveLightPref, resolveLighting, cycleLightPref} from './daylight.js';
-import {isPostponed} from './local-waiting.js';
+import {isPostponed, filterWaiting, postpone} from './local-waiting.js';
 import {ICON, iconHtml} from './icons.js';
 import {mountProyectosPanel} from './proyectos-panel.js';
 import {mountFichaFlotante} from './ficha-flotante.js';
@@ -55,11 +55,20 @@ const equipo=mountEquipoPanel({
 const pizarron=mountPizarron({
  getModel:()=>buildPizarronModel({
   mando:mandoSession.unlocked?mandoSession.mando:null,
-  waiting:(snapshot.bots||[]).filter(b=>b.status==='review'&&!b.stale),
+  waiting:filterWaiting(snapshot.bots||[]),
   bots:snapshot.bots||[],
  }),
  onSelect:id=>choose(id),
+ /* s11 (boceto C): «Posponer 3 h» también en el Pizarrón (mismo guardado local que Solo lista y la ficha). */
+ onPostpone:id=>{const b=(snapshot.bots||[]).find(x=>x.id===id);if(!b)return;postpone(b.id,b.waitingSince,'3h');afterWaitingChange();},
 });
+/* s11 (boceto C): numerito de «te esperan» en el botón Paneles del dock y en el acceso Pizarrón; si nadie espera, no sale. */
+function paintWaitBadges(){
+ const n=filterWaiting(snapshot.bots||[]).length;
+ for(const bd of document.querySelectorAll('.wait-badge')){bd.textContent=String(n);bd.hidden=!n;}
+ const dp=$('#dock-paneles');if(dp)dp.setAttribute('aria-label',n?`Paneles · ${n} te ${n===1?'espera':'esperan'}`:'Paneles');
+}
+function afterWaitingChange(){render();command.refresh();pizarron.refresh();paintWaitBadges();if(resumenPanel?.isOpen?.())resumenPanel.refresh();}
 let selectionLabels=null;
 const quickReplies=mountQuickReplies(document.querySelector('#detail .detail-content')||document.querySelector('#detail'),{
  getBot:()=>snapshot.bots.find(b=>b.id===selected),
@@ -67,13 +76,14 @@ const quickReplies=mountQuickReplies(document.querySelector('#detail .detail-con
 });
 const fichaLocal=mountFichaLocal(document.querySelector('#detail .detail-content')||document.querySelector('#detail'),{
  getBot:()=>snapshot.bots.find(b=>b.id===selected),
- onChange:()=>{render();command.refresh();},
+ onChange:()=>afterWaitingChange(),
  onToast:msg=>{$('#refresh-feedback').textContent=msg;},
 });
 const resumenPanel=mountResumenPanel({
  getSnapshot:()=>snapshot,
  getMando:()=>mandoSession.unlocked?mandoSession.mando:null,
  onChoose:id=>choose(id),
+ onPizarron:()=>{sheets.closeAll('pizarron');sheets.open('pizarron');},
 });
 const staleBanner=mountStaleBanner(document.body);
 const proyectosPanel=mountProyectosPanel({
@@ -140,15 +150,16 @@ function setPanelesOpen(open){
   top.append(left,close);
   const box=document.createElement('div');box.className='paneles-actions';
   /* B4 tanda 1 (D6, boceto aprobado t336u): una hilera; Notificaciones + Avisos = «Avisos»; «Celular» = configurar avisos al teléfono. */
-  const ICO={lista:'<path d="M5 6h14M5 12h14M5 18h9"/>',campana:'<path d="M6 17h12l-1.5-2V11a4.5 4.5 0 0 0-9 0v4z M10 20h4"/>',cel:'<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/>',cal:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',ref:'<path d="M19 12a7 7 0 1 1-2-4.9M19 4v4h-4"/>'};
+  const ICO={cc:'<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/>',lista:'<path d="M5 6h14M5 12h14M5 18h9"/>',campana:'<path d="M6 17h12l-1.5-2V11a4.5 4.5 0 0 0-9 0v4z M10 20h4"/>',cel:'<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/>',cal:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',ref:'<path d="M19 12a7 7 0 1 1-2-4.9M19 4v4h-4"/>'};
   box.className='paneles-actions sj-row1';
-  for(const [id,label,ico] of [['pending-open','Pendientes','lista'],['notifications-open','Avisos','campana'],['avisos-open','Celular','cel'],['pizarron-open','Pizarrón','cal'],['refresh-office','Actualizar','ref']]){
+  /* s11 (bocetos A y C, Rob t403 «Todo»): Pizarrón (con numerito) · Avisos al celular · Centro de mando · Actualizar. */
+  for(const [id,label,ico] of [['pizarron-open','Pizarrón','cal'],['avisos-open','Avisos al celular','cel'],['command-open','Centro de mando','cc'],['refresh-office','Actualizar','ref']]){
     const src=document.getElementById(id);
     if(!src)continue;
     const b=document.createElement('button');
     b.type='button';b.className='sj-ic';b.dataset.panel=id;
-    b.innerHTML=`<span class="sj-ic-g"><svg viewBox="0 0 24 24" aria-hidden="true">${ICO[ico]}</svg>${id==='pending-open'?'<em class="sj-badge" hidden></em>':''}</span><span>${label}</span>`;
-    b.addEventListener('click',()=>{if(id==='refresh-office'){src.click();return;}returnTo='paneles';src.click();if(id==='avisos-open')setTimeout(()=>document.querySelector('.avisos-dialog [data-topic-form]')?.scrollIntoView({block:'center'}),120);});
+    b.innerHTML=`<span class="sj-ic-g"><svg viewBox="0 0 24 24" aria-hidden="true">${ICO[ico]}</svg>${id==='pizarron-open'?'<em class="sj-badge wait-badge" hidden></em>':''}</span><span>${label}</span>`;
+    b.addEventListener('click',()=>{if(id==='refresh-office'){src.click();return;}returnTo='paneles';src.click();});
     box.append(b);
   }
   const fb=document.createElement('p');fb.className='paneles-feedback small muted';fb.setAttribute('role','status');
@@ -224,6 +235,25 @@ function paintMando(){
  const dockM=$('#dock-mando');
  if(dockM){dockM.setAttribute('aria-pressed',String(unlocked));dockM.title=unlocked?'Mando desbloqueado':'Desbloquear mando';}
  if(status){status.textContent=unlocked?'Mando desbloqueado · cifrado local':'Mando bloqueado';status.classList.toggle('unlocked',unlocked);}
+ paintMandoDialog();
+}
+/* s10: con el Mando abierto, su botón muestra el estado y «Bloquear» pide confirmación antes de olvidar la frase. */
+function paintMandoDialog(){
+ const unlocked=mandoSession.unlocked;
+ const t=$('#mando-dialog-title'),lead=$('#mando-dialog-lead'),box=$('#mando-abierto'),form=$('#mando-form'),conf=$('#mando-confirmar');
+ if(t)t.textContent=unlocked?'Mando abierto':'Desbloquear mando';
+ if(lead)lead.textContent=unlocked?'Se descifra solo en este teléfono.':'Escribe tu frase de mando. Se descifra solo en este teléfono; no se envía a ningún lado.';
+ if(box)box.hidden=!unlocked;
+ if(form)form.hidden=unlocked;
+ if(conf&&!unlocked)conf.hidden=true;
+}
+function lockMandoNow(){
+ mandoSession.lock();
+ resetArchiveroCache();
+ if(snapshot.mode==='live')applySnapshot({mode:snapshot.mode,source:snapshot.source,lastSignal:snapshot.lastSignal,salud:snapshot.salud??null,bots:snapshot.bots.map(b=>({...b}))});
+ else paintMando();
+ $('#refresh-feedback').textContent='Mando bloqueado y frase olvidada en este teléfono.';
+ refreshUso();
 }
 function tasksFromMando(liveBots){
  if(!mandoSession.unlocked||!mandoSession.mando)return null;
@@ -261,7 +291,6 @@ if($('#roster-dept')){
 }
 $('#floor-jump').addEventListener('change',e=>setFloor(Number(e.target.value)));
 $('#roster-floor').addEventListener('change',e=>{rosterFloor=Number(e.target.value);renderRoster();});
-$('#pending-open').addEventListener('click',()=>{sheets.closeAll('consulta');command.open('waiting');historyBack.push();});
 $('#refresh-office').addEventListener('click',()=>{command.refresh();if(wantLive&&snapshot.mode!=='demo'){refreshLive({manual:true});}else{$('#refresh-feedback').textContent=snapshot.mode==='demo'?'Vista demo actualizada. Sin consulta a la fuente en vivo.':'Vista actualizada. Sin fuente en vivo activa.';}});
 function toggleAvatars(open){$('#avatar-dropdown').hidden=!open;$('#avatars-toggle').setAttribute('aria-expanded',String(open));if(open){const frame=$('#avatar-dropdown iframe');if(!frame.getAttribute('src'))frame.src=frame.dataset.src;$('#avatars-close').focus();historyBack.push();}else $('#avatars-toggle').focus();}
 $('#avatars-close').addEventListener('click',()=>sheets.close('avatares'));
@@ -485,7 +514,7 @@ function applySnapshot(next,{demoMotion=false}={}){
  equipo.refresh();
  pizarron.refresh();
  render();
- {const bd=document.querySelector('#paneles-sheet .sj-badge');if(bd){const n=snapshot.bots.filter(x=>x.status==='review'&&!x.stale).length;bd.textContent=String(n);bd.hidden=!n;}}
+ paintWaitBadges();
  const fid=fichaFlotante.getCurrentId?.();
  if(fid){const fb=snapshot.bots.find(x=>x.id===fid);if(fb)fichaFlotante.open(fb,{taskText:fb.task||fb.liveTask?.text||'',resumen:fb.resumen||''});}
 }
@@ -557,20 +586,16 @@ async function bootOffice(){
 paintSource();
 paintMando();
 $('#mando-unlock')?.addEventListener('click',()=>{
- if(mandoSession.unlocked){
-  mandoSession.lock();
-  resetArchiveroCache();
-  if(snapshot.mode==='live')applySnapshot({mode:snapshot.mode,source:snapshot.source,lastSignal:snapshot.lastSignal,salud:snapshot.salud??null,bots:snapshot.bots.map(b=>({...b}))});
-  else paintMando();
-  $('#refresh-feedback').textContent='Mando bloqueado en este navegador.';
-  refreshUso();
-  return;
- }
+ paintMandoDialog();
  $('#mando-error').textContent='';
  $('#mando-pass').value='';
+ if($('#mando-confirmar'))$('#mando-confirmar').hidden=true;
  if(!mandoDialog.open){sheets.closeAll('mando');mandoDialog.showModal();historyBack.push();}
- $('#mando-pass').focus();
+ if(mandoSession.unlocked)$('#mando-bloquear')?.focus();else $('#mando-pass').focus();
 });
+$('#mando-bloquear')?.addEventListener('click',()=>{const c=$('#mando-confirmar');if(c){c.hidden=false;$('#mando-confirmar-no')?.focus();}});
+$('#mando-confirmar-no')?.addEventListener('click',()=>{const c=$('#mando-confirmar');if(c)c.hidden=true;});
+$('#mando-confirmar-si')?.addEventListener('click',()=>{lockMandoNow();mandoDialog.close();});
 $('#mando-dialog-close')?.addEventListener('click',()=>mandoDialog.close());
 $('#mando-lock')?.addEventListener('click',()=>{
  mandoSession.lock();
@@ -697,8 +722,8 @@ function consumeDeepLink(){
     const bot=q.get('bot');
     const abrir=q.get('abrir');
     if(abrir==='avisos'||abrir==='notificaciones')avisosPanel.open();
-    else if(abrir==='esperan'||abrir==='waiting')command.open('waiting');
-    else if(abrir==='mando')command.open('stats');
+    else if(abrir==='esperan'||abrir==='waiting')sheets.open('pizarron');
+    else if(abrir==='mando')command.open('tasks');
     else if(abrir==='resumen')resumenPanel.open();
     if(bot&&bots.some(b=>b.id===bot)){
       let tries=0;

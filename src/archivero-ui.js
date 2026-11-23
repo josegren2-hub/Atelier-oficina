@@ -60,20 +60,23 @@ export function showArchiveroLocked() {
   host().append(box);
 }
 
-function openUrl(url) {
-  if (!url) return;
-  const opened = window.open(url, '_blank', 'noopener,noreferrer');
-  if (!opened) window.location.assign(url);
+/* s10: Drive se abre SOLO en una pestaña nueva; la pestaña de la oficina nunca navega.
+ * (Con 'noopener', window.open devuelve null aunque sí abra, y antes eso mandaba también
+ * la oficina a Drive.) Devuelve false si el navegador bloqueó la pestaña nueva. */
+export function openUrl(url, {open = (...a) => window.open(...a)} = {}) {
+  if (!url) return false;
+  let w = null;
+  try { w = open(url, '_blank'); } catch { w = null; }
+  if (!w) return false;
+  try { w.opener = null; } catch {}
+  return true;
 }
 
 export function showArchiveroList(nombre, folders) {
   ensureStyle();
   closeArchiveroUi();
   if (!folders?.length) return;
-  if (folders.length === 1) {
-    openUrl(folders[0].url);
-    return;
-  }
+  if (folders.length === 1 && openUrl(folders[0].url)) return;
   mountDim();
   const box = document.createElement('div');
   box.id = 'archivero-lista';
@@ -88,7 +91,10 @@ export function showArchiveroList(nombre, folders) {
     const btn = ev.target.closest('button[data-i]');
     if (!btn) return;
     const folder = folders[Number(btn.dataset.i)];
-    if (folder?.url) openUrl(folder.url);
+    if (folder?.url && !openUrl(folder.url)) {
+      const sub = box.querySelector('.sub');
+      if (sub) sub.textContent = 'El navegador bloqueó la pestaña nueva. Permite ventanas emergentes para esta página y vuelve a tocar.';
+    }
   });
   host().append(box);
 }

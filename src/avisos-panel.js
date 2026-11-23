@@ -1,13 +1,13 @@
-/** Phase 5 UI: ntfy subscribe/configure + Te espera alert history. Does not POST to Rob's topic. */
+/** s11 (boceto A, Rob t403 «Todo»): «Avisos al celular» — una sola hoja que junta Avisos, Celular y Centro de mando › Notificaciones.
+ * Estado en palabras simples, quién espera 24 h+, el tema de este teléfono e historial plegado. Nunca envía avisos al tema real. */
 import {
   createNtfySession,
   waitingAlertCandidates,
   mapSalud,
   avisosHealthLabel,
   atelierDeepLink,
-  NTFY_WAIT_HOURS,
-  sendThrowawayTest,
 } from './ntfy-session.js';
+import {avatarPhotoUrl} from './avatar-photo.js';
 
 function el(tag, text, className) {
   const n = document.createElement(tag);
@@ -15,11 +15,29 @@ function el(tag, text, className) {
   if (text != null && text !== '') n.textContent = text;
   return n;
 }
+function btn(text, onClick, extra = {}) {
+  const b = el('button', text);
+  b.type = 'button';
+  for (const [k, v] of Object.entries(extra)) b.dataset[k] = v;
+  b.addEventListener('click', onClick);
+  return b;
+}
 
 function dateText(value) {
   const d = new Date(value);
   if (Number.isNaN(+d)) return '';
-  return d.toLocaleString('es-MX', {timeZone: 'America/Chihuahua'});
+  return d.toLocaleString('es-MX', {timeZone: 'America/Chihuahua', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit'});
+}
+
+/** Estado en palabras simples, sin jerga técnica. */
+export function plainAvisosState(saludMapped, now = Date.now()) {
+  const s = saludMapped || {};
+  const base = avisosHealthLabel(s, now);
+  if (s.avisosConfig === false) return {tone: 'warn', text: 'Los avisos al celular no están activados en la caja.'};
+  if (s.avisosConfig == null) return {tone: 'muted', text: 'Todavía no hay dato de cómo van los avisos.'};
+  if (base.tone === 'warn') return {tone: 'warn', text: 'El último aviso no llegó. La caja lo vuelve a intentar sola.'};
+  if (s.avisosOk) return {tone: 'ok', text: 'Los avisos están llegando bien.'};
+  return {tone: 'ok', text: 'Todo listo; todavía no ha hecho falta mandar ningún aviso.'};
 }
 
 export function mountAvisosPanel({
@@ -37,121 +55,125 @@ export function mountAvisosPanel({
     <div class="detail-top">
       <div>
         <p class="eyebrow">AVISOS AL CELULAR</p>
-        <h2 id="avisos-dialog-title">ntfy · misma fuente que la oficina anterior</h2>
-        <p class="muted avisos-lead">El loop de la caja sigue enviando los avisos. San Junipero no vuelve a mandarlos (así no hay duplicados). Aquí configuras la suscripción en <em>este</em> navegador y ves el estado público.</p>
+        <h2 id="avisos-dialog-title">Avisos al celular</h2>
       </div>
-      <button type="button" data-close aria-label="Cerrar">✕</button>
+      <button type="button" data-close class="sj-x" aria-label="Cerrar">✕</button>
     </div>
     <div class="avisos-body">
       <section class="avisos-block" data-health></section>
-      <section class="avisos-block">
-        <h3>Suscripción en el teléfono</h3>
-        <p class="muted">El tema es secreto (como la frase de mando). Se guarda solo en este navegador; nunca en el repo.</p>
-        <form class="avisos-form" data-topic-form>
-          <label for="avisos-tema">Tema ntfy</label>
-          <input id="avisos-tema" name="tema" type="password" autocomplete="off" spellcheck="false" placeholder="Pega el mismo tema que en la oficina anterior">
-          <label class="switch"><input type="checkbox" name="remember" checked> Recordar en este navegador</label>
-          <p class="avisos-form-status" data-topic-status role="status"></p>
+      <section class="avisos-block" data-waiting></section>
+      <section class="avisos-block" data-demo hidden></section>
+      <section class="avisos-block" data-phone>
+        <h3>En este teléfono</h3>
+        <div data-phone-saved hidden>
+          <p class="muted" data-phone-status></p>
+          <div class="detail-actions">
+            <button type="button" data-subscribe>Abrir en ntfy</button>
+            <button type="button" data-change>Cambiar tema</button>
+            <button type="button" data-forget>Olvidar</button>
+          </div>
+        </div>
+        <form class="avisos-form" data-topic-form hidden>
+          <label for="avisos-tema">Tema de avisos (ntfy)</label>
+          <input id="avisos-tema" name="tema" type="password" autocomplete="off" spellcheck="false" placeholder="Pega tu tema de avisos">
+          <label class="switch"><input type="checkbox" name="remember" checked> Recordar en este teléfono</label>
           <div class="detail-actions">
             <button type="submit">Guardar tema</button>
-            <button type="button" data-subscribe>Abrir suscripción ntfy</button>
-            <button type="button" data-forget>Olvidar tema</button>
+            <button type="button" data-cancel-change hidden>Cancelar</button>
           </div>
+          <p class="muted small">El tema es secreto: se guarda solo en este teléfono. En la app ntfy: Suscribirse → pega el tema.</p>
         </form>
-        <p class="muted small">En la app ntfy: Suscribirse → pega el tema. Los avisos llegan del loop viejo; el clic aún abre Oficina-bots hasta que Rob apruebe cambiar la URL.</p>
+        <p class="avisos-form-status" data-topic-status role="status"></p>
       </section>
-      <section class="avisos-block" data-waiting></section>
-      <section class="avisos-block" data-history></section>
-      <section class="avisos-block avisos-test">
-        <h3>Prueba (tema desechable)</h3>
-        <p class="muted">Solo con un tema que empiece por <code>prueba-atelier-</code> o <code>test-atelier-</code>. Nunca uses el tema real.</p>
-        <div class="detail-actions">
-          <button type="button" data-test-throwaway>Enviar prueba a tema desechable guardado</button>
-        </div>
-        <p class="avisos-form-status" data-test-status role="status"></p>
-      </section>
+      <details class="avisos-block avisos-hist" data-history-box>
+        <summary><span class="avisos-hist-t">Historial (este teléfono)</span><span class="muted small" data-history-count></span></summary>
+        <div data-history></div>
+      </details>
     </div>`;
   container.append(dialog);
 
   const healthEl = dialog.querySelector('[data-health]');
   const waitingEl = dialog.querySelector('[data-waiting]');
+  const demoEl = dialog.querySelector('[data-demo]');
   const historyEl = dialog.querySelector('[data-history]');
+  const historyCount = dialog.querySelector('[data-history-count]');
   const form = dialog.querySelector('[data-topic-form]');
+  const saved = dialog.querySelector('[data-phone-saved]');
+  const phoneStatus = dialog.querySelector('[data-phone-status]');
   const statusEl = dialog.querySelector('[data-topic-status]');
-  const testStatus = dialog.querySelector('[data-test-status]');
+  const cancelChange = dialog.querySelector('[data-cancel-change]');
   let returnFocus = null;
+  let changing = false;
 
-  function paintTopicStatus() {
+  function paintPhone() {
     const snap = session.snapshot();
-    statusEl.textContent = snap.configured
-      ? `Tema guardado en este navegador (${snap.topicMasked}).`
-      : 'Sin tema en este navegador. Puedes suscribirte cuando lo pegues.';
+    const showForm = !snap.configured || changing;
+    saved.hidden = !snap.configured || changing;
+    form.hidden = !showForm;
+    cancelChange.hidden = !(snap.configured && changing);
+    if (snap.configured) phoneStatus.textContent = `Tema guardado ${snap.topicMasked}`;
     form.tema.value = '';
   }
 
   function paint() {
     const snapshot = getSnapshot() || {};
     const salud = mapSalud(snapshot.salud);
-    const health = avisosHealthLabel(salud);
-    healthEl.replaceChildren();
-    healthEl.append(el('h3', 'Estado público (estado.json)'));
-    const badge = el('p', health.text, `avisos-health ${health.tone}`);
-    healthEl.append(badge);
-    if (salud.avisosOk) healthEl.append(el('p', `Último envío OK: ${dateText(salud.avisosOk)}`, 'muted small'));
-    if (salud.avisosError) healthEl.append(el('p', `Último error: ${dateText(salud.avisosError)}`, 'muted small'));
-    healthEl.append(el('p', `Umbral del loop: ${NTFY_WAIT_HOURS} h en «Te espera».`, 'muted small'));
+    const st = plainAvisosState(salud);
+    healthEl.replaceChildren(el('h3', 'Estado'));
+    healthEl.className = `avisos-block avisos-estado ${st.tone}`;
+    healthEl.append(el('p', st.text, 'avisos-estado-txt'));
+    if (salud.avisosOk) healthEl.append(el('p', `Último aviso bien: ${dateText(salud.avisosOk)}`, 'muted small'));
+    if (st.tone === 'warn' && salud.avisosError) healthEl.append(el('p', `Último que no llegó: ${dateText(salud.avisosError)}`, 'muted small'));
 
     const cands = waitingAlertCandidates(snapshot.bots || []);
     session.rememberCandidates(cands);
-    waitingEl.replaceChildren();
-    waitingEl.append(el('h3', 'Te espera · umbral 24 h'));
-    waitingEl.append(el('p', 'Misma regla que el loop (solo lectura aquí; no se envía ntfy desde San Junipero).', 'muted small'));
-    if (!cands.length) {
-      waitingEl.append(el('p', 'Nadie lleva 24 h o más en Te espera ahora.', 'muted'));
-    } else {
-      for (const c of cands) {
+    waitingEl.replaceChildren(el('h3', 'Te esperan hace más de 24 h'));
+    if (!cands.length) waitingEl.append(el('p', 'Nadie lleva más de 24 h esperándote.', 'muted'));
+    for (const c of cands) {
+      const card = el('article', undefined, 'avisos-card avisos-bot');
+      const img = document.createElement('img');
+      img.className = 'av'; img.src = avatarPhotoUrl(c.id); img.alt = ''; img.width = 28; img.height = 28; img.loading = 'lazy';
+      const meta = el('div', undefined, 'avisos-bot-meta');
+      meta.append(el('h4', c.title), el('p', `Desde ${dateText(c.waitingSince)} · ${c.hours} h`, 'muted small'));
+      const row = el('div', undefined, 'detail-actions');
+      row.append(btn('Abrir ficha', () => { dialog.close(); onChoose(c.id); }));
+      const copy = btn('Copiar enlace', async () => {
+        try { await navigator.clipboard.writeText(c.deepLink); copy.textContent = 'Copiado'; setTimeout(() => { copy.textContent = 'Copiar enlace'; }, 1500); }
+        catch { copy.textContent = 'No se pudo copiar'; }
+      });
+      row.append(copy);
+      meta.append(row);
+      card.append(img, meta);
+      waitingEl.append(card);
+    }
+
+    // Avisos de ejemplo del modo demostración (antes en Centro de mando › Notificaciones).
+    const notes = snapshot.mode === 'demo' && Array.isArray(snapshot.notifications)
+      ? snapshot.notifications.filter(n => n && n.id && n.title) : [];
+    demoEl.hidden = !notes.length;
+    demoEl.replaceChildren();
+    if (notes.length) {
+      demoEl.append(el('h3', 'Avisos de ejemplo (demostración)'));
+      for (const n of notes) {
         const card = el('article', undefined, 'avisos-card');
-        card.append(el('h4', c.title));
-        card.append(el('p', `Desde ${dateText(c.waitingSince)} · ${c.hours} h`, 'muted small'));
-        const row = el('div', undefined, 'detail-actions');
-        const open = el('button', 'Abrir ficha');
-        open.type = 'button';
-        open.addEventListener('click', () => { dialog.close(); onChoose(c.id); });
-        const copy = el('button', 'Copiar enlace San Junipero');
-        copy.type = 'button';
-        copy.addEventListener('click', async () => {
-          try {
-            await navigator.clipboard.writeText(c.deepLink);
-            copy.textContent = 'Copiado';
-            setTimeout(() => { copy.textContent = 'Copiar enlace San Junipero'; }, 1500);
-          } catch {
-            copy.textContent = 'No se pudo copiar';
-          }
-        });
-        row.append(open, copy);
-        card.append(row);
-        waitingEl.append(card);
+        card.append(el('h4', n.title));
+        if (n.body) card.append(el('p', n.body, 'muted small'));
+        if (n.createdAt) card.append(el('p', dateText(n.createdAt), 'muted small'));
+        demoEl.append(card);
       }
     }
 
     const hist = session.readHistory();
     historyEl.replaceChildren();
-    historyEl.append(el('h3', 'Historial local (este navegador)'));
-    historyEl.append(el('p', 'Se arma al ver candidatos ≥24 h. No es el registro .ntfy-enviados del servidor.', 'muted small'));
-    if (!hist.length) historyEl.append(el('p', 'Aún no hay entradas locales.', 'muted'));
-    else {
-      for (const h of hist.slice(0, 12)) {
-        const card = el('article', undefined, 'avisos-card');
-        card.append(el('h4', h.title));
-        card.append(el('p', `${h.source || ''} · visto ${dateText(h.seenAt)}`, 'muted small'));
-        const open = el('button', 'Abrir ficha');
-        open.type = 'button';
-        open.addEventListener('click', () => { dialog.close(); onChoose(h.id); });
-        card.append(open);
-        historyEl.append(card);
-      }
+    historyCount.textContent = hist.length ? `${hist.length} ${hist.length === 1 ? 'aviso visto' : 'avisos vistos'} · toca para ver` : 'Sin avisos vistos todavía';
+    if (!hist.length) historyEl.append(el('p', 'Aquí se anotan los avisos de más de 24 h que este teléfono ha visto.', 'muted small'));
+    for (const h of hist.slice(0, 12)) {
+      const card = el('article', undefined, 'avisos-card');
+      card.append(el('h4', h.title), el('p', `Visto ${dateText(h.seenAt)}`, 'muted small'));
+      card.append(btn('Abrir ficha', () => { dialog.close(); onChoose(h.id); }));
+      historyEl.append(card);
     }
-    paintTopicStatus();
+    paintPhone();
   }
 
   form.addEventListener('submit', e => {
@@ -159,38 +181,30 @@ export function mountAvisosPanel({
     try {
       const fd = new FormData(form);
       session.saveTopic(fd.get('tema'), {remember: fd.get('remember') === 'on'});
-      statusEl.textContent = 'Tema guardado solo en este navegador.';
-      paintTopicStatus();
+      changing = false;
+      statusEl.textContent = 'Tema guardado solo en este teléfono.';
+      paintPhone();
     } catch (err) {
       statusEl.textContent = err.message || 'No se pudo guardar';
     }
   });
+  dialog.querySelector('[data-change]').addEventListener('click', () => { changing = true; statusEl.textContent = ''; paintPhone(); form.tema.focus(); });
+  cancelChange.addEventListener('click', () => { changing = false; statusEl.textContent = ''; paintPhone(); });
   dialog.querySelector('[data-forget]').addEventListener('click', () => {
     session.clearTopic();
-    paintTopicStatus();
+    changing = false;
+    statusEl.textContent = 'Tema olvidado en este teléfono.';
+    paintPhone();
   });
   dialog.querySelector('[data-subscribe]').addEventListener('click', () => {
-    let topic = session.readTopic();
-    if (!topic) {
-      try { topic = form.tema.value; session.saveTopic(topic, {remember: form.remember.checked}); }
-      catch (err) { statusEl.textContent = err.message; return; }
-    }
     const url = session.subscribeUrl();
     if (!url) { statusEl.textContent = 'Guarda un tema primero.'; return; }
-    window.open(url, '_blank', 'noopener,noreferrer');
-  });
-  dialog.querySelector('[data-test-throwaway]').addEventListener('click', async () => {
-    testStatus.textContent = '';
-    try {
-      const topic = session.readTopic() || form.tema.value;
-      const st = await sendThrowawayTest({topic, confirmThrowaway: true});
-      testStatus.textContent = `Prueba enviada (HTTP ${st}) al tema desechable.`;
-    } catch (err) {
-      testStatus.textContent = err.message || 'No se envió';
-    }
+    const w = window.open(url, '_blank');
+    if (w) { try { w.opener = null; } catch {} } else statusEl.textContent = 'El navegador bloqueó la pestaña nueva.';
   });
   dialog.querySelector('[data-close]').addEventListener('click', () => dialog.close());
-  dialog.addEventListener('close', () => { try { returnFocus?.focus?.(); } catch {} });
+  dialog.addEventListener('click', e => { if (e.target === dialog) dialog.close(); });
+  dialog.addEventListener('close', () => { changing = false; try { returnFocus?.focus?.(); } catch {} });
 
   return {
     element: dialog,

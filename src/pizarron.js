@@ -1,11 +1,18 @@
 import {avatarPhotoUrl} from './avatar-photo.js';
 /** Ted's whiteboard: Agenda y pendientes de hoy (public + mando-unlocked only). */
 export function buildPizarronModel({mando = null, waiting = [], bots = []} = {}) {
-  if (!mando) return {unlocked: false, aud: [], esp: [], pend: [], gen: null, audEstado: null};
+  const byId = new Map(bots.map(b => [b.id, b]));
+  // s11 (boceto C): «Te esperan» vive aquí y se ve también con el Mando bloqueado (solo nombre y tiempo; el pendiente, solo desbloqueado).
+  const esp = (waiting || []).map(b => ({
+    id: b.id,
+    nombre: b.name || byId.get(b.id)?.name || b.id,
+    desde: typeof b.waitingSince === 'string' ? b.waitingSince : '',
+    pendiente: mando && typeof b.pendiente === 'string' ? b.pendiente : '',
+    autorizacion: mando && Array.isArray(b.authorization) ? b.authorization.filter(Boolean) : [],
+  }));
+  if (!mando) return {unlocked: false, aud: [], esp, pend: [], gen: null, audEstado: null};
   const a = mando.audiencias;
   const aud = a && a.estado === 'ok' && Array.isArray(a.items) ? a.items : [];
-  const byId = new Map(bots.map(b => [b.id, b]));
-  const esp = (waiting || []).map(b => ({id: b.id, nombre: b.name || byId.get(b.id)?.name || b.id}));
   const pend = (mando.bots || []).flatMap(b => (b.pendientes || []).map(p => ({
     id: b.id,
     n: byId.get(b.id)?.name || b.nombre || b.id,
@@ -74,9 +81,21 @@ export function assignLanes(events = []) {
   return list;
 }
 
+/** «hace 3 h», «hace 40 min», «hace 2 días». */
+export function haceText(iso, now = Date.now()) {
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return '';
+  const min = Math.max(0, Math.round((now - t) / 60000));
+  if (min < 60) return `hace ${min} min`;
+  const h = Math.round(min / 60);
+  if (h < 48) return `hace ${h} h`;
+  return `hace ${Math.round(h / 24)} días`;
+}
+
 export function mountPizarron({
   getModel = () => buildPizarronModel(),
   onSelect = () => {},
+  onPostpone = () => {},
 } = {}) {
   const dialog = document.createElement('dialog');
   dialog.id = 'v17pizarron';
@@ -90,6 +109,16 @@ export function mountPizarron({
     return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 
+  function esperanHtml(list) {
+    let h = `<section class="pz-esp" aria-label="Te esperan"><h4>Te esperan · ${list.length}</h4>`;
+    if (!list.length) return h + '<p class="s">Nadie te espera ahora.</p></section>';
+    for (const b of list) {
+      const linea = [b.pendiente, haceText(b.desde)].filter(Boolean).join(' · ');
+      h += `<article class="pz-card"><img class="av" src="${escapeHtml(avatarPhotoUrl(b.id))}" alt="" width="28" height="28" loading="lazy"><div class="pz-card-m"><b>${escapeHtml(b.nombre)}</b>${linea ? `<p class="s">${escapeHtml(linea)}</p>` : ''}${b.autorizacion?.length ? `<p class="s">Autorización: ${escapeHtml(b.autorizacion.join(' · '))}</p>` : ''}<div class="pz-acts"><button type="button" data-ficha="${escapeHtml(b.id)}">Abrir ficha</button><button type="button" data-pos="${escapeHtml(b.id)}">Posponer 3 h</button></div></div></article>`;
+    }
+    return h + '</section>';
+  }
+
   function render() {
     const d = getModel() || {unlocked: false};
     const jul = who === 'julian';
@@ -97,14 +126,17 @@ export function mountPizarron({
     dialog.setAttribute('aria-label', jul ? 'Pizarrón de Julián · Solo agenda de trabajo' : 'Agenda y pendientes de hoy');
     let h = jul
       ? `<div class="lt"><b>Pizarrón de Julián</b><button type="button" class="lcerrar" aria-label="Cerrar">✕</button></div><p class="pz-sub">Solo agenda de trabajo</p>`
-      : `<div class="lt"><b>Agenda y pendientes de hoy</b><button type="button" class="lcerrar" aria-label="Cerrar">✕</button></div>`;
-    if (!d.unlocked) {
-      h += '<p class="s">Solo con el Centro de mando desbloqueado. Sin la clave no se muestra contenido privado.</p>';
-    } else {
+      : `<div class="lt"><b>Pizarrón</b><button type="button" class="lcerrar" aria-label="Cerrar">✕</button></div>`;
+    if (d.unlocked) {
       const when = d.gen ? new Date(d.gen).toLocaleString('es-MX', {timeZone: 'America/Chihuahua', hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short'}) : '—';
       h += `<p class="s">Se actualiza solo · datos al ${escapeHtml(when)}</p>`;
-      h += '<h4>Agenda</h4>';
+    }
+    if (!jul) h += esperanHtml(d.esp || []);
+    if (!d.unlocked) {
+      h += '<p class="s">La agenda y los pendientes se ven solo con el Mando desbloqueado. Sin la clave no se muestra contenido privado.</p>';
+    } else {
       h += `<div class="pz-tog" role="group" aria-label="Días"><button type="button" data-days="1" aria-pressed="${days === 1}">Hoy</button><button type="button" data-days="2" aria-pressed="${days === 2}">2 días</button></div>`;
+      h += '<h4>Agenda</h4>';
       if (d.audEstado && d.audEstado !== 'ok') h += `<p class="s">Audiencias: sin datos de mañana todavía.</p>`;
       {
         const cal = buildCalendar(jul ? d.aud : [...d.aud, ...(d.agenda || [])], {days, fallbackFecha: d.audFecha});
@@ -128,10 +160,6 @@ export function mountPizarron({
         h += '<p class="s">Cada cita se muestra con su horario del calendario; si no trae hora de fin, se dibuja de 1 h.</p>';
       }
       if (!jul) {
-      h += '<h4>Te esperan</h4>';
-      h += d.esp.length
-        ? d.esp.map(b => `<button type="button" class="f" data-id="${escapeHtml(b.id)}"><img class="av" src="${escapeHtml(avatarPhotoUrl(b.id))}" alt="" width="28" height="28" loading="lazy"><span class="d e-te"></span><div class="lx"><b>${escapeHtml(b.nombre)}</b></div><span class="lir">›</span></button>`).join('')
-        : '<p class="s">Nadie te espera.</p>';
       h += '<h4>Pendientes</h4>';
       h += d.pend.length
         ? '<ul>' + d.pend.slice(0, 30).map(p => `<li data-id="${escapeHtml(p.id)}"><b>${escapeHtml(p.n)}:</b> ${escapeHtml(p.t)}</li>`).join('') + '</ul>'
@@ -144,6 +172,10 @@ export function mountPizarron({
   dialog.addEventListener('click', e => {
     if (e.target === dialog) { close(); return; }
     if (e.target.closest('.lcerrar')) { close(); return; }
+    const fi = e.target.closest('[data-ficha]');
+    if (fi) { close(); onSelect(fi.dataset.ficha); return; }
+    const po = e.target.closest('[data-pos]');
+    if (po) { onPostpone(po.dataset.pos); render(); return; }
     const tg = e.target.closest('[data-days]');
     if (tg) { days = Number(tg.dataset.days) === 2 ? 2 : 1; render(); return; }
     const row = e.target.closest('[data-id]');
