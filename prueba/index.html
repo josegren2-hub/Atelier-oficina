@@ -10,7 +10,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <title>San Junipero Corp · Oficina digital</title>
-  <script type="module" crossorigin src="/Atelier-oficina/prueba/assets/index-BFdmp3d4.js"></script>
+  <script type="module" crossorigin src="/Atelier-oficina/prueba/assets/index-BQxv-ous.js"></script>
   <link rel="modulepreload" crossorigin href="/Atelier-oficina/prueba/assets/modulepreload-polyfill-B5Qt9EMX.js">
 <style>.prueba-badge{display:inline-flex;align-items:center;margin-left:10px;padding:3px 9px;border-radius:4px;font:700 10px/1.2 system-ui,sans-serif;letter-spacing:1.2px;color:#0c1824;background:#bcd9ec;border:1px solid #a9c6da;vertical-align:middle}</style>
 </head>
@@ -18,7 +18,7 @@
 <div id="app">
 <header class="chrome-top">
   <a class="brand" href="#">SJ<span>SAN JUNIPERO CORP<small>OFICINA DIGITAL / 16 BOTS</small></span></a>
-  <span class="prueba-badge" title="Vista de prueba — no es el sitio en vivo">PRUEBA · 0.22.3s9n</span>
+  <span class="prueba-badge" title="Vista de prueba — no es el sitio en vivo">PRUEBA · 0.22.4s10</span>
   <div class="source"><i></i><span id="source-label">Conectando en vivo…</span><small>Última señal: <span id="last-signal">ninguna</span></small></div>
   <div class="chrome-primary" role="toolbar" aria-label="Accesos principales">
     <button id="mando-unlock" type="button" class="btn-slim" title="Mando"><span class="ico" data-ico="mando"></span><span class="lbl">Mando</span></button>
@@ -35,7 +35,7 @@
     <button type="button" id="mas-close" class="icon-btn" aria-label="Cerrar">×</button>
   </div>
   <div class="mas-body">
-    <div class="release-info"><span>Versión 0.22.3</span><button id="check-version" class="btn-slim">Comprobar versión</button><span id="version-result" role="status"></span></div>
+    <div class="release-info"><span>Versión 0.22.4</span><button id="check-version" class="btn-slim">Comprobar versión</button><span id="version-result" role="status"></span></div>
     <button id="demo" class="btn-slim" aria-pressed="false">Ver demostración</button>
     <button id="avatars-toggle" class="btn-slim gallery-link" aria-expanded="false" aria-controls="avatar-dropdown">Avatares</button>
     <button id="command-open" class="btn-slim">Centro de mando</button>
@@ -43,7 +43,7 @@
     <button id="install-app" type="button" class="btn-slim" hidden>Instalar como app</button>
     <div class="mas-block">
       <label class="switch"><input id="walls" type="checkbox" checked> Fachada de vidrio</label>
-      <span class="roles-pending">5 niveles · distribución por funciones</span>
+      <span class="roles-pending">6 niveles (PB y 5 pisos) · distribución por funciones</span>
       <p class="small muted">Los avatares muestran ubicación de diseño. No implican actividad real.</p>
     </div>
   </div>
@@ -83,7 +83,7 @@
 <label class="switch visually-hidden"><input id="night" type="checkbox"> Modo nocturno</label>
 
 
-<dialog id="mando-dialog" aria-labelledby="mando-dialog-title"><div class="detail-top"><div><p class="eyebrow">MANDO CIFRADO</p><h2 id="mando-dialog-title">Desbloquear mando</h2><p>Introduce la misma frase que en la oficina anterior. Se descifra solo en este navegador; no se envía a San Junipero Corp.</p></div><button id="mando-dialog-close" type="button" aria-label="Cerrar">Cerrar ×</button></div><form id="mando-form" class="mando-form"><label for="mando-pass">Frase de mando</label><input id="mando-pass" type="password" autocomplete="current-password" required><label class="switch"><input id="mando-remember" type="checkbox" checked> Recordar en este navegador</label><p id="mando-error" role="alert"></p><div class="detail-actions"><button type="submit">Desbloquear</button><button type="button" id="mando-lock">Bloquear y olvidar</button></div></form></dialog>
+<dialog id="mando-dialog" aria-labelledby="mando-dialog-title"><div class="detail-top"><div><p class="eyebrow">MANDO CIFRADO</p><h2 id="mando-dialog-title">Desbloquear mando</h2><p id="mando-dialog-lead">Escribe tu frase de mando. Se descifra solo en este teléfono; no se envía a ningún lado.</p></div><button id="mando-dialog-close" type="button" class="sj-x" aria-label="Cerrar">✕</button></div><div id="mando-abierto" class="mando-abierto" hidden><p class="mando-abierto-txt">El mando está abierto en este teléfono: ves tareas, agenda y archiveros.</p><div class="detail-actions"><button type="button" id="mando-bloquear">Bloquear</button></div><div id="mando-confirmar" class="mando-confirmar" hidden role="alertdialog" aria-labelledby="mando-confirmar-txt"><p id="mando-confirmar-txt">¿Bloquear el mando y olvidar la frase en este teléfono? Para volver a abrirlo tendrás que escribirla otra vez.</p><div class="detail-actions"><button type="button" id="mando-confirmar-si">Sí, bloquear</button><button type="button" id="mando-confirmar-no">Cancelar</button></div></div></div><form id="mando-form" class="mando-form"><label for="mando-pass">Frase de mando</label><input id="mando-pass" type="password" autocomplete="current-password" required><label class="switch"><input id="mando-remember" type="checkbox" checked> Recordar en este navegador</label><p id="mando-error" role="alert"></p><div class="detail-actions"><button type="submit">Desbloquear</button><button type="button" id="mando-lock" hidden>Bloquear y olvidar</button></div></form></dialog>
 <dialog id="detail" aria-labelledby="detail-title" aria-describedby="detail-source"><div class="detail-top"><img id="detail-photo" alt="" width="62" height="62" hidden><div class="detail-id"><p class="eyebrow" id="detail-eyebrow">FICHA</p><h2 id="detail-title"></h2><p id="detail-role"></p></div><button id="detail-close" type="button" class="sj-x" autofocus aria-label="Cerrar ficha y volver">✕</button></div><div class="sj-chips" id="detail-chips"><span id="detail-st" class="ficha-st"></span><span class="sj-chip" id="detail-floor-chip"></span><span class="sj-chip" id="detail-live-chip"></span></div><div class="detail-content"><div id="detail-facts"></div></div><div class="detail-actions sj-btns"><button id="detail-chat" type="button" class="sj-btn gold">Abrir chat</button><button id="detail-goto" type="button" class="sj-btn">Ir al avatar</button></div><div class="detail-more"><button id="detail-agenda" type="button" class="sj-link" hidden>Abrir agenda</button><button id="detail-all" type="button" class="sj-link">Ver todos (16)</button></div><p id="detail-source" class="sj-foot"></p><p id="detail-uso" class="uso-line" hidden></p></dialog>
 </body>
 </html>
