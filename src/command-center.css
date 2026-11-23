@@ -128,3 +128,6 @@
 @media(max-width:600px){
   .cc-summary dd.cc-summary-word{font-size:12px!important}
 }
+/* s9n: agenda del Mando en Centro de mando › Agendas (mismos colores que el Pizarrón) */
+.cc-card.cc-ag-aud{border-left:3px solid #ba85ea}
+.cc-card.cc-ag-cal{border-left:3px solid #6fb2ff}

@@ -1,3 +1,4 @@
+import {buildPizarronModel} from './pizarron.js';
 import {waitingAlertCandidates,mapSalud,avisosHealthLabel} from './ntfy-session.js';
 import {isPostponed} from './local-waiting.js';
 import {avatarPhotoUrl} from './avatar-photo.js';
@@ -31,11 +32,12 @@ export function commandCenterModel(snapshot = {}) {
     mandoUnlocked:snapshot.mandoUnlocked===true,
     agenda:available && snapshot.agenda && typeof snapshot.agenda === 'object'?snapshot.agenda:{}};
 }
+function ymdChihuahua(d){const p=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Chihuahua',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d);const g=k=>p.find(x=>x.type===k)?.value;return `${g('year')}-${g('month')}-${g('day')}`;}
 export function filterTasks(tasks, {status='all',query='',botId=''}={}) {
   const q=normalized(query).trim();
   return tasks.filter(task=>(status==='all'||(status==='urgent'?task.urgent:task.status===status))&&(!botId||task.botId===botId)&&(!q||normalized(`${task.title} ${task.description} ${task.botId}`).includes(q)));
 }
-export function mountCommandCenter({getSnapshot=()=>({}),onChoose=()=>{}}={}) {
+export function mountCommandCenter({getSnapshot=()=>({}),onChoose=()=>{},getMando=()=>null}={}) {
   const dialog=document.createElement('dialog');
   dialog.className='cc-dialog'; dialog.setAttribute('aria-label','Centro de mando');
   dialog.innerHTML=`<header class="cc-header"><div><p class="cc-eyebrow">OFICINA · CONSULTA</p><h2>Actividades</h2></div><button type="button" data-close aria-label="Cerrar centro de mando">Cerrar ×</button></header><nav class="cc-nav" aria-label="Secciones del centro de mando"><button type="button" data-section="waiting">Te espera</button><button type="button" data-section="tasks">Actividades</button><button type="button" data-section="notifications">Notificaciones</button><button type="button" data-section="stats">Estadísticas</button><button type="button" data-section="agenda">Agendas</button></nav><div class="cc-source" role="status"></div><main class="cc-content"></main><footer class="cc-footer"><span>Solo consulta · no modifica tareas ni calendarios</span><button type="button" data-refresh>Actualizar vista</button></footer>`;
@@ -141,6 +143,9 @@ export function mountCommandCenter({getSnapshot=()=>({}),onChoose=()=>{}}={}) {
   function renderAgenda(){
     const name=agendaId==='julian'?'Julián':'Ted';
     heading(`Agenda y pendientes de ${name}`,'Consulta rápida de compromisos y tareas por atender.');
+    // s9n (Rob t398): with the Mando unlocked, show the same encrypted agenda + hearings the Pizarrón uses (today and tomorrow). Never invents events.
+    let mando=null;try{mando=getMando()||null;}catch{mando=null;}
+    if(mando){renderMandoAgenda(name,mando);return;}
     const agenda=model.agenda[agendaId];const simulated=model.mode==='demo'&&agenda?.simulated===true;const connected=(simulated||agenda?.connected===true)&&Array.isArray(agenda.events);
     const events=connected?agenda.events.filter(e=>e&&str(e.id)&&str(e.title)&&Number.isFinite(Date.parse(e.start))).slice().sort((a,b)=>Date.parse(a.start)-Date.parse(b.start)):[];
     const pending=model.tasks.filter(task=>task.botId===agendaId&&task.status!=='completed');
@@ -155,6 +160,29 @@ export function mountCommandCenter({getSnapshot=()=>({}),onChoose=()=>{}}={}) {
     const tasks=el('section',undefined,'cc-agenda-tasks');tasks.setAttribute('aria-label',`Pendientes de ${name}`);tasks.append(el('h3','Pendientes y actividades'));
     if(!pending.length)empty(model.hasTasks?'Sin tareas por atender':'Pendientes aún no disponibles',model.hasTasks?`No hay tareas abiertas de ${name} en esta vista.`:'La fuente de tareas no está conectada. No se puede confirmar si hay pendientes.',tasks);
     for(const task of pending){const card=el('article',undefined,'cc-card');card.append(el('span',taskStates[task.status]+(task.urgent&&task.status!=='urgent'?' · Urgente':''),'cc-badge'),el('h4',task.title));if(task.description)card.append(el('p',task.description));card.append(el('small',task.dueAt?dateText(task.dueAt):'Sin fecha prevista'),el('small',`ID: ${task.id}`));tasks.append(card);}
+    columns.append(schedule,tasks);content.append(columns);
+  }
+  function renderMandoAgenda(name,mando){
+    const jul=agendaId==='julian';const pm=buildPizarronModel({mando});
+    const hoy=ymdChihuahua(new Date()),man=ymdChihuahua(new Date(Date.now()+864e5));
+    const items=(jul?pm.aud:[...pm.aud,...(pm.agenda||[])]).filter(e=>e&&str(e.titulo)&&[hoy,man].includes(String(e.fecha||'').slice(0,10)))
+      .sort((a,b)=>(String(a.fecha)+String(a.hora||'')).localeCompare(String(b.fecha)+String(b.hora||'')));
+    const pending=model.tasks.filter(task=>task.botId===agendaId&&task.status!=='completed');
+    const nAud=items.filter(e=>e.tipo==='aud').length;
+    summary(jul?[['Audiencias hoy y mañana',nAud],['Tareas por atender',model.hasTasks?pending.length:null]]:[['Eventos hoy y mañana',items.length],['Audiencias',nAud]]);
+    const tabs=el('div',undefined,'cc-filters cc-agenda-switch');tabs.setAttribute('role','group');tabs.setAttribute('aria-label','Consultar otra agenda');
+    for(const [id,label] of [['ted','Ted'],['julian','Julián']]){const b=button(`Agenda de ${label}`,()=>{agendaId=id;render();content.querySelector(`[data-agenda="${id}"]`).focus();});b.dataset.agenda=id;b.setAttribute('aria-pressed',String(id===agendaId));tabs.append(b);}content.append(tabs);
+    const gen=pm.gen?new Date(pm.gen).toLocaleString('es-MX',{timeZone:'America/Chihuahua',hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'}):'—';
+    content.append(el('p',`Fuente: Mando cifrado (Google Calendar) · Solo lectura · datos al ${gen}${jul?' · Solo audiencias':''}`,'cc-explainer'));
+    const columns=el('div',undefined,'cc-agenda-columns');
+    const schedule=el('section',undefined,'cc-agenda-events');schedule.setAttribute('aria-label',`Compromisos de ${name}`);schedule.append(el('h3','Compromisos · hoy y mañana'));
+    if(!items.length)empty(jul?'Sin audiencias':'Sin eventos',jul?'No hay audiencias hoy ni mañana.':'No hay eventos hoy ni mañana.',schedule);
+    for(const e of items){const card=el('article',undefined,'cc-card cc-ag-'+(e.tipo==='cal'?'cal':'aud'));
+      const dia=new Date(String(e.fecha).slice(0,10)+'T12:00:00-06:00').toLocaleDateString('es-MX',{timeZone:'America/Chihuahua',weekday:'short',day:'numeric',month:'short'});
+      card.append(el('span',`${e.tipo==='cal'?'Calendario':'Audiencia'} · ${dia}${e.hora?' · '+e.hora+(e.fin?'–'+e.fin:''):''}`,'cc-badge'),el('h4',e.titulo));if(str(e.lugar))card.append(el('p',e.lugar));schedule.append(card);}
+    const tasks=el('section',undefined,'cc-agenda-tasks');tasks.setAttribute('aria-label',`Pendientes de ${name}`);tasks.append(el('h3','Pendientes y actividades'));
+    if(!pending.length)empty(model.hasTasks?'Sin tareas por atender':'Pendientes aún no disponibles',model.hasTasks?`No hay tareas abiertas de ${name} en esta vista.`:'La fuente de tareas no está conectada. No se puede confirmar si hay pendientes.',tasks);
+    for(const task of pending){const card=el('article',undefined,'cc-card');card.append(el('span',taskStates[task.status]+(task.urgent&&task.status!=='urgent'?' · Urgente':''),'cc-badge'),el('h4',task.title));if(task.description)card.append(el('p',task.description));card.append(el('small',task.dueAt?dateText(task.dueAt):'Sin fecha prevista'));tasks.append(card);}
     columns.append(schedule,tasks);content.append(columns);
   }
   function refresh(){try{model=commandCenterModel(getSnapshot()||{});readError=false;}catch{model=commandCenterModel();readError=true;}render();}

@@ -125,7 +125,7 @@ export function mountPizarron({
         if (!cal.cols.some(c => c.events.length)) h += `<p class="s">${jul ? 'Sin audiencias en estos días.' : 'Sin eventos en estos días.'}</p>`;
         h += jul ? '<p class="s">Fuente: audiencias (trabajo).</p>' : `<p class="s"><span class="pz-key pz-aud"></span> Audiencias · <span class="pz-key pz-cal"></span> Calendario de Google${d.agendaEstado === 'ok' ? '' : ' (sin datos)'}</p>`;
         if (cal.sinHora.length) h += '<ul>' + cal.sinHora.map(e => `<li>${escapeHtml(e.titulo)} <span class="s">(sin hora)</span></li>`).join('') + '</ul>';
-        h += '<p class="s">Las audiencias se muestran de 1 h aprox.; los eventos del calendario con su duración real.</p>';
+        h += '<p class="s">Cada cita se muestra con su horario del calendario; si no trae hora de fin, se dibuja de 1 h.</p>';
       }
       if (!jul) {
       h += '<h4>Te esperan</h4>';

@@ -42,7 +42,7 @@ document.documentElement.dataset.theme=nightMode?'night':'day';
 
 function el(tag,text,className){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(className)n.className=className;return n;}
 const mandoSession=createMandoSession({onChange:()=>{if(snapshot.mode==='live')applySnapshot(enrichSnapshot(snapshot),{demoMotion:false});else paintMando();}});
-const command=mountCommandCenter({getSnapshot:()=>snapshot,onChoose:id=>choose(id)});
+const command=mountCommandCenter({getSnapshot:()=>snapshot,onChoose:id=>choose(id),getMando:()=>mandoSession.unlocked?mandoSession.mando:null});
 const avisosPanel=mountAvisosPanel({getSnapshot:()=>snapshot,onChoose:id=>choose(id),container:document.body});
 
 const nav=$('#floors'),detail=$('#detail');
