@@ -31,7 +31,16 @@ function dateText(value) {
   return d.toLocaleString('es-MX', {timeZone: 'America/Chihuahua', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit'});
 }
 
-/** Estado en palabras simples, sin jerga técnica. */
+/** Texto del distintivo de canal, o null si no hay uno que mostrar. */
+export function canalAvisosLabel(saludMapped) {
+  if (saludMapped?.avisosCanal === 'telegram' && saludMapped.avisosTelegram === true) return 'Canal: Telegram · Conectado';
+  return null;
+}
+
+export function usaTelegramEnTelefono(saludMapped) {
+  return saludMapped?.avisosCanal === 'telegram' && saludMapped.avisosTelegram === true;
+}
+
 export function plainAvisosState(saludMapped, now = Date.now()) {
   const s = saludMapped || {};
   const base = avisosHealthLabel(s, now);
@@ -91,6 +100,13 @@ export function mountAvisosPanel({
           </div>
           <p class="muted small">El tema es secreto: se guarda solo en este teléfono. En la app ntfy: Suscribirse → pega el tema.</p>
         </form>
+        <div data-telegram-phone hidden>
+          <p data-telegram-status>Telegram está vinculado a este teléfono. Los avisos llegan al chat del bot.</p>
+          <div class="detail-actions">
+            <button type="button" data-telegram-disconnect>Cambiar o desconectar</button>
+          </div>
+          <p class="muted small" data-telegram-help hidden>Para dejar de recibir avisos, en Telegram abre el chat del bot (@SnJuniBot) y toca Detener o Bloquear. Eso no borra nada en este teléfono; el token y el chat no se guardan aquí.</p>
+        </div>
         <p class="avisos-form-status" data-topic-status role="status"></p>
       </section>
       <details class="avisos-block avisos-hist" data-history-box>
@@ -112,9 +128,21 @@ export function mountAvisosPanel({
   const cancelChange = dialog.querySelector('[data-cancel-change]');
   let returnFocus = null;
   let changing = false;
+  let lastSalud = {};
 
-  function paintPhone() {
+  function paintPhone(salud = {}) {
     const snap = session.snapshot();
+    const telegram = usaTelegramEnTelefono(salud);
+    const tgBox = dialog.querySelector('[data-telegram-phone]');
+    const tgHelp = dialog.querySelector('[data-telegram-help]');
+    if (tgBox) tgBox.hidden = !telegram;
+    if (tgHelp && !telegram) tgHelp.hidden = true;
+    if (telegram) {
+      saved.hidden = true;
+      form.hidden = true;
+      cancelChange.hidden = true;
+      return;
+    }
     const showForm = !snap.configured || changing;
     saved.hidden = !snap.configured || changing;
     form.hidden = !showForm;
@@ -126,10 +154,13 @@ export function mountAvisosPanel({
   function paint() {
     const snapshot = getSnapshot() || {};
     const salud = mapSalud(snapshot.salud);
+    lastSalud = salud;
     const st = plainAvisosState(salud);
     healthEl.replaceChildren(el('h3', 'Estado'));
     healthEl.className = `avisos-block avisos-estado ${st.tone}`;
     healthEl.append(el('p', st.text, 'avisos-estado-txt'));
+    const canal = canalAvisosLabel(salud);
+    if (canal) healthEl.append(el('p', canal, 'avisos-canal'));
     if (salud.avisosOk) healthEl.append(el('p', `Último aviso bien: ${dateText(salud.avisosOk)}`, 'muted small'));
     if (st.tone === 'warn' && salud.avisosError) healthEl.append(el('p', `Último que no llegó: ${dateText(salud.avisosError)}`, 'muted small'));
 
@@ -181,7 +212,7 @@ export function mountAvisosPanel({
       card.append(btn('Abrir ficha', () => { dialog.close(); onChoose(h.id); }));
       historyEl.append(card);
     }
-    paintPhone();
+    paintPhone(salud);
   }
 
   form.addEventListener('submit', e => {
@@ -191,24 +222,28 @@ export function mountAvisosPanel({
       session.saveTopic(fd.get('tema'), {remember: fd.get('remember') === 'on'});
       changing = false;
       statusEl.textContent = 'Tema guardado solo en este teléfono.';
-      paintPhone();
+      paintPhone(lastSalud);
     } catch (err) {
       statusEl.textContent = err.message || 'No se pudo guardar';
     }
   });
-  dialog.querySelector('[data-change]').addEventListener('click', () => { changing = true; statusEl.textContent = ''; paintPhone(); form.tema.focus(); });
-  cancelChange.addEventListener('click', () => { changing = false; statusEl.textContent = ''; paintPhone(); });
+  dialog.querySelector('[data-change]').addEventListener('click', () => { changing = true; statusEl.textContent = ''; paintPhone(lastSalud); form.tema.focus(); });
+  cancelChange.addEventListener('click', () => { changing = false; statusEl.textContent = ''; paintPhone(lastSalud); });
   dialog.querySelector('[data-forget]').addEventListener('click', () => {
     session.clearTopic();
     changing = false;
     statusEl.textContent = 'Tema olvidado en este teléfono.';
-    paintPhone();
+    paintPhone(lastSalud);
   });
   dialog.querySelector('[data-subscribe]').addEventListener('click', () => {
     const url = session.subscribeUrl();
     if (!url) { statusEl.textContent = 'Guarda un tema primero.'; return; }
     const w = window.open(url, '_blank');
     if (w) { try { w.opener = null; } catch {} } else statusEl.textContent = 'El navegador bloqueó la pestaña nueva.';
+  });
+  dialog.querySelector('[data-telegram-disconnect]').addEventListener('click', () => {
+    const help = dialog.querySelector('[data-telegram-help]');
+    if (help) help.hidden = false;
   });
   dialog.querySelector('[data-close]').addEventListener('click', () => dialog.close());
   dialog.addEventListener('click', e => { if (e.target === dialog) dialog.close(); });

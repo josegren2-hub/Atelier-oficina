@@ -18,6 +18,7 @@ import * as daylight from '../../src/daylight.js';
 import {isPostponed, filterWaiting, postpone} from '../../src/local-waiting.js';
 import {rachaText} from '../../src/resumen-panel.js';
 import {createSheetManager, bindSwipeToClose} from '../../src/ui-sheets.js';
+import {wallsShouldBeOnAfterViewChange, syncWalls, wallsFacadeApplies} from '../../src/walls-sync.js';
 
 const dataKey=name=>name.slice(5).replace(/-([a-z])/g,(_,letter)=>letter.toUpperCase());
 const decode=text=>text.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"');
@@ -190,6 +191,7 @@ export function createMainHarness({storage=createMemoryStorage()}={}){
   iconHtml:(n,l)=>l||'',
   mountProyectosPanel:()=>({open(){},close(){},isOpen(){return false;},refresh(){},element:{}}),
   createSheetManager, bindSwipeToClose,
+  wallsShouldBeOnAfterViewChange, syncWalls, wallsFacadeApplies,
   sheets: createSheetManager(),
   bindChromeNow(){},
   loadUsoEnc:async()=>({state:'missing',uso:null}),

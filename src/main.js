@@ -8,6 +8,7 @@ import {mountCommandCenter} from './command-center.js';
 import {filterRoster,botProfile} from './roster.js';
 import {readNightPreference,saveNightPreference} from './theme-state.js';
 import {createMandoSession} from './mando-session.js';
+import {wallsShouldBeOnAfterViewChange,syncWalls,wallsFacadeApplies} from './walls-sync.js';
 import {openArchivero, resetArchiveroCache} from './archivero-ui.js';
 import {mountEquipoPanel} from './equipo-panel.js';
 import {mountSelectionLabels} from './selection-labels.js';
@@ -323,6 +324,7 @@ function setFloor(id,{syncRoster=true}={}){
  office?.setView(id);renderRoster();
  const active=nav.querySelector('[aria-pressed=true]');
  if(active){const left=active.offsetLeft-nav.offsetLeft-(nav.clientWidth-active.offsetWidth)/2;nav.scrollTo({left:Math.max(0,left),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}
+ syncVidriosUi();
 }
 function openFullDetail(id){
  const b=snapshot.bots.find(b=>b.id===id);if(!b)return;
@@ -640,10 +642,34 @@ onUsoChange(()=>{try{render();}catch{}resumenPanel.refresh?.();});
 mandoSession.tryRestore().then(()=>{if(snapshot.mode==='live')applySnapshot({mode:snapshot.mode,source:snapshot.source,lastSignal:snapshot.lastSignal,salud:snapshot.salud??null,bots:snapshot.bots.map(b=>({...b}))});else paintMando();refreshUso();});
 refreshLive();
 startLivePolling();
+function syncVidriosUi(){
+ const btn=$('#vidrios-toggle');
+ const box=$('#walls');
+ if(!btn)return;
+ const on=!!(box&&box.checked);
+ btn.setAttribute('aria-checked',String(on));
+ const aplica=wallsFacadeApplies(floor);
+ btn.dataset.inactivo=aplica?'false':'true';
+ btn.disabled=!aplica;
+}
+function applyWallsFromUi(on){
+ syncWalls({on,setChecked:v=>{const box=$('#walls');if(box)box.checked=v;},setWalls:v=>office?.setWalls(v)});
+ syncVidriosUi();
+}
 document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>{
- viewMode=button.dataset.view;selected=null;office?.select(null);office?.setMode(viewMode);if(viewMode==='exterior')$('#walls').checked=true;setFloor(-1);
+ viewMode=button.dataset.view;selected=null;office?.select(null);office?.setMode(viewMode);
+ applyWallsFromUi(wallsShouldBeOnAfterViewChange(viewMode,$('#walls')?.checked));
+ setFloor(-1);
 }));
-$('#walls').addEventListener('change',e=>office?.setWalls(e.target.checked));
+$('#walls').addEventListener('change',e=>applyWallsFromUi(e.target.checked));
+$('#vidrios-toggle')?.addEventListener('click',e=>{
+ e.preventDefault();
+ e.stopPropagation();
+ const btn=$('#vidrios-toggle');
+ if(!btn||btn.disabled||btn.dataset.inactivo==='true')return;
+ applyWallsFromUi(btn.getAttribute('aria-checked')!=='true');
+});
+syncVidriosUi();
 $('#night')?.addEventListener('change',e=>{
  lightPref=e.target.checked?'noche':'dia';
  saveLightPref(lightPref);

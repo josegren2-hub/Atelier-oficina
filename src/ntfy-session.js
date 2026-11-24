@@ -55,9 +55,9 @@ export function waitingAlertCandidates(bots = [], now = Date.now()) {
 
 export function mapSalud(salud) {
   if (!salud || typeof salud !== 'object') {
-    return {avisosConfig: null, avisosOk: null, avisosError: null, latido: null, mando: null, avisosMotivo: null, avisosReintenta: null, avisosCodigo: null, avisosCupoRestante: null, avisosCupoTotal: null};
+    return {avisosConfig: null, avisosOk: null, avisosError: null, latido: null, mando: null, avisosMotivo: null, avisosReintenta: null, avisosCodigo: null, avisosCupoRestante: null, avisosCupoTotal: null, avisosCanal: null, avisosTelegram: null};
   }
-  const motivo = typeof salud.avisos_motivo === 'string' && salud.avisos_motivo.trim() && !/https?:|\/|tema/i.test(salud.avisos_motivo)
+  const motivo = typeof salud.avisos_motivo === 'string' && salud.avisos_motivo.trim() && !/https?:|\/|tema|token|chat_id/i.test(salud.avisos_motivo)
     ? salud.avisos_motivo.trim().slice(0, 120) : null;
   return {
     avisosConfig: typeof salud.avisos_config === 'boolean' ? salud.avisos_config : null,
@@ -70,6 +70,8 @@ export function mapSalud(salud) {
     avisosCodigo: typeof salud.avisos_codigo === 'number' && Number.isFinite(salud.avisos_codigo) ? salud.avisos_codigo : null,
     avisosCupoRestante: typeof salud.avisos_cupo_restante === 'number' && Number.isFinite(salud.avisos_cupo_restante) ? salud.avisos_cupo_restante : null,
     avisosCupoTotal: typeof salud.avisos_cupo_total === 'number' && Number.isFinite(salud.avisos_cupo_total) ? salud.avisos_cupo_total : null,
+    avisosCanal: salud.avisos_canal === 'telegram' || salud.avisos_canal === 'ntfy' ? salud.avisos_canal : null,
+    avisosTelegram: typeof salud.avisos_telegram === 'boolean' ? salud.avisos_telegram : null,
   };
 }
 

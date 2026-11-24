@@ -54,10 +54,12 @@ export function mapOficinaEstado(payload, knownIds, now = Date.now()) {
     avisos_error: typeof payload.salud.avisos_error === 'string' ? payload.salud.avisos_error : null,
     avisos_config: typeof payload.salud.avisos_config === 'boolean' ? payload.salud.avisos_config : null,
     avisos_codigo: typeof payload.salud.avisos_codigo === 'number' && Number.isFinite(payload.salud.avisos_codigo) ? payload.salud.avisos_codigo : null,
-    avisos_motivo: typeof payload.salud.avisos_motivo === 'string' && payload.salud.avisos_motivo.trim() && !/https?:|\/|tema/i.test(payload.salud.avisos_motivo) ? payload.salud.avisos_motivo.trim().slice(0, 120) : null,
+    avisos_motivo: typeof payload.salud.avisos_motivo === 'string' && payload.salud.avisos_motivo.trim() && !/https?:|\/|tema|token|chat_id/i.test(payload.salud.avisos_motivo) ? payload.salud.avisos_motivo.trim().slice(0, 120) : null,
     avisos_reintenta: typeof payload.salud.avisos_reintenta === 'string' ? payload.salud.avisos_reintenta : null,
     avisos_cupo_restante: typeof payload.salud.avisos_cupo_restante === 'number' && Number.isFinite(payload.salud.avisos_cupo_restante) ? payload.salud.avisos_cupo_restante : null,
     avisos_cupo_total: typeof payload.salud.avisos_cupo_total === 'number' && Number.isFinite(payload.salud.avisos_cupo_total) ? payload.salud.avisos_cupo_total : null,
+    avisos_canal: payload.salud.avisos_canal === 'telegram' || payload.salud.avisos_canal === 'ntfy' ? payload.salud.avisos_canal : null,
+    avisos_telegram: typeof payload.salud.avisos_telegram === 'boolean' ? payload.salud.avisos_telegram : null,
   } : null;
   const racha = payload.racha && typeof payload.racha === 'object' ? {
     dias: Number(payload.racha.dias) || 0,

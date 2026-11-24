@@ -1856,3 +1856,108 @@ dialog.avisos-dialog,dialog.pizarron-dialog,.cc-dialog,.resumen-dialog,#mando-di
   position:relative;
   z-index:30;
 }
+
+/* s14: distintivo de canal Telegram en Avisos › Estado (boceto aprobado). Esquina B 4 px. */
+.avisos-canal{
+  display:inline-block;
+  margin-top:6px;
+  padding:4px 8px;
+  border-radius:4px;
+  background:#1d3a2a;
+  color:#c7efd4;
+  font:600 13px var(--sj-sans),system-ui,sans-serif;
+}
+
+/* s15: boceto v2 de botones (t421u, OK de Rob). Mismo tamaño, grupo bajado en el celular,
+   controles en pastilla de vidrio (sin subir su visibilidad), Vidrios en la hilera de vistas. */
+@media(max-width:760px){
+  #canvas-container #vista-toolbar.vista-toolbar{
+    /* 39 px deja ~12 px sobre el dock (el lienzo se mete ~27 px detrás). Se suma safe-area. */
+    bottom:calc(39px + env(safe-area-inset-bottom,0px))!important;
+    z-index:30;
+    gap:6px;
+  }
+  #canvas-container #vista-toolbar #view-modes{order:1!important}
+  #canvas-container #vista-toolbar .controls{order:2!important}
+  #canvas-container #vista-toolbar .controls,
+  #canvas-container #vista-toolbar.vista-toolbar .controls{
+    position:static!important;
+    display:flex!important;
+    flex-wrap:nowrap!important;
+    align-items:center;
+    gap:4px;
+    padding:4px 6px!important;
+    margin:0!important;
+    width:max-content;
+    max-width:100%;
+    border-radius:4px!important;
+    background:var(--sj-glass)!important;
+    backdrop-filter:var(--sj-blur,blur(20px))!important;
+    -webkit-backdrop-filter:var(--sj-blur,blur(20px))!important;
+    border:1px solid var(--sj-line,rgba(188,217,236,.38))!important;
+  }
+  #canvas-container #vista-toolbar .controls button{
+    border-radius:4px!important;
+  }
+}
+#view-modes .vidrios-sep{
+  display:inline-block;
+  width:1px;
+  align-self:stretch;
+  min-height:16px;
+  margin:2px 4px;
+  background:rgba(188,217,236,.35);
+  flex:0 0 1px;
+}
+#vidrios-toggle{
+  display:inline-flex!important;
+  align-items:center;
+  gap:6px;
+  font:500 11.5px var(--sj-sans),system-ui,sans-serif!important;
+  padding:5px 8px!important;
+  min-height:24px!important;
+  border-radius:4px!important;
+  background:transparent!important;
+  border:1px solid transparent!important;
+  color:var(--sj-mut,#9aa7b6)!important;
+  box-shadow:none!important;
+}
+#vidrios-toggle .knob{
+  display:inline-block;
+  width:22px;
+  height:12px;
+  border-radius:8px;
+  background:#2a3544;
+  border:1px solid #5a6b7e;
+  position:relative;
+  flex:0 0 22px;
+}
+#vidrios-toggle .knob::after{
+  content:"";
+  position:absolute;
+  top:1px;
+  left:1px;
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#c5d0da;
+}
+#vidrios-toggle[aria-checked="true"]{
+  color:var(--sj-gold,#bcd9ec)!important;
+  border-color:transparent!important;
+  background:transparent!important;
+}
+#vidrios-toggle[aria-checked="true"] .knob{
+  background:#1d3a4a;
+  border-color:#bcd9ec;
+}
+#vidrios-toggle[aria-checked="true"] .knob::after{
+  left:auto;
+  right:1px;
+  background:#bcd9ec;
+}
+#vidrios-toggle[data-inactivo="true"],
+#vidrios-toggle:disabled{
+  opacity:.45;
+  cursor:default;
+}
