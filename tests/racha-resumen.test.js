@@ -27,7 +27,7 @@ test('PWA sw never caches live data files', () => {
   assert.match(sw, /tareas\.enc/);
   assert.match(sw, /uso\.enc/);
   assert.match(sw, /no-store/);
-  assert.match(sw, /atelier-v0\.22\.8/);
+  assert.match(sw, /atelier-v0\.22\.9/);
 });
 
 test('manifest has lista and resumen shortcuts', () => {

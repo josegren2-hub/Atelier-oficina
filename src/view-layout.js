@@ -75,3 +75,19 @@ export function visualStatus(record,{mode,now=Date.now()}={}){
  if(mode==='disconnected')return 'unknown';
  return ['working','review','idle','error'].includes(record.status)?record.status:'unknown';
 }
+
+/** s19 (Rob t436u): one shared anchor per floor — the front-left corner of the slab (floor-local coords). */
+export const FLOOR_LABEL_ANCHOR = Object.freeze({x: -13, y: -0.14, z: 9});
+
+/** s19 (Rob t438u): names only in Separación amplia (stacked); never in Plantas, Edificio cerrado or a single floor. */
+export function floorLabelsShownFor(mode, floor = -1) {
+  return mode === 'stacked' && Number(floor) < 0;
+}
+
+/** s19 (Rob t435u/t437u): black corner posts + top beams.
+ * Edificio cerrado keeps them always (unchanged); Separación amplia / Plantas only with Vidrios on; single floors never (as before). */
+export function floorFramesVisible({floor = -1, mode = 'exterior', walls = true} = {}) {
+  if (Number(floor) >= 0) return false;
+  if (mode === 'exterior') return true;
+  return Boolean(walls);
+}

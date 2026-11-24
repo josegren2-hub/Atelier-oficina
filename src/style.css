@@ -1433,6 +1433,9 @@ body.lista-mode #lista-root{
 @media(min-width:820px) and (max-width:1180px){
   .floor-label-pill{font-size:13px;padding:6px 12px}
 }
+/* s19 (Rob t436u): smaller names, all pinned to the same slab corner */
+.floor-label-pill{font-size:9px;line-height:1.2;padding:2px 7px;max-width:min(190px,50vw);box-shadow:0 2px 6px #0005}
+@media(min-width:760px){.floor-label-pill{font-size:10.5px;padding:3px 8px;max-width:min(240px,30vw)}}
 
 /* Uso lines and Resumen bars (percentages only) */
 .uso-line{margin:4px 0 0;font-size:11px;line-height:1.35;color:#9aa8b6;font-weight:500}
@@ -1515,9 +1518,11 @@ body.lista-mode #lista-root{
 .pizarron-dialog .pz-ev small{display:block;font-size:10px;color:#dce6f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* C21/C27 burbujas (boceto aprobado t295): círculo con foto y aro del color del bot + nombre legible */
-.v17pin.v21 img{width:34px!important;height:34px!important;border:3px solid var(--c,#64748b)!important;box-shadow:0 2px 8px #0007}
-.v17pin.v21 em{display:block!important;font:700 10px/1.2 Inter,system-ui,sans-serif!important;background:#fffffff0;color:#141820;padding:1px 6px!important;border-radius:9px;margin-top:2px}
-.v17pin.v21 .sd{top:24px;right:-1px;width:9px;height:9px}
+/* s16 (Rob t424u): pines opción B, ~40 % más chicos. Zona de toque mínima 44 px. */
+.v17pin.v21{min-width:44px;min-height:44px;justify-content:center}
+.v17pin.v21 img{width:20.5px!important;height:20.5px!important;border:1.75px solid var(--c,#64748b)!important;box-shadow:0 2px 8px #0007}
+.v17pin.v21 em{display:block!important;font:700 9px/1.2 Inter,system-ui,sans-serif!important;background:#fffffff0;color:#141820;padding:1px 4px!important;border-radius:6px;margin-top:2px}
+.v17pin.v21 .sd{top:14px;right:-1px;width:5px;height:5px}
 .v17pin.v21 .mas{position:absolute;top:-6px;right:-10px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:#0e1118;border:1.5px solid #fff;color:#fff;font:700 9px/15px Inter,system-ui,sans-serif;text-align:center}
 .v17pin.v21 .stem{display:none}
 
@@ -1745,7 +1750,7 @@ dialog.avisos-dialog,dialog.pizarron-dialog,.cc-dialog,.resumen-dialog,#mando-di
 #spread-page-label,.spread-pagination{display:none!important}
 #viewport .spread-picker{padding:5px 10px!important}
 .v17pin.v21 .mas{top:-8px;right:-14px;z-index:2}
-.v17pin.v21 em{position:relative;z-index:1;max-width:78px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v17pin.v21 em{position:relative;z-index:1;max-width:47px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* s9e: pin visuals are drawn on a 2D canvas so they keep moving during touch (CSS transforms can freeze until finger-up on Android). */
 .capa-sel-draw{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:19;touch-action:none}
