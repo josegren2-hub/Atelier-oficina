@@ -734,7 +734,7 @@ nav#dock.dock,
   transform:translateX(-50%)!important;
   bottom:10px!important;
   top:auto!important;
-  z-index:6;
+  z-index:30; /* s13: above pin canvas (18/19) */
   width:max-content;
   max-width:calc(100% - 12px)!important;
   margin:0!important;
@@ -877,7 +877,7 @@ nav#dock.dock,
   top:auto!important;
   bottom:8px!important;
   transform:translateX(-50%)!important;
-  z-index:8;
+  z-index:30; /* s13: above pin canvas (18/19) */
   display:flex!important;
   flex-direction:row!important;
   flex-wrap:nowrap!important;
@@ -1309,7 +1309,7 @@ body.lista-mode #lista-root{
   /* Phone canvas can extend behind the fixed dock; lift the stack a full dock height + gap. */
   bottom:calc(var(--dock-h) + env(safe-area-inset-bottom,0px) + 12px)!important;
   transform:translateX(-50%)!important;
-  z-index:8;
+  z-index:30; /* s13: above pin canvas (18/19) */
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -1835,3 +1835,24 @@ dialog.avisos-dialog,dialog.pizarron-dialog,.cc-dialog,.resumen-dialog,#mando-di
   #ficha-flotante [data-full]::after{left:0;right:0;top:50%;height:max(100%,44px);transform:translateY(-50%)}
 }
 .cc-dialog .cc-nav button[aria-current=page]{border-color:var(--sj-gold,#bcd9ec)!important;color:var(--sj-gold,#bcd9ec)!important}
+
+/* ===== s13 (Rob t410u): chrome always stacks above avatar pins =====
+   The 2D pin canvas (.capa-sel z-index 18, .capa-sel-draw 19) covers #canvas-container
+   and was painting over the view menu (z-index was 8). Style is unchanged; only stacking. */
+#canvas-container #vista-toolbar.vista-toolbar,
+#canvas-container #vista-toolbar #view-modes,
+#canvas-container #vista-toolbar #view-modes.views-pill,
+#canvas-container #vista-toolbar #view-modes.views-bar.views-pill,
+#canvas-container #view-modes.views-pill,
+#canvas-container #view-modes.views-bar.views-pill,
+#canvas-container #vista-toolbar .controls{
+  z-index:30!important;
+}
+#app>header.chrome-top,#app>header{
+  position:relative;
+  z-index:40;
+}
+#floors,.navigation{
+  position:relative;
+  z-index:30;
+}

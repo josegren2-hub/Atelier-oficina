@@ -73,6 +73,12 @@ export function mapSalud(salud) {
   };
 }
 
+
+/** Strip trailing dots from a locale time like «11:21 p.m.» so a following period is not doubled. */
+export function horaSinPuntoFinal(hora) {
+  return String(hora || '').replace(/\.+$/, '').trim();
+}
+
 export function horaAviso(iso) {
   const t = Date.parse(iso);
   if (!Number.isFinite(t)) return '';
@@ -92,8 +98,8 @@ export function avisosHealthLabel(saludMapped, now = Date.now()) {
   if (Number.isFinite(er) && (!Number.isFinite(ok) || er > ok)) {
     const hora = horaAviso(s.avisosReintenta);
     const cupo = typeof s.avisosMotivo === 'string' && s.avisosMotivo.includes('cupo');
-    if (cupo && hora) return {tone: 'warn', text: `El cupo diario de avisos de esta red se acabó. Se reintenta a las ${hora}.`};
-    if (hora) return {tone: 'warn', text: `El último aviso al celular falló. Se reintenta a las ${hora}.`};
+    if (cupo && hora) return {tone: 'warn', text: `El cupo diario de avisos de esta red se acabó. Se reintenta a las ${horaSinPuntoFinal(hora)}.`};
+    if (hora) return {tone: 'warn', text: `El último aviso al celular falló. Se reintenta a las ${horaSinPuntoFinal(hora)}.`};
     return {tone: 'warn', text: 'El último aviso al celular falló; el loop reintenta solo.'};
   }
   if (Number.isFinite(ok)) {

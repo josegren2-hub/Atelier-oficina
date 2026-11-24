@@ -1,4 +1,4 @@
-export const RELEASE='0.22.6';
+export const RELEASE='0.22.7';
 /* s11: la copia de /prueba/ se construye con VITE_PRUEBA_VERSION (p. ej. 0.22.4s11-prueba); en la raíz no existe y todo queda igual. */
 export const BUILD_VERSION=(typeof import.meta!=='undefined'&&import.meta.env?.VITE_PRUEBA_VERSION)||RELEASE;
 export const VERSION_RE=/^\d+\.\d+\.\d+(?:s\d+[a-z]?)?(?:-prueba)?$/;

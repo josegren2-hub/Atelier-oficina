@@ -23,7 +23,8 @@ test('s12: Avisos explains a shared-network quota without leaking a topic', () =
     avisosReintenta: '2026-11-23T23:21:31-06:00',
   }, Date.parse('2026-11-23T12:00:00-06:00'));
   assert.equal(st.tone, 'warn');
-  assert.equal(st.text, `El cupo diario de avisos de esta red se acabó. Se reintenta a las ${hora}.`);
+  assert.doesNotMatch(st.text, /p\.m\.\./);
+  assert.equal(st.text, `El cupo diario de avisos de esta red se acabó. Se reintenta a las ${hora.replace(/\.+$/, '')}.`);
   assert.doesNotMatch(st.text, /tema|ntfy\.sh|42908/i);
 });
 

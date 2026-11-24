@@ -4,11 +4,72 @@
  *  s9d (Rob t370u): no "+N" clustering — each bot keeps its own circle, even if they overlap.
  *  Overlay lives on #canvas-container (same layer as the WebGL canvas), like Oficina-bots.
  *  s9e (Rob t375u): pin *visuals* are painted on a 2D canvas in the same frame as the 3D,
- *  because CSS transforms can stay frozen on Android while a finger is down. */
+ *  because CSS transforms can stay frozen on Android while a finger is down.
+ *  s13 (Rob t410u): chrome (view menu, dock, header, floors, sheets) stacks above the pin
+ *  canvas; pins that sit under those zones are not painted and do not steal taps. */
 import {statusLabels} from './data.js';
 import {avatarPhotoUrl} from './avatar-photo.js';
 
 const statusClass = status => status === 'working' ? 'trabajando' : status === 'review' ? 'te' : status === 'idle' ? 'pausa' : status === 'error' ? 'error' : 'unknown';
+
+
+/** Axis-aligned overlap. Rects are {x,y,w,h}. */
+export function rectsOverlap(a, b) {
+  if (!a || !b) return false;
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+/** Approximate pin visual box: photo + name, anchored at the projected feet (item.x, item.y). */
+export function pinBox(item, size = 34, nameW = 80, nameH = 18) {
+  const w = Math.max(size, nameW);
+  const h = size + nameH;
+  return {x: item.x - w / 2, y: item.y - h, w, h};
+}
+
+export const CHROME_SELECTORS = [
+  '#vista-toolbar',
+  '#dock',
+  '#app > header',
+  'header.chrome-top',
+  '#floors',
+  'dialog[open]',
+  '#mas-panel.open',
+  '#paneles-sheet.open',
+  '.proy-sheet.open',
+  'aside.team',
+  '#ficha-flotante.open',
+];
+
+/** Chrome rectangles in the same coordinate space as projectBots (container client space). */
+export function chromeRectsIn(container, doc = typeof document !== 'undefined' ? document : null) {
+  if (!container || !doc || typeof container.getBoundingClientRect !== 'function') return [];
+  const crect = container.getBoundingClientRect();
+  const out = [];
+  for (const sel of CHROME_SELECTORS) {
+    let els;
+    try { els = doc.querySelectorAll(sel); } catch { continue; }
+    for (const el of els) {
+      if (el.id === 'capa-sel' || el.classList?.contains('capa-sel') || el.classList?.contains('capa-sel-draw') || el.closest?.('#capa-sel')) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width < 2 || r.height < 2) continue;
+      let hidden = false;
+      try {
+        const st = (doc.defaultView || globalThis).getComputedStyle?.(el);
+        if (st && (st.display === 'none' || st.visibility === 'hidden' || st.pointerEvents === 'none' && (st.opacity === '0' || Number(st.opacity) === 0))) hidden = true;
+        // Equipo sheet stays in DOM when closed (visibility:hidden / opacity 0).
+        if (st && (st.visibility === 'hidden' || Number.parseFloat(st.opacity || '1') === 0)) hidden = true;
+      } catch {}
+      if (hidden) continue;
+      out.push({x: r.left - crect.left, y: r.top - crect.top, w: r.width, h: r.height});
+    }
+  }
+  return out;
+}
+
+export function pinBlockedByChrome(box, chromeRects) {
+  return (chromeRects || []).some((r) => rectsOverlap(box, r));
+}
+
 
 function panelOpen() {
   if (typeof document === 'undefined') return false;
@@ -142,8 +203,10 @@ export function mountSelectionLabels({
     const selected = getSelected();
     const byId = new Map((snapshot.bots || []).map(b => [b.id, b]));
     const projected = (projectBots() || []).filter(i => i?.id && !i.hidden && byId.has(i.id));
+    const chrome = chromeRectsIn(container);
     // s9d (Rob t370u): every visible bot keeps its own photo on its head. Overlap is OK.
     const seen = new Set();
+    const drawable = [];
     for (const item of projected) {
       seen.add(item.id);
       const bot = byId.get(item.id);
@@ -168,11 +231,16 @@ export function mountSelectionLabels({
       const tf = `translate(${item.x.toFixed(1)}px, ${item.y.toFixed(1)}px) translate(-50%, -100%)`;
       if (tf !== rec.tf) { rec.tf = tf; rec.el.style.transform = tf; }
       if (!rec.shown) { rec.shown = true; rec.el.style.display = ''; }
+      // s13: hide pin visuals and hits under the view menu, dock, header, floor tabs, and open sheets.
+      const blocked = pinBlockedByChrome(pinBox(item), chrome);
+      rec.el.style.pointerEvents = blocked ? 'none' : 'auto';
+      rec.el.style.visibility = blocked ? 'hidden' : '';
+      if (!blocked) drawable.push(item);
     }
     for (const [id, rec] of pins) {
       if (!seen.has(id) && rec.shown) { rec.shown = false; rec.el.style.display = 'none'; }
     }
-    paintCanvas(projected, byId);
+    paintCanvas(drawable, byId);
   }
 
   // Only paint after a 3D frame (Rob t369u): an independent loop would move pins
