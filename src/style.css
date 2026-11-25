@@ -1434,7 +1434,7 @@ body.lista-mode #lista-root{
   .floor-label-pill{font-size:13px;padding:6px 12px}
 }
 /* s19 (Rob t436u): smaller names, all pinned to the same slab corner */
-.floor-label-pill{font-size:9px;line-height:1.2;padding:2px 7px;max-width:min(190px,50vw);box-shadow:0 2px 6px #0005}
+.floor-label-pill{font-size:9px;line-height:1.2;padding:2px 7px;max-width:min(250px,68vw);box-shadow:0 2px 6px #0005}
 @media(min-width:760px){.floor-label-pill{font-size:10.5px;padding:3px 8px;max-width:min(240px,30vw)}}
 
 /* Uso lines and Resumen bars (percentages only) */
@@ -1966,3 +1966,63 @@ dialog.avisos-dialog,dialog.pizarron-dialog,.cc-dialog,.resumen-dialog,#mando-di
   opacity:.45;
   cursor:default;
 }
+
+/* s23 (Rob t462u, propuesta A): Registro Tinta Rosa — vidrio rosa de la marca (#FA069C), 4 px, sin amarillo.
+   El acento hielo #bcd9ec se queda en el resto de la oficina. */
+.resumen-dialog.tr-dialog{width:min(430px,calc(100vw - 16px))!important;max-height:min(86dvh,760px)!important;display:none;flex-direction:column;overflow:hidden;border-radius:4px!important;background:linear-gradient(180deg,rgba(254,206,227,.14) 0%,rgba(18,14,22,.15) 28%,rgba(18,14,22,.08) 100%),rgba(18,14,22,.78)!important;backdrop-filter:var(--sj-blur,blur(22px)) saturate(1.35);-webkit-backdrop-filter:var(--sj-blur,blur(22px)) saturate(1.35);border:1px solid rgba(250,6,156,.35)!important;color:var(--sj-txt,#eef2f7);box-shadow:0 18px 44px rgba(0,0,0,.4),0 0 0 1px rgba(253,214,232,.08),inset 0 1px 0 rgba(254,206,227,.2)}
+.resumen-dialog.tr-dialog[open]{display:flex}
+.tr-dialog .lt{border-bottom:1px solid rgba(254,206,227,.22)!important;background:linear-gradient(180deg,rgba(250,6,156,.12),rgba(250,6,156,0))}
+.tr-dialog .tr-brand{display:flex;align-items:center;gap:10px;min-width:0}
+.tr-dialog .tr-emblema{width:36px;height:36px;flex:none;border-radius:4px;object-fit:contain;background:rgba(253,214,232,.16);border:1px solid rgba(250,6,156,.28);padding:3px}
+.tr-dialog .lt .eyebrow{font:700 9.5px var(--sj-sans)!important;letter-spacing:1.8px;color:#F7B7D8!important;text-transform:uppercase;margin:0 0 2px!important}
+.tr-dialog .lt b{font:500 20px var(--sj-serif)!important;color:#fff}
+.tr-tabs{display:flex;gap:4px;padding:8px 10px;border-bottom:1px solid rgba(254,206,227,.22)}
+dialog#tr-registro.tr-dialog.resumen-dialog .tr-tabs button.tr-tab[role=tab][data-tab]{flex:1;min-width:0;height:34px;min-height:0!important;padding:0 4px!important;border-radius:4px!important;background:transparent!important;border:1px solid transparent!important;color:var(--sj-mut)!important;font:600 12px var(--sj-sans)!important}
+dialog#tr-registro.tr-dialog.resumen-dialog .tr-tabs button.tr-tab[role=tab][data-tab][aria-selected=true]{background:rgba(250,6,156,.18)!important;border:1px solid rgba(250,6,156,.55)!important;color:#FFE4F2!important;box-shadow:inset 0 0 0 1px rgba(254,206,227,.12)}
+.tr-body{overflow:auto;padding:10px 12px 14px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.tr-week{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:0 0 8px}
+.tr-week b{font:500 15px var(--sj-serif)}.tr-week span,.tr-sub{font:600 11px var(--sj-sans);color:#b7a8b4}
+.tr-sub{margin:0 0 8px}
+.tr-row{display:block;border:1px solid rgba(254,206,227,.22);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));border-radius:4px;padding:8px 10px;margin:0 0 6px;color:var(--sj-txt);text-decoration:none}
+.tr-row.tr-today{border-color:rgba(250,6,156,.55);background:linear-gradient(180deg,rgba(250,6,156,.2),rgba(254,206,227,.08));box-shadow:0 0 0 1px rgba(250,6,156,.12),inset 0 1px 0 rgba(254,206,227,.25)}
+.tr-when{display:flex;justify-content:space-between;gap:8px;align-items:baseline;margin-bottom:3px;flex-wrap:wrap}
+.tr-day{display:block;font:800 10.5px var(--sj-sans);letter-spacing:.07em;text-transform:uppercase;color:#F7B7D8;white-space:nowrap;flex:none}
+.tr-row.tr-today .tr-day{color:#FFE4F2}
+.tr-hora{font:600 10.5px var(--sj-sans);color:#b7a8b4;text-align:right;flex:1;min-width:min(100%,180px)}
+.tr-title{display:block;margin:2px 0 0;font:600 13.5px/1.3 var(--sj-sans);color:var(--sj-txt)}
+.tr-url{display:block;margin-top:3px;font:500 10.5px/1.35 var(--sj-sans);color:#F7B7D8;word-break:break-all}
+.tr-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.tr-chip{height:20px;padding:0 6px;border-radius:4px;border:1px solid rgba(255,255,255,.14);font:700 9.5px/18px var(--sj-sans);background:rgba(0,0,0,.22);color:var(--sj-txt);white-space:nowrap}
+.tr-chip.tr-ok{color:#c8efda;border-color:#8fcdb066;background:rgba(143,205,176,.1)}
+.tr-chip.tr-plan{color:#FFE4F2;border-color:rgba(250,6,156,.45);background:rgba(250,6,156,.12)}
+.tr-chip.tr-warn{color:#f0d2bf;border-color:#d9a48a66}
+.tr-chip.tr-off{color:#b7a8b4;opacity:.8}
+.tr-chip.tr-hoy{color:#1a0812;background:linear-gradient(180deg,#FAD7E8,#FA069C);border:0;font-weight:800}
+.tr-pend{border:1px solid rgba(254,206,227,.22);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));border-radius:4px;padding:8px 10px;margin:0 0 6px}
+.tr-pend b{display:block;font:600 13px/1.3 var(--sj-sans);margin-bottom:2px}
+.tr-pend p{margin:0;font:500 12px/1.4 var(--sj-sans);color:#b7a8b4}
+.tr-pend.tr-p-atraso,.tr-pend.tr-p-bitacora{border-color:#d9a48a55}
+.tr-note,.tr-foot{font:500 11.5px/1.45 var(--sj-sans);color:#b7a8b4;margin:8px 0 0}
+.tr-old{margin:0 0 8px;padding:7px 9px;border:1px dashed rgba(250,6,156,.4);border-radius:4px;background:rgba(250,6,156,.08);font:600 11.5px/1.4 var(--sj-sans);color:#FFE4F2}
+.tr-lock{padding:12px;border:1px dashed rgba(254,206,227,.28);border-radius:4px;background:rgba(255,255,255,.05)}
+.tr-lock p{margin:0 0 10px;font:500 12.5px/1.45 var(--sj-sans)}
+.tr-table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid rgba(254,206,227,.22);border-radius:4px;overflow:hidden;font:600 12px/1.3 var(--sj-sans)}
+.tr-table th,.tr-table td{padding:7px 8px;text-align:left;vertical-align:top;border-bottom:1px solid rgba(254,206,227,.22)}
+.tr-table tr:last-child td{border-bottom:0}
+.tr-table th{background:rgba(250,6,156,.12);color:#F7B7D8;font:700 10px var(--sj-sans);letter-spacing:.06em;text-transform:uppercase}
+.tr-table small{display:block;color:#b7a8b4;font-weight:500;font-size:10.5px}
+.tr-num{color:#fff;font-weight:800;white-space:nowrap}.tr-mut{color:#b7a8b4;font-weight:500}
+/* s24 (Rob t463u): botón en la fila del título de planta, a la derecha, sin encimarse. Rosa de la propuesta A. */
+#viewport .scene-title{align-items:center}
+#viewport .scene-title:has(#tr-registro-btn:not([hidden])) h2{min-width:0;flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tr-floor-btn{position:static;right:auto;top:auto;margin-left:auto;flex:none;z-index:6;display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 9px!important;border-radius:4px!important;background:linear-gradient(180deg,rgba(254,206,227,.22),rgba(18,14,22,.55)),rgba(18,14,22,.72)!important;backdrop-filter:var(--sj-blur,blur(22px));-webkit-backdrop-filter:var(--sj-blur,blur(22px));border:1px solid rgba(250,6,156,.5)!important;color:#FFE4F2!important;font:600 11.5px var(--sj-sans,system-ui)!important;box-shadow:0 4px 12px rgba(250,6,156,.16),inset 0 1px 0 rgba(254,206,227,.3);pointer-events:auto;white-space:nowrap}
+.tr-floor-btn[hidden]{display:none!important}
+.tr-floor-btn svg{width:14px;height:14px;fill:none;stroke:#FA069C;stroke-width:1.7;stroke-linecap:round;flex:none}
+#viewport .scene-title #tr-registro-btn .tr-btn-short{display:none!important}
+#viewport .scene-title #tr-registro-btn .tr-btn-full{display:inline!important}
+@media(max-width:760px){
+  #viewport .scene-title #tr-registro-btn .tr-btn-full{display:none!important}
+  #viewport .scene-title #tr-registro-btn .tr-btn-short{display:inline!important}
+}
+#paneles-sheet .sj-ic[data-panel="tinta-registro"]{background:linear-gradient(180deg,rgba(250,6,156,.22),rgba(254,206,227,.08))!important;border-color:rgba(250,6,156,.55)!important;color:#FFE4F2!important;box-shadow:inset 0 1px 0 rgba(254,206,227,.25)}
+#paneles-sheet .sj-ic[data-panel="tinta-registro"] svg{stroke:#FA069C!important}

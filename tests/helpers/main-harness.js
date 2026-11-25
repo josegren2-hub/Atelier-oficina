@@ -186,6 +186,8 @@ export function createMainHarness({storage=createMemoryStorage()}={}){
   mountQuickReplies:()=>({refresh(){},root:{}}),
   mountFichaLocal:()=>({refresh(){},root:{}}),
   mountResumenPanel:()=>({open(){},close(){},isOpen(){return false;},refresh(){},rachaText:()=>'🔥'}),
+  mountTintaRegistro:()=>({open(){},close(){},isOpen(){return false;},refresh(){},dialog:{addEventListener(){}}}),
+  TR_FLOOR_ID:4,
   mountStaleBanner:()=>({refresh(){}}),
   ICON:{mando:'',equipo:'',proyectos:'',paneles:'',noche:'',dia:'',resumen:'',lista:'',mas:'',racha:'',close:''},
   iconHtml:(n,l)=>l||'',

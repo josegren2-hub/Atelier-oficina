@@ -20,6 +20,7 @@ import {DEPARTMENTS, departmentOf} from './departments.js';
 import {mountQuickReplies} from './quick-replies.js';
 import {mountFichaLocal} from './ficha-local.js';
 import {mountResumenPanel, rachaText} from './resumen-panel.js';
+import {mountTintaRegistro, TR_FLOOR_ID} from './tintarosa-registro.js';
 import {mountStaleBanner} from './stale-banner.js';
 import {readLightPref, saveLightPref, resolveLighting, cycleLightPref} from './daylight.js';
 import {isPostponed, filterWaiting, postpone} from './local-waiting.js';
@@ -124,6 +125,24 @@ function openMas(open){
   else{panel.classList.remove('open');btn?.setAttribute('aria-expanded','false');setTimeout(()=>{if(!panel.classList.contains('open'))panel.hidden=true;},380);}
 }
 
+/* s22–s24 (Rob t459u/t460u/t462u/t463u): Registro Tinta Rosa. s24: sin marca de agua; el botón va en la fila del título de planta. */
+const tintaRegistro=mountTintaRegistro({getKey:()=>mandoSession.unlocked?(mandoSession.key||null):null,onOpenMando:()=>$('#mando-unlock')?.click()});
+tintaRegistro.dialog.addEventListener('close',()=>backToOrigin());
+function openTintaRegistro(){sheets.closeAll('tinta');tintaRegistro.open();historyBack.push();}
+(function ensureTintaFloorButton(){
+  if($('#tr-registro-btn'))return;
+  const host=$('#viewport .scene-title')||$('#viewport');
+  if(!host)return;
+  const b=document.createElement('button');
+  b.type='button';b.id='tr-registro-btn';b.className='tr-floor-btn';b.hidden=true;
+  b.setAttribute('aria-label','Registro Tinta Rosa');
+  b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14M5 10h14M5 15h9M5 20h6"/></svg><span class="tr-btn-full">Registro Tinta Rosa</span><span class="tr-btn-short">Registro</span>';
+  b.addEventListener('click',openTintaRegistro);
+  host.append(b);
+})();
+function syncTintaButton(){
+  const b=$('#tr-registro-btn');if(b)b.hidden=floor!==TR_FLOOR_ID;
+}
 /* D7 (Rob 13/11): an option opened from Paneles or Más returns there when closed. Choosing a bot clears it. */
 let returnTo=null;
 function backToOrigin(){const o=returnTo;returnTo=null;if(!o)return;setTimeout(()=>{if(!document.querySelector('dialog[open]')&&!fichaFlotante.isOpen()&&!detail.open)sheets.open(o);},0);}
@@ -161,6 +180,12 @@ function setPanelesOpen(open){
     b.type='button';b.className='sj-ic';b.dataset.panel=id;
     b.innerHTML=`<span class="sj-ic-g"><svg viewBox="0 0 24 24" aria-hidden="true">${ICO[ico]}</svg>${id==='pizarron-open'?'<em class="sj-badge wait-badge" hidden></em>':''}</span><span>${label}</span>`;
     b.addEventListener('click',()=>{if(id==='refresh-office'){src.click();return;}returnTo='paneles';src.click();});
+    box.append(b);
+  }
+  { /* s22: acceso al Registro de Tinta Rosa también desde Paneles */
+    const b=document.createElement('button');b.type='button';b.className='sj-ic';b.dataset.panel='tinta-registro';
+    b.innerHTML='<span class="sj-ic-g"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14M5 10h14M5 15h9M5 20h6"/></svg></span><span>Tinta Rosa</span>';
+    b.addEventListener('click',()=>{returnTo='paneles';openTintaRegistro();});
     box.append(b);
   }
   const fb=document.createElement('p');fb.className='paneles-feedback small muted';fb.setAttribute('role','status');
@@ -325,6 +350,7 @@ function setFloor(id,{syncRoster=true}={}){
  const active=nav.querySelector('[aria-pressed=true]');
  if(active){const left=active.offsetLeft-nav.offsetLeft-(nav.clientWidth-active.offsetWidth)/2;nav.scrollTo({left:Math.max(0,left),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}
  syncVidriosUi();
+ syncTintaButton();
 }
 function openFullDetail(id){
  const b=snapshot.bots.find(b=>b.id===id);if(!b)return;
@@ -619,6 +645,7 @@ $('#mando-form')?.addEventListener('submit',async e=>{
   else paintMando();
   $('#refresh-feedback').textContent='Mando desbloqueado. Las frases cifradas se leen solo en este navegador.';
   refreshUso();
+  tintaRegistro.refresh();
  }catch(err){
   $('#mando-error').textContent=err?.message||'No se pudo desbloquear';
  }
@@ -704,6 +731,7 @@ function registerSheets(){
  sheets.register('mando',{open:()=>{mandoDialog?.showModal?.();historyBack.push();},close:()=>mandoDialog?.close?.(),isOpen:()=>!!mandoDialog?.open});
  sheets.register('ficha',{open:()=>{},close:()=>{if(fichaFlotante.isOpen())fichaFlotante.close({notify:true});},isOpen:()=>fichaFlotante.isOpen()});
  sheets.register('pizarron',{open:()=>{pizarron.open({who:pizarronWho});pizarronWho='ted';historyBack.push();},close:()=>pizarron.close(),isOpen:()=>pizarron.isOpen()});
+ sheets.register('tinta',{open:openTintaRegistro,close:()=>tintaRegistro.close(),isOpen:()=>tintaRegistro.isOpen()});
  sheets.register('avisos',{open:()=>{avisosPanel.open();historyBack.push();},close:()=>{if(typeof avisosPanel.close==='function')avisosPanel.close();else avisosPanel.element?.close?.();},isOpen:()=>!!(avisosPanel.isOpen?.()||document.querySelector('.avisos-dialog[open]'))});
 }
 registerSheets();

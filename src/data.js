@@ -6,7 +6,7 @@ export const floors = [
  {id:2,name:'Proyectos',description:'Libro · apps · estrategia · soporte',color:'#a0b9cd'},
  {id:3,name:'Medios y Producción',description:'Video · podcast · redes personales',color:'#8fb3c9'},
  {id:4,name:'Tinta Rosa',description:'Dirección · edición · web · comunidad',color:'#cba1a8'},
- {id:5,name:'Penthouse · Ted',description:'Asistencia personal · coordinación general',color:'#d5c19b'}
+ {id:5,name:'Penthouse · Ted · CEO',description:'Asistencia personal · coordinación general',color:'#d5c19b'}
 ];
 const entries=[
  ['ted','Ted','Asistente personal / coordinador general',5,'#f4d5a1'],

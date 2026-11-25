@@ -115,7 +115,7 @@ function paint() {
   for (const fl of [...floors].sort((a, b) => b.id - a.id)) {
     const rows = snapshot.bots.filter(b => b.floor === fl.id && (!filtro || b.status === filtro));
     if (!rows.length) continue;
-    html += `<h3 class="sj-floor">${fl.name.replace(' · Ted', '')}</h3>`;
+    html += `<h3 class="sj-floor">${fl.name}</h3>`;
     for (const b of rows) {
       const dot = b.callado ? 'callado' : b.status;
       const sub = [statusLabels[b.status] || 'Sin señal', b.resumen || b.task].filter(Boolean).join(' · ');

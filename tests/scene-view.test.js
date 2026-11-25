@@ -17,7 +17,8 @@ test('stacked floors keep a wide even air gap and a short camera window',()=>{
  assert.equal(floorCaption(0),'PB · Personal');
  assert.equal(floorCaption(3),'Piso 3 · Medios y Producción');
  assert.match(floorCaption(4),/Piso 4 · Tinta Rosa/);
- assert.match(floorCaption(5),/Piso 5 · Penthouse/);
+ assert.match(floorCaption(5),/Piso 5 · Penthouse · Ted · CEO/);
+ assert.equal(floors[5].name,'Penthouse · Ted · CEO');
 });
 test('placement rejects furniture, walls, floor edges and other avatars',()=>{
  const obstacles=[{minX:-2,maxX:2,minZ:-2,maxZ:2},{minX:4,maxX:4.1,minZ:-8,maxZ:8}];

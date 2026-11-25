@@ -18,6 +18,10 @@ export function createOffice(container,onBot,onAssets=()=>{},onAgenda=()=>{},onF
  const pmrem=new THREE.PMREMGenerator(renderer);const roomEnvironment=new RoomEnvironment();scene.environment=pmrem.fromScene(roomEnvironment,.04).texture;scene.environmentIntensity=.25;roomEnvironment.dispose();pmrem.dispose();
  let camera=new THREE.PerspectiveCamera(35,1,.1,1200);camera.position.set(40,30,43);
  const controls=new OrbitControls(camera,renderer.domElement);controls.target.set(0,7,0);controls.enableDamping=true;controls.minDistance=12;controls.maxDistance=700;controls.maxPolarAngle=Math.PI*.48;
+ // s21: la cámara no puede bajar del suelo (Rob t457u: al arrastrar hacia abajo se iba debajo y la ciudad desaparecía).
+ const CAM_MIN_Y=2;
+ function clampViewToGround(){if(camera.position.y<CAM_MIN_Y){const lift=CAM_MIN_Y-camera.position.y;camera.position.y+=lift;controls.target.y+=lift;}if(controls.target.y<CAM_MIN_Y)controls.target.y=CAM_MIN_Y;}
+ function updateControls(){controls.update();clampViewToGround();}
  const ambient=new THREE.HemisphereLight(0xd7e0e7,0x655746,.65);scene.add(ambient);const sun=new THREE.DirectionalLight(0xffc78e,1.6);sun.position.set(-18,30,23);sun.castShadow=true;const shadowSize=matchMedia('(max-width:760px)').matches?1024:2048;sun.shadow.mapSize.set(shadowSize,shadowSize);Object.assign(sun.shadow.camera,{left:-34,right:34,top:35,bottom:-30,far:100});sun.shadow.normalBias=.035;scene.add(sun);const fill=new THREE.DirectionalLight(0xaecbe3,.4);fill.position.set(20,20,-12);scene.add(fill);
  const {M,mat,box,cyl,sphere,group,plant,tree,chair,screen,lamp,desk,archivero,besideDesk,sofa,rug,coffeeTable,library,roundTable,partition,pendant,mic,label,batch}=createFurnishings();
  // s17: entorno decorativo (fusión distrito + costa San Junipero, sin letrero). Solo en Edificio cerrado; no entra en el picking.
@@ -337,7 +341,7 @@ batch(site);const skipBatch=new Set([...facades,...structures]);frames.forEach(f
  function easeInOutCubic(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}
  let camTween=null,floorTween=null,lightTween=null;
  function startCamTween(toPos,toTarget,dur=VIEW_ANIM_MS){
-  if(reduced){camera.position.copy(toPos);controls.target.copy(toTarget);camera.lookAt(toTarget);controls.update();camTween=null;moving=false;return;}
+  if(reduced){camera.position.copy(toPos);controls.target.copy(toTarget);camera.lookAt(toTarget);updateControls();camTween=null;moving=false;return;}
   camTween={t0:performance.now(),dur,fromPos:camera.position.clone(),toPos:toPos.clone(),fromTarget:controls.target.clone(),toTarget:toTarget.clone()};
   moving=true;
  }
@@ -371,7 +375,7 @@ batch(site);const skipBatch=new Set([...facades,...structures]);frames.forEach(f
   camera.updateProjectionMatrix();target.copy(fit.center);desired.copy(fit.position);
   if(!animate||reduced){
    const damping=controls.enableDamping;controls.enableDamping=false;
-   controls.target.copy(target);camera.position.copy(desired);camera.lookAt(target);controls.update();
+   controls.target.copy(target);camera.position.copy(desired);camera.lookAt(target);updateControls();
    controls.enableDamping=damping;camTween=null;moving=false;
   }else{
    startCamTween(desired,target,VIEW_ANIM_MS);
@@ -398,7 +402,7 @@ function syncStackControls(){const stacked=isStackOverview();controls.enableRota
  }
  function flushView(){
   // Paint pins in the same turn as a camera/view change so they never sit one frame behind (t369u / t375u).
-  controls.update();
+  updateControls();
   paintNow();
  }
 
@@ -535,7 +539,7 @@ function setView(f=-1,{animate=true}={}){floor=f;structures.forEach(g=>g.visible
   if(busy){
    if(nowMsTick-lastUiRender>120){
     lastUiRender=nowMsTick;
-    controls.update();
+    updateControls();
     paintNow();
     fpsFrames++;
    }
@@ -545,9 +549,9 @@ function setView(f=-1,{animate=true}={}){floor=f;structures.forEach(g=>g.visible
   // D17/D21/D25 (Rob t354u): avatars hold their spot while the view/level is changing; walking resumes after the transition.
   movement.update(step,{reducedMotion:reduced,paused:!!floorTween&&!globalThis.__atelierTestNoPause});
   const overBudget=performance.now()-nowMsTick>8;
-  if(overBudget){for(const b of botModels){const action=movement.getActivity(b.id);if(action){b.group.position.x=action.position[0];b.group.position.z=action.position[1];b.group.rotation.y=action.angle;}}controls.update();paintNow();fpsFrames++;const nowMs=performance.now();if(nowMs-fpsLast>1000){fpsValue=fpsFrames*1000/(nowMs-fpsLast);fpsFrames=0;fpsLast=nowMs;}return;}
+  if(overBudget){for(const b of botModels){const action=movement.getActivity(b.id);if(action){b.group.position.x=action.position[0];b.group.position.z=action.position[1];b.group.rotation.y=action.angle;}}updateControls();paintNow();fpsFrames++;const nowMs=performance.now();if(nowMs-fpsLast>1000){fpsValue=fpsFrames*1000/(nowMs-fpsLast);fpsFrames=0;fpsLast=nowMs;}return;}
   for(const b of botModels){const action=movement.getActivity(b.id);if(action){b.group.position.x=action.position[0];b.group.position.z=action.position[1];b.group.rotation.y=action.angle;avatars.setActivity?.(b.id,{clip:action.clip,seated:action.seated,expression:action.expression,phase:action.moving?1:0});const support=avatars.getSeatSupport?.(b.id),seatOffset=action.seated&&support?Math.max(0,action.seatHeight-b.base-support.bottomY):0;b.visual.position.y=THREE.MathUtils.lerp(b.visual.position.y,seatOffset,reduced?1:Math.min(1,Math.max(0,Number.isFinite(dt)?dt:0)*7));}b.group.position.y=b.base;b.label.position.y=1.75+b.visual.position.y+(b.id==='ted'?.2:0);b.indicator.position.y=b.label.position.y;b.selection.visible=selected===b.id;b.label.visible=floor>=0||mode!=='exterior'||selected===b.id;}
-  const phoneFar=reduced||(!animateBots)||(container.clientWidth<760&&floor<0&&mode==='exterior'&&camera.position.distanceTo(controls.target)>40);deskProps.setVisible(!phoneFar);avatars.update(t,animateBots?'idle':false,phoneFar);controls.update();paintNow();fpsFrames++;const nowMs=performance.now();if(nowMs-fpsLast>1000){fpsValue=fpsFrames*1000/(nowMs-fpsLast);fpsFrames=0;fpsLast=nowMs;}
+  const phoneFar=reduced||(!animateBots)||(container.clientWidth<760&&floor<0&&mode==='exterior'&&camera.position.distanceTo(controls.target)>40);deskProps.setVisible(!phoneFar);avatars.update(t,animateBots?'idle':false,phoneFar);updateControls();paintNow();fpsFrames++;const nowMs=performance.now();if(nowMs-fpsLast>1000){fpsValue=fpsFrames*1000/(nowMs-fpsLast);fpsFrames=0;fpsLast=nowMs;}
  }
 
  const resize=()=>{camera.aspect=container.clientWidth/container.clientHeight;camera.updateProjectionMatrix();renderer.setSize(container.clientWidth,container.clientHeight);fitCamera({animate:false});};new ResizeObserver(resize).observe(container);resize();const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();let down=null;
@@ -606,5 +610,5 @@ renderer.domElement.addEventListener('pointerup',e=>{stackTouches=Math.max(0,sta
  }
  function getViewState(){return {floor,mode,selected};}
  function debugBots(){const v=new THREE.Vector3();return botModels.map(b=>{b.group.getWorldPosition(v);return {id:b.id,x:+v.x.toFixed(3),y:+v.y.toFixed(3),z:+v.z.toFixed(3)};});}
- return {setView,setMode,setExploded(v){setMode(v?'stacked':'exterior');},setWalls(v){walls=Boolean(v);facades.forEach(g=>g.visible=walls&&floor<0);syncFrames();},getOcclusionState(){return entorno?.occlusion?.state?.()||null;},getFrameInfo(){return {walls,mode,floor,frames:frames.length,framesVisible:frames.filter(g=>g.visible).length,facadesVisible:facades.filter(g=>g.visible).length,structuresVisible:structures.filter(g=>g.visible).length};},setNight,setLighting,setStatuses,select(id){selected=id;},focusBot,projectBots,getViewState,debugBots,setDemo(v){movement.setDemo(v);animateBots=Boolean(v)||movement.isLive;},getActivity(id){return movement.getActivity(id);},getMovementStats(){return movement.getStats();},getFps(){return fpsValue;},getCameraInfo(){const d=camera.position.distanceTo(controls.target);return {distance:+d.toFixed(3),min:controls.minDistance,max:controls.maxDistance,zoom:camera.zoom,ortho:!!camera.isOrthographicCamera,azimuth:+controls.getAzimuthalAngle().toFixed(3)};},rotate(d){moving=false;const o=camera.position.clone().sub(controls.target);const before=o.clone();o.applyAxisAngle(new THREE.Vector3(0,1,0),d);if(isStackOverview()){/* C43: back off so the rotated floors fit the phone width (footprint 29×18) */const f=desired.clone().sub(target);const k=v=>{const a=Math.atan2(v.x,v.z)-Math.atan2(f.x,f.z);return Math.max(1,(Math.abs(14.5*Math.cos(a))+Math.abs(9*Math.sin(a)))/14.5);};o.setLength(o.length()/k(before)*k(o));}camera.position.copy(controls.target).add(o);flushView();},zoom(s){moving=false;if(camera.isOrthographicCamera){camera.zoom=THREE.MathUtils.clamp(camera.zoom/s,.35,8);camera.updateProjectionMatrix();flushView();return;}const o=camera.position.clone().sub(controls.target);o.setLength(THREE.MathUtils.clamp(o.length()*s,12,700));camera.position.copy(controls.target).add(o);flushView();},reset(){setView(floor);},get renderer(){return renderer;}};
+ return {setView,setMode,setExploded(v){setMode(v?'stacked':'exterior');},setWalls(v){walls=Boolean(v);facades.forEach(g=>g.visible=walls&&floor<0);syncFrames();},getOcclusionState(){return entorno?.occlusion?.state?.()||null;},getFrameInfo(){return {walls,mode,floor,frames:frames.length,framesVisible:frames.filter(g=>g.visible).length,facadesVisible:facades.filter(g=>g.visible).length,structuresVisible:structures.filter(g=>g.visible).length};},setNight,setLighting,setStatuses,select(id){selected=id;},focusBot,projectBots,getViewState,debugBots,setDemo(v){movement.setDemo(v);animateBots=Boolean(v)||movement.isLive;},getActivity(id){return movement.getActivity(id);},getMovementStats(){return movement.getStats();},getFps(){return fpsValue;},getCameraInfo(){const d=camera.position.distanceTo(controls.target);return {distance:+d.toFixed(3),min:controls.minDistance,max:controls.maxDistance,zoom:camera.zoom,ortho:!!camera.isOrthographicCamera,azimuth:+controls.getAzimuthalAngle().toFixed(3),polar:+controls.getPolarAngle().toFixed(3),camY:+camera.position.y.toFixed(3),targetY:+controls.target.y.toFixed(3),minY:CAM_MIN_Y,maxPolar:controls.maxPolarAngle};},setPolar(phi){moving=false;camTween=null;const off=camera.position.clone().sub(controls.target);const sph=new THREE.Spherical().setFromVector3(off);sph.phi=THREE.MathUtils.clamp(Number(phi),0.05,controls.maxPolarAngle);camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(sph));flushView();},nudgeTargetY(dy){moving=false;camTween=null;camera.position.y+=Number(dy)||0;controls.target.y+=Number(dy)||0;flushView();},rotate(d){moving=false;const o=camera.position.clone().sub(controls.target);const before=o.clone();o.applyAxisAngle(new THREE.Vector3(0,1,0),d);if(isStackOverview()){/* C43: back off so the rotated floors fit the phone width (footprint 29×18) */const f=desired.clone().sub(target);const k=v=>{const a=Math.atan2(v.x,v.z)-Math.atan2(f.x,f.z);return Math.max(1,(Math.abs(14.5*Math.cos(a))+Math.abs(9*Math.sin(a)))/14.5);};o.setLength(o.length()/k(before)*k(o));}camera.position.copy(controls.target).add(o);flushView();},zoom(s){moving=false;if(camera.isOrthographicCamera){camera.zoom=THREE.MathUtils.clamp(camera.zoom/s,.35,8);camera.updateProjectionMatrix();flushView();return;}const o=camera.position.clone().sub(controls.target);o.setLength(THREE.MathUtils.clamp(o.length()*s,12,700));camera.position.copy(controls.target).add(o);flushView();},reset(){setView(floor);},get renderer(){return renderer;}};
 }

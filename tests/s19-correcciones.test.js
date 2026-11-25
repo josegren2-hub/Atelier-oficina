@@ -106,52 +106,30 @@ test('s19 C5: histeresis en el borde y transición de 250 ms', () => {
   assert.equal(stepFade(1, false, 125), .5);
 });
 
-test('s19 C5: el shader no tiene ruido, ni tiempo, ni gl_FragCoord; por cuadro solo se escriben floats', () => {
-  const code = occSrc.replace(/\/\*[^]*?\*\//g, '').replace(/\/\/.*$/gm, '');
-  assert.doesNotMatch(code, /gl_FragCoord|uTime|frameCount|fract\(52\.98/);
-  const upd = occSrc.slice(occSrc.indexOf('function update(camera'), occSrc.indexOf('return {\n    materials'));
-  assert.doesNotMatch(upd, /needsUpdate|onBeforeCompile|traverse|new THREE/);
-  assert.match(upd, /now - lastCheck >= THROTTLE_MS/);
-  assert.match(occSrc, /customProgramCacheKey = \(\) => 'occ-s19-/);
-  assert.match(occSrc, /g\.depthWrite = false/);
+test('s20 C5: el tramado de C es el de s18 pero fijo (IGN sobre píxeles enteros, sin tiempo)', () => {
+  assert.match(occSrc, /floor\(gl_FragCoord\.xy\)/);
+  assert.match(occSrc, /fract\(52\.9829189 \* fract\(dot\(occP/);
+  assert.doesNotMatch(occSrc, /uOccTime|uTime|iTime|frameCount/);
+  assert.match(occSrc, /fragDist < uOccFar/);
+  assert.match(occSrc, /occD <= inner\) discard/);
+  assert.match(occSrc, /variant: 'c'/);
   assert.match(scene, /if\(entorno\?\.group\.visible\)entorno\.occlusion\?\.update\(camera\);/);
 });
 
-test('s19 C5: entorno real — cada torre tiene su id, la oficina nunca queda tapada en 8 ángulos × 3 zooms y nada detrás se desvanece', async () => {
+test('s20 C5: variante C por defecto, sin meshes fantasma, uniformes fijos con la cámara quieta', async () => {
   const {createEntorno} = await import('../src/entorno2.js');
   const env = withFakeDocument(() => createEntorno('fusion', {quality: 'alta'}));
   const occ = env.occlusion;
-  assert.ok(occ.towers.length >= 10, `torres: ${occ.towers.length}`);
-  assert.ok(occ.ghosts > 0 && occ.materials.includes('towerGlass'));
-  env.group.updateMatrixWorld(true);
-  const towerMeshes = []; env.group.traverse((o) => { if (o.isMesh && !o.userData.ghost && o.geometry?.attributes?.aTower && !o.isInstancedMesh) towerMeshes.push(o); });
-  const ray = new THREE.Raycaster(); const pts = [OFFICE_CENTER, [-13, 3, 0], [16, 3, 0], [1.5, 27, -9], [1.5, 27, 9], [1.5, 6, 9], [1.5, 6, -9]];
-  const towerOfHit = (h) => { const a = h.object.geometry.attributes.aTower; const i = h.face ? h.face.a : h.index; return Math.round(a.getX(i)); };
-  let blocked = [], falseFades = [], checked = 0;
-  for (let az = 0; az < 360; az += 45) for (const dist of [40, 138, 300]) {
-    const cam = camAt(az, dist); const camera = {position: new THREE.Vector3(...cam)};
-    let now = 0; for (let k = 0; k < 6; k++) { occ.update(camera, now); now += 120; }
-    const st = new Map(occ.towers.map((t) => [t.id, t.f]));
-    for (const p of pts) {
-      const P = new THREE.Vector3(...p), C = new THREE.Vector3(...cam), dir = P.clone().sub(C), len = dir.length(); dir.normalize();
-      ray.set(C, dir); ray.far = len - .5; checked++;
-      for (const h of ray.intersectObjects(towerMeshes, false)) { const id = towerOfHit(h); if (id > 0 && st.get(id) < 1) blocked.push({az, dist, id}); }
-    }
-    // falso positivo: una torre desvanecida debe estar entre la cámara y la caja de la oficina
-    for (const t of occ.towers) if (t.f > 0) {
-      const c = [(t.min[0] + t.max[0]) / 2, (t.min[1] + t.max[1]) / 2, (t.min[2] + t.max[2]) / 2];
-      const dT = Math.hypot(c[0] - cam[0], c[1] - cam[1], c[2] - cam[2]), dO = Math.hypot(OFFICE_CENTER[0] - cam[0], OFFICE_CENTER[1] - cam[1], OFFICE_CENTER[2] - cam[2]);
-      if (!(towerBlockCount(cam, t, PAD_OFF) > 0) || dT > dO + 20) falseFades.push({az, dist, id: t.id});
-    }
-  }
-  assert.ok(checked >= 160);
-  assert.deepEqual(blocked.slice(0, 5), [], `torres que tapan: ${blocked.length}`);
-  assert.deepEqual(falseFades, []);
-  // cámara quieta: sin nuevas comprobaciones ni cambios
-  const camera = {position: new THREE.Vector3(...camAt(45, 300))}; let now = 1e6;
-  for (let k = 0; k < 10; k++) { occ.update(camera, now); now += 120; }
-  const a = JSON.stringify(occ.state().towers), checks = occ.state().checks;
-  for (let k = 0; k < 20; k++) { occ.update(camera, now); now += 16; }
-  assert.equal(JSON.stringify(occ.state().towers), a, 'quieta → idéntico');
-  assert.equal(occ.state().checks, checks, 'quieta → no recalcula');
+  assert.equal(occ.variant, 'c');
+  assert.equal(occ.ghosts, 0);
+  assert.ok(occ.materials.includes('towerGlass'));
+  const camera = {position: new THREE.Vector3(...camAt(45, 138)), updateMatrixWorld() {}, projectionMatrix: {elements: new Array(16).fill(0)}, matrixWorldInverse: {elements: new Array(16).fill(0)}, near: 0.1, zoom: 1, fov: 35, aspect: 390/844};
+  occ.update(camera, 0);
+  occ.update(camera, 16);
+  const a = JSON.stringify(occ.state());
+  const updates = occ.state().updates;
+  for (let k = 0; k < 20; k++) occ.update(camera, 32 + k * 16);
+  assert.equal(JSON.stringify(occ.state()), a, 'quieta → estado idéntico');
+  assert.equal(occ.state().updates, updates, 'quieta → no recalcula');
 });
+
