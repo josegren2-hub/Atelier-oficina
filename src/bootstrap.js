@@ -10,7 +10,7 @@ if (abrir === 'lista') {
 if (abrir === 'lista') {
   import('./lista-app.js');
 } else {
-  import('./ui-chrome.js').catch(()=>{}).finally(()=>import('./main.js'));
+  import('./ui-chrome.js').catch(()=>{}).finally(()=>import('./main.js').finally(()=>import('./nav-shell.js').then(m=>m.mountNavShell()).catch(()=>{})));
 }
 
 function swScope() {
