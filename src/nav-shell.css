@@ -86,3 +86,5 @@ body.ns-inmersivo header,body.ns-inmersivo .chrome-top,body.ns-inmersivo #vista-
 .ns-root h2,.ns-root h3,.ns-root p{font-family:Inter,ui-sans-serif,system-ui,sans-serif}
 .ns-root .ns-hello{font-family:Inter,ui-sans-serif,system-ui,sans-serif}
 .ns-qc{min-width:0}.ns-qc .ns-btn{flex:none}.ns-in{min-width:0}
+body.ns-on #app{padding-bottom:env(safe-area-inset-bottom,0px)!important}
+@media (orientation:landscape) and (max-height:500px){.ns-drawer .ns-item{min-height:40px;padding:7px 12px;font-size:15px}.ns-dh .ns-s{display:none}.ns-dfoot .ns-btn{min-height:40px;padding:0 8px;font-size:13px}}
