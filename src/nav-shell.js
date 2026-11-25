@@ -32,6 +32,7 @@ const I = {
   chev: '<path d="M9 6l6 6-6 6"/>', cube: '<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/>',
   dia: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M4.93 4.93l1.77 1.77M17.3 17.3l1.77 1.77M2 12h2.5M19.5 12H22M4.93 19.07l1.77-1.77M17.3 6.7l1.77-1.77"/>',
   noche: '<path d="M20.5 14.5A8.5 8.5 0 019.5 3.5a7 7 0 1011 11z"/>',
+  slide: '<path d="M5 12h14M13 6l6 6-6 6"/>',
 };
 const svg = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${I[k] || ''}</svg>`;
 export const MODULOS = [
@@ -125,19 +126,44 @@ export function setModo(m) {
   state.modo = m; ls.set(LS.modo + (isPhoneNav() ? 'Movil' : 'Escritorio'), m); aplicarModo(); renderNav();
 }
 
-function navItems(lista) {
+function navItems(lista, {chev = false} = {}) {
   const n = waitCount();
-  return lista.map(([id, label]) => `<button type="button" class="ns-item${state.activo === id ? ' on' : ''}" data-mod="${id}" title="${esc(label)}" aria-label="${esc(label)}${id === 'bandeja' && n ? ` · ${n} te esperan` : ''}">${svg(id)}<span class="ns-lbl">${esc(label)}</span>${id === 'bandeja' ? `<em class="ns-badge wait-badge"${n ? '' : ' hidden'}>${n || ''}</em>` : ''}</button>`).join('');
+  return lista.map(([id, label]) => `<button type="button" class="ns-item${state.activo === id ? ' on' : ''}" data-mod="${id}" title="${esc(label)}" aria-label="${esc(label)}${id === 'bandeja' && n ? ` · ${n} te esperan` : ''}">${svg(id)}<span class="ns-lbl">${esc(label)}</span>${id === 'bandeja' ? `<em class="ns-badge wait-badge"${n ? '' : ' hidden'}>${n || ''}</em>` : ''}${chev ? `<span class="ns-chev" aria-hidden="true">${svg('chev')}</span>` : ''}</button>`).join('');
+}
+const MAS_BLURB = {
+  proyectos: ['Proyectos', 'Metas grandes'],
+  agenda: ['Agenda', 'Ted y Julián'],
+  automatizaciones: ['Automatizaciones', 'Solo lectura'],
+  archivo: ['Archivo', 'Archiveros'],
+  estadisticas: ['Estadísticas', 'Racha y TR'],
+  configuracion: ['Configuración', 'Mando y avisos'],
+};
+function masCarrusel() {
+  const extras = MODULOS.filter(([id]) => !MOVIL.includes(id));
+  return `<div class="ns-mas">
+    <div class="ns-mas-top"><span class="ns-eyebrow">Más módulos</span><span class="ns-mas-hint">Desliza ${svg('slide')}</span></div>
+    <div class="ns-mas-wrap"><div class="ns-mas-rail" role="list" aria-label="Más módulos">${extras.map(([id, label]) => {
+    const [t, d] = MAS_BLURB[id] || [label, ''];
+    return `<button type="button" class="ns-mas-card${state.activo === id ? ' on' : ''}" data-mod="${id}" role="listitem" title="${esc(label)}" aria-label="${esc(label)}"><span class="ns-mas-ic">${svg(id)}</span><b>${esc(t)}</b><small>${esc(d)}</small></button>`;
+  }).join('')}</div></div>
+  </div>`;
 }
 function renderNav() {
   const phone = isPhoneNav();
   const lista = phone ? MODULOS.filter(([id]) => MOVIL.includes(id)) : MODULOS;
-  drawer.querySelector('.ns-list').innerHTML = navItems(lista) + (phone ? `<button type="button" class="ns-item" data-mas="1">${svg('menu')}<span class="ns-lbl">Más: Proyectos, Agenda, Archivo…</span></button><div class="ns-more" hidden>${navItems(MODULOS.filter(([id]) => !MOVIL.includes(id)))}</div>` : '');
+  drawer.querySelector('.ns-list').innerHTML = navItems(lista, {chev: true}) + (phone ? masCarrusel() : '');
   rail.querySelector('.ns-list').innerHTML = navItems(MODULOS);
   drawer.querySelector('[data-act=fijar]')?.setAttribute('aria-pressed', String(ls.get(LS.fijo, '0') === '1'));
   const n = waitCount();
   const dot = fab?.querySelector('.ns-dot');
   if (dot) { dot.textContent = n ? String(n) : ''; dot.hidden = !n; }
+}
+function playEnter(el) {
+  if (!el) return;
+  el.classList.add('ns-enter');
+  el.hidden = false;
+  void el.offsetWidth;
+  requestAnimationFrame(() => el.classList.remove('ns-enter'));
 }
 
 function syncScrim() { scrim.hidden = !(state.abierto || !hubEl.hidden); }
@@ -152,7 +178,7 @@ function cerrarTodoPorFuera() {
 }
 function abrirMenu(opener) {
   state.opener = opener || document.activeElement; state.abierto = true;
-  renderNav(); root.classList.add('ns-open'); drawer.hidden = false; syncScrim();
+  renderNav(); root.classList.add('ns-open'); playEnter(drawer); syncScrim();
   fab.setAttribute('aria-expanded', 'true'); pushBack();
   drawer.querySelector('.ns-item.on, .ns-item')?.focus({preventScroll: true});
 }
@@ -182,10 +208,10 @@ export function irA(id, {from} = {}) {
 function abrirHub(id) {
   const h = hubs()[id]; if (!h) return;
   state.hub = id;
-  hubEl.innerHTML = `<div class="ns-head">${navStack.length ? `<button type="button" class="ns-x ns-back" data-act="volver" aria-label="Volver">${svg('back')}</button>` : `<span class="ns-ic">${svg(id)}</span>`}<div><h2>${esc(h.t)}</h2><p>${esc(h.d)}</p></div><button type="button" class="ns-x" data-act="cerrar-hub" aria-label="Cerrar">${svg('x')}</button></div>
-  <div class="ns-hub-list">${h.items.map(([t, d, fn, keep, cls], i) => `<button type="button" class="ns-hub-item${cls ? ' ns-' + cls : ''}" data-i="${i}"${fn ? '' : ' disabled aria-disabled="true"'}><span><b>${esc(t)}</b><small>${esc(typeof d === 'function' ? d() : d)}</small></span>${fn ? svg('chev') : '<em class="ns-nd">No disponible</em>'}</button>`).join('')}</div>`;
+  hubEl.innerHTML = `<div class="ns-head">${navStack.length ? `<button type="button" class="ns-x ns-back" data-act="volver" aria-label="Volver">${svg('back')}</button>` : ''}<span class="ns-ic">${svg(id)}</span><div><h2>${esc(h.t)}</h2><p>${esc(h.d)}</p></div><button type="button" class="ns-x" data-act="cerrar-hub" aria-label="Cerrar">${svg('x')}</button></div>
+  <div class="ns-hub-list">${h.items.map(([t, d, fn, keep, cls], i) => `<button type="button" class="ns-hub-item${cls ? ' ns-' + cls : ''}" data-i="${i}"${fn ? '' : ' disabled aria-disabled="true"'}><span><b>${esc(t)}${cls === 'tr' ? '<em class="ns-tr-pill">Revista</em>' : ''}</b><small>${esc(typeof d === 'function' ? d() : d)}</small></span>${fn ? `<span class="ns-chev" aria-hidden="true">${svg('chev')}</span>` : '<em class="ns-nd">No disponible</em>'}</button>`).join('')}</div>`;
   sheets.closeAll('hub');
-  hubEl.hidden = false; hubEl.classList.add('open'); syncScrim(); pushBack();
+  hubEl.classList.add('open'); playEnter(hubEl); syncScrim(); pushBack();
   hubEl.querySelector('.ns-hub-item:not([disabled])')?.focus({preventScroll: true});
 }
 function cerrarHub() { hubEl.hidden = true; hubEl.classList.remove('open'); state.hub = null; syncScrim(); }
@@ -247,9 +273,9 @@ export function mountNavShell() {
   root.innerHTML = `
   <div class="ns-scrim" hidden></div>
   <nav id="ns-drawer" class="ns-drawer" hidden aria-label="Menú principal" role="dialog" aria-modal="false">
-    <div class="ns-dh"><b>Menú</b><span class="ns-s">La cámara no se mueve</span>
-      <button type="button" class="ns-btn sm" data-act="fijar" aria-pressed="false" title="Fijar menú">${svg('pin')}<span>Fijar</span></button>
-      <button type="button" class="ns-x" data-act="cerrar" aria-label="Cerrar menú">${svg('x')}</button></div>
+    <div class="ns-dh"><div class="ns-dh-txt"><span class="ns-eyebrow">Menú · Navegación</span><span class="ns-s">La cámara no se mueve</span></div>
+      <div class="ns-dh-acts"><button type="button" class="ns-btn sm" data-act="fijar" aria-pressed="false" title="Fijar menú">${svg('pin')}<span>Fijar</span></button>
+      <button type="button" class="ns-x" data-act="cerrar" aria-label="Cerrar menú">${svg('x')}</button></div></div>
     <div class="ns-list"></div>
     <div class="ns-dfoot"><button type="button" class="ns-btn" data-act="inmersivo">${svg('full')}<span>Inmersivo</span></button><button type="button" class="ns-btn" data-act="modo">${svg('menu')}<span>Tipo de menú</span></button></div>
   </nav>

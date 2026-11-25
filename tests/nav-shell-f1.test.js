@@ -76,3 +76,23 @@ test('F1b: botón persistente de Día/Noche (luz) con vidrio y 4 px visible incl
   assert.match(css, /\.ns-luz\{[^}]*backdrop-filter:blur/);
   assert.match(css, /body\.ns-inmersivo[^}]*\.ns-luz[^}]*visibility:visible/);
 });
+
+test('F1c: Más es un carrusel horizontal de tarjetas (no la fila desplegable anterior)', () => {
+  assert.match(src, /ns-mas-rail/);
+  assert.match(src, /ns-mas-card/);
+  assert.match(src, /Desliza/);
+  assert.match(src, /MAS_BLURB/);
+  assert.doesNotMatch(src, /Más: Proyectos, Agenda, Archivo/);
+  assert.match(css, /scroll-snap-type:x mandatory/);
+  assert.match(css, /\.ns-mas-wrap::after/);
+  assert.match(css, /Desliza|ns-mas-hint/);
+});
+
+test('F1c: vidrio esmerilado más marcado (28px, 4 px) y apertura ~200ms con prefers-reduced-motion', () => {
+  assert.match(css, /blur\(28px\) saturate\(1\.55\)/);
+  assert.match(css, /transition:transform 200ms/);
+  assert.match(css, /prefers-reduced-motion:reduce/);
+  assert.match(src, /playEnter/);
+  assert.match(css, /border-radius:4px/);
+  assert.match(css, /#bcd9ec/);
+});
