@@ -88,13 +88,24 @@ test('F1c: Más es un carrusel horizontal de tarjetas (no la fila desplegable an
   assert.match(css, /Desliza|ns-mas-hint/);
 });
 
-test('F1c: vidrio esmerilado más marcado (28px, 4 px) y apertura ~200ms con prefers-reduced-motion', () => {
-  assert.match(css, /blur\(28px\) saturate\(1\.55\)/);
+test('F1c: apertura ~200ms con prefers-reduced-motion, 4 px y acento (el vidrio 28px lo sustituye F1e)', () => {
   assert.match(css, /transition:transform 200ms/);
   assert.match(css, /prefers-reduced-motion:reduce/);
   assert.match(src, /playEnter/);
   assert.match(css, /border-radius:4px/);
   assert.match(css, /#bcd9ec/);
+});
+
+test('F1e: menú con fondo de El equipo (navy casi sólido, sin blur 28px), líneas, texto secundario y botones', () => {
+  assert.match(css, /\.ns-drawer\{[^}]*background:rgba\(14,17,24,\.86\)/);
+  assert.match(css, /\.ns-drawer\{[^}]*backdrop-filter:blur\(20px\) saturate\(1\.3\)/);
+  assert.doesNotMatch(css, /\.ns-drawer\{[^}]*blur\(28px\)/);
+  assert.match(css, /#485a6b/);
+  assert.match(css, /#344250/);
+  assert.match(css, /#b4c9d9/);
+  assert.match(css, /\.ns-drawer \.ns-btn:not\(\.p\):not\(\.tr\)[^}]*#314c62/);
+  assert.match(css, /#90a9bd/);
+  assert.match(css, /transition:transform 200ms/);
 });
 
 test('F1d: la barra inferior (vistas + cámara) no se recorta: 39px + safe-area, no 16px', () => {
