@@ -30,6 +30,8 @@ const I = {
   back: '<path d="M9 14l-4-4 4-4"/><path d="M5 10h9a5 5 0 010 10h-2"/>', plus: '<path d="M12 5v14M5 12h14"/>',
   star: '<path d="M12 4l2.4 5 5.4.6-4 3.7 1.1 5.4L12 16l-4.9 2.7 1.1-5.4-4-3.7 5.4-.6z"/>', signal: '<path d="M4 18h2M9 18v-4M14 18V9M19 18V5"/>',
   chev: '<path d="M9 6l6 6-6 6"/>', cube: '<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/>',
+  dia: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M4.93 4.93l1.77 1.77M17.3 17.3l1.77 1.77M2 12h2.5M19.5 12H22M4.93 19.07l1.77-1.77M17.3 6.7l1.77-1.77"/>',
+  noche: '<path d="M20.5 14.5A8.5 8.5 0 019.5 3.5a7 7 0 1011 11z"/>',
 };
 const svg = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${I[k] || ''}</svg>`;
 export const MODULOS = [
@@ -105,7 +107,8 @@ function hubs() {
 }
 
 const state = {modo: 'oculto', abierto: false, activo: 'oficina', inmersivo: false, opener: null, hub: null};
-let root, drawer, fab, rail, hubEl, inicioEl, scrim, salir;
+const navStack = [];
+let root, drawer, fab, rail, hubEl, inicioEl, scrim, salir, luzBtn;
 
 function aplicarModo() {
   document.body.dataset.navModo = state.modo;
@@ -132,24 +135,40 @@ function renderNav() {
   drawer.querySelector('.ns-list').innerHTML = navItems(lista) + (phone ? `<button type="button" class="ns-item" data-mas="1">${svg('menu')}<span class="ns-lbl">Más: Proyectos, Agenda, Archivo…</span></button><div class="ns-more" hidden>${navItems(MODULOS.filter(([id]) => !MOVIL.includes(id)))}</div>` : '');
   rail.querySelector('.ns-list').innerHTML = navItems(MODULOS);
   drawer.querySelector('[data-act=fijar]')?.setAttribute('aria-pressed', String(ls.get(LS.fijo, '0') === '1'));
+  const n = waitCount();
+  const dot = fab?.querySelector('.ns-dot');
+  if (dot) { dot.textContent = n ? String(n) : ''; dot.hidden = !n; }
 }
 
+function syncScrim() { scrim.hidden = !(state.abierto || !hubEl.hidden); }
+function cerrarTodoPorFuera() {
+  navStack.length = 0;
+  globalThis.__atelierSwallowPickAt = performance.now();
+  sheets.closeAll();
+  cerrarHub();
+  cerrarMenu();
+  cerrarInicio();
+  syncScrim();
+}
 function abrirMenu(opener) {
   state.opener = opener || document.activeElement; state.abierto = true;
-  renderNav(); root.classList.add('ns-open'); drawer.hidden = false; scrim.hidden = false;
+  renderNav(); root.classList.add('ns-open'); drawer.hidden = false; syncScrim();
   fab.setAttribute('aria-expanded', 'true'); pushBack();
   drawer.querySelector('.ns-item.on, .ns-item')?.focus({preventScroll: true});
 }
 function cerrarMenu() {
   if (!state.abierto) return;
-  state.abierto = false; drawer.hidden = true; scrim.hidden = true; root.classList.remove('ns-open');
+  state.abierto = false; drawer.hidden = true; root.classList.remove('ns-open'); syncScrim();
   fab.setAttribute('aria-expanded', 'false');
   try { (state.opener && document.contains(state.opener) ? state.opener : fab).focus({preventScroll: true}); } catch {}
 }
 
 function recordar(id) { ls.set(LS.ultimo, JSON.stringify({mod: id, ts: Date.now()})); }
-export function irA(id) {
+export function irA(id, {from} = {}) {
+  const veníaDeMenu = state.abierto;
   state.activo = id; recordar(id);
+  if (from) navStack.push(from);
+  else if (veníaDeMenu) navStack.push({type: 'nav'});
   if (ls.get(LS.fijo, '0') !== '1') sheets.close('nav'); else renderNav();
   switch (id) {
     case 'inicio': sheets.open('inicio'); break;
@@ -163,13 +182,13 @@ export function irA(id) {
 function abrirHub(id) {
   const h = hubs()[id]; if (!h) return;
   state.hub = id;
-  hubEl.innerHTML = `<div class="ns-head"><span class="ns-ic">${svg(id)}</span><div><h2>${esc(h.t)}</h2><p>${esc(h.d)}</p></div><button type="button" class="ns-x" data-act="cerrar-hub" aria-label="Cerrar">${svg('x')}</button></div>
+  hubEl.innerHTML = `<div class="ns-head">${navStack.length ? `<button type="button" class="ns-x ns-back" data-act="volver" aria-label="Volver">${svg('back')}</button>` : `<span class="ns-ic">${svg(id)}</span>`}<div><h2>${esc(h.t)}</h2><p>${esc(h.d)}</p></div><button type="button" class="ns-x" data-act="cerrar-hub" aria-label="Cerrar">${svg('x')}</button></div>
   <div class="ns-hub-list">${h.items.map(([t, d, fn, keep, cls], i) => `<button type="button" class="ns-hub-item${cls ? ' ns-' + cls : ''}" data-i="${i}"${fn ? '' : ' disabled aria-disabled="true"'}><span><b>${esc(t)}</b><small>${esc(typeof d === 'function' ? d() : d)}</small></span>${fn ? svg('chev') : '<em class="ns-nd">No disponible</em>'}</button>`).join('')}</div>`;
   sheets.closeAll('hub');
-  hubEl.hidden = false; hubEl.classList.add('open'); pushBack();
+  hubEl.hidden = false; hubEl.classList.add('open'); syncScrim(); pushBack();
   hubEl.querySelector('.ns-hub-item:not([disabled])')?.focus({preventScroll: true});
 }
-function cerrarHub() { hubEl.hidden = true; hubEl.classList.remove('open'); state.hub = null; }
+function cerrarHub() { hubEl.hidden = true; hubEl.classList.remove('open'); state.hub = null; syncScrim(); }
 
 /* ---- Inicio ---- */
 function ultimo() { try { return JSON.parse(ls.get(LS.ultimo, 'null')); } catch { return null; } }
@@ -189,7 +208,7 @@ export function renderInicio() {
   const mando = txt('#mando-status'); const mandoAbierto = /abierto|desbloq/i.test(mando) && !/bloqueado/i.test(mando);
   inicioEl.innerHTML = `<div class="ns-ini">
   <div class="ns-ini-top"><div><h2 class="ns-hello">${saludo()}</h2><p class="ns-sub">${esc(fechaLarga())}${n ? ` · <span class="ns-pink">${n} ${n === 1 ? 'asunto espera' : 'asuntos esperan'} tu OK</span>` : ''}</p></div>
-   <button type="button" class="ns-x" data-act="cerrar-inicio" aria-label="Cerrar Inicio">${svg('x')}</button></div>
+   <div class="ns-ini-acts">${state.modo === 'oculto' ? `<button type="button" class="ns-x ns-ini-menu" data-act="menu-desde-inicio" aria-label="Abrir menú">${svg('menu')}</button>` : ''}<button type="button" class="ns-x" data-act="cerrar-inicio" aria-label="Cerrar Inicio">${svg('x')}</button></div></div>
   <form class="ns-qc" data-act="captura"><label class="ns-in">${svg('plus')}<input name="t" maxlength="280" autocomplete="off" placeholder="Captura rápida: idea, pendiente o instrucción…" aria-label="Captura rápida"></label><button class="ns-btn p" type="submit">Guardar</button></form>
   <p class="ns-note">La captura rápida se guarda solo en este dispositivo; no se envía a nadie.</p>
   <div class="ns-grid">
@@ -226,7 +245,6 @@ export function mountNavShell() {
   document.body.classList.add('ns-on');
   root = document.createElement('div'); root.id = 'ns-root'; root.className = 'ns-root';
   root.innerHTML = `
-  <button type="button" class="ns-fab" aria-label="Abrir menú" aria-expanded="false" aria-controls="ns-drawer">${svg('menu')}<em class="ns-dot wait-badge" hidden></em></button>
   <div class="ns-scrim" hidden></div>
   <nav id="ns-drawer" class="ns-drawer" hidden aria-label="Menú principal" role="dialog" aria-modal="false">
     <div class="ns-dh"><b>Menú</b><span class="ns-s">La cámara no se mueve</span>
@@ -244,38 +262,98 @@ export function mountNavShell() {
   <section class="ns-inicio" hidden role="dialog" aria-label="Inicio"></section>
   <button type="button" class="ns-salir" hidden aria-label="Salir del modo inmersivo">${svg('full')}<span>Mostrar controles</span></button>`;
   document.body.appendChild(root);
-  fab = root.querySelector('.ns-fab'); drawer = root.querySelector('.ns-drawer'); rail = root.querySelector('.ns-rail');
+  fab = document.createElement('button');
+  fab.type = 'button'; fab.className = 'ns-fab';
+  fab.setAttribute('aria-label', 'Abrir menú'); fab.setAttribute('aria-expanded', 'false'); fab.setAttribute('aria-controls', 'ns-drawer');
+  fab.innerHTML = `${svg('menu')}<em class="ns-dot wait-badge" hidden></em>`;
+  const hdr = $('.chrome-primary');
+  if (hdr) hdr.appendChild(fab); else root.prepend(fab); drawer = root.querySelector('.ns-drawer'); rail = root.querySelector('.ns-rail');
   hubEl = root.querySelector('.ns-hub'); inicioEl = root.querySelector('.ns-inicio'); scrim = root.querySelector('.ns-scrim'); salir = root.querySelector('.ns-salir');
-  for (const el of [drawer, rail, hubEl, inicioEl, fab, salir]) stopper(el);
-  /* Tocar fuera cierra la capa sin que el toque llegue al 3D. */
-  for (const ev of ['pointerdown', 'touchstart']) scrim.addEventListener(ev, e => { e.stopPropagation(); e.preventDefault?.(); sheets.close('nav'); }, {passive: false});
+  luzBtn = document.createElement('button');
+  luzBtn.type = 'button'; luzBtn.className = 'ns-luz';
+  const vp = $('#viewport');
+  if (vp) vp.appendChild(luzBtn); else root.appendChild(luzBtn);
+  const paintLuz = () => {
+    const lab = txt('#dock-noche .lbl') || 'Auto';
+    const night = document.documentElement.dataset.theme === 'night' || lab === 'Noche';
+    luzBtn.innerHTML = `${svg(night ? 'noche' : 'dia')}<span>${esc(lab)}</span>`;
+    luzBtn.setAttribute('aria-label', `Luz: ${lab}. Toca para cambiar entre Auto, Noche y Día`);
+    luzBtn.title = $('#dock-noche')?.title || `Luz: ${lab}`;
+  };
+  paintLuz();
+  luzBtn.addEventListener('click', () => { click('dock-noche'); setTimeout(paintLuz, 20); });
+  const dn = $('#dock-noche');
+  if (dn && typeof MutationObserver !== 'undefined') new MutationObserver(paintLuz).observe(dn, {childList: true, subtree: true, attributes: true});
+  if (typeof MutationObserver !== 'undefined') new MutationObserver(paintLuz).observe(document.documentElement, {attributes: true, attributeFilter: ['data-theme']});
+  for (const el of [drawer, rail, hubEl, inicioEl, fab, salir, luzBtn]) stopper(el);
+  /* Tocar fuera (scrim) cierra todo el menú sin dejar caer el toque al 3D ni al botón. */
+  let scrimTap = null;
+  for (const ev of ['pointerdown', 'touchstart']) scrim.addEventListener(ev, e => {
+    e.stopPropagation();
+    const pt = e.touches?.[0] || e;
+    scrimTap = {x: pt.clientX || 0, y: pt.clientY || 0};
+  }, {passive: true});
+  scrim.addEventListener('pointerup', e => {
+    e.stopPropagation();
+    if (scrimTap && Math.hypot((e.clientX || 0) - scrimTap.x, (e.clientY || 0) - scrimTap.y) < 18) {
+      scrimTap = null;
+      cerrarTodoPorFuera();
+    }
+  });
+  scrim.addEventListener('click', e => { e.stopPropagation(); e.preventDefault(); cerrarTodoPorFuera(); });
+  /* Tocar fuera de un <dialog> modal (::backdrop) también cierra por completo. */
+  document.addEventListener('click', e => {
+    const d = e.target;
+    if (!(d instanceof HTMLDialogElement) || !d.open) return;
+    if (!e.clientX && !e.clientY) return;
+    const r = d.getBoundingClientRect();
+    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) cerrarTodoPorFuera();
+  }, true);
+  /* Tocar fuera de hojas (p.ej. Proyectos, Mas, Equipo) limpia la pila para no reabrir al cerrar. */
+  document.addEventListener('pointerdown', e => {
+    const t = e.target;
+    if (!(t instanceof Element)) return;
+    if (t.closest('.ns-drawer,.ns-hub,.ns-rail,.ns-fab,.ns-inicio,.glass-sheet,aside.team,.cc-dialog,.resumen-dialog,.avisos-dialog,.tr-dialog,.pizarron-dialog,#mando-dialog,#detail,#ficha-flotante,#avatar-dropdown')) return;
+    navStack.length = 0;
+  }, true);
 
   sheets.register('nav', {open: () => abrirMenu(), close: cerrarMenu, isOpen: () => state.abierto});
   sheets.register('inicio', {open: abrirInicio, close: cerrarInicio, isOpen: () => !inicioEl.hidden});
   sheets.register('hub', {open: () => {}, close: cerrarHub, isOpen: () => !hubEl.hidden});
 
-  fab.addEventListener('click', () => (state.abierto ? sheets.close('nav') : (sheets.closeAll('nav'), abrirMenu(fab))));
+  fab.addEventListener('click', () => { if (state.abierto) { navStack.length = 0; sheets.close('nav'); } else { navStack.length = 0; sheets.closeAll('nav'); abrirMenu(fab); } });
   salir.addEventListener('click', () => setInmersivo(false));
   root.addEventListener('click', e => {
     const t = e.target.closest('button'); if (!t || !root.contains(t)) return;
     if (t.dataset.mod) { irA(t.dataset.mod); return; }
     if (t.dataset.mas) { const m = drawer.querySelector('.ns-more'); if (m) { m.hidden = !m.hidden; t.setAttribute('aria-expanded', String(!m.hidden)); } return; }
-    if (t.dataset.go) { cerrarInicio(); irA(t.dataset.go); return; }
+    if (t.dataset.go) { const mod = t.dataset.go; cerrarInicio(); irA(mod, {from: {type: 'inicio'}}); return; }
     if (t.classList.contains('ns-hub-item')) {
-      const h = hubs()[state.hub]; const it = h?.items[+t.dataset.i]; if (!it || !it[2]) return;
-      if (it[3]) { it[2](); setTimeout(() => state.hub && abrirHub(state.hub), 60); } else { cerrarHub(); it[2](); }
+      const hid = state.hub;
+      const h = hubs()[hid]; const it = h?.items[+t.dataset.i]; if (!it || !it[2]) return;
+      if (it[3]) { it[2](); setTimeout(() => state.hub && abrirHub(state.hub), 60); }
+      else { navStack.push({type: 'hub', id: hid}); cerrarHub(); it[2](); }
       return;
     }
     switch (t.dataset.act) {
-      case 'cerrar': sheets.close('nav'); break;
+      case 'cerrar': navStack.length = 0; sheets.close('nav'); break;
+      case 'menu-desde-inicio': navStack.push({type: 'inicio'}); cerrarInicio(); abrirMenu(fab); break;
+      case 'volver': {
+        const prev = navStack.pop();
+        cerrarHub();
+        if (prev?.type === 'nav') abrirMenu(fab);
+        else if (prev?.type === 'hub') abrirHub(prev.id);
+        else if (prev?.type === 'inicio') abrirInicio();
+        break;
+      }
       case 'fijar': ls.set(LS.fijo, ls.get(LS.fijo, '0') === '1' ? '0' : '1'); renderNav(); break;
-      case 'inmersivo': setInmersivo(true); break;
+      case 'inmersivo': navStack.length = 0; setInmersivo(true); break;
       case 'modo': ciclarModo(); break;
-      case 'cerrar-hub': cerrarHub(); break;
-      case 'cerrar-inicio': cerrarInicio(); break;
-      case 'mando': cerrarInicio(); click('mando-unlock'); break;
-      case 'tinta': cerrarInicio(); sheets.open('tinta'); break;
-      case 'resumen': cerrarInicio(); sheets.open('resumen'); break;
+      case 'cerrar-hub': navStack.length = 0; cerrarHub(); break;
+      case 'cerrar-inicio': navStack.length = 0; cerrarInicio(); break;
+      case 'mando': navStack.push({type: 'inicio'}); cerrarInicio(); click('mando-unlock'); break;
+      case 'tinta': navStack.push({type: 'inicio'}); cerrarInicio(); sheets.open('tinta'); break;
+      case 'resumen': navStack.push({type: 'inicio'}); cerrarInicio(); sheets.open('resumen'); break;
       case 'borrar-capturas': ls.set(LS.capt, '[]'); renderInicio(); break;
     }
   });
@@ -290,12 +368,21 @@ export function mountNavShell() {
     else if (!inicioEl.hidden) { e.preventDefault(); cerrarInicio(); }
     else if (state.inmersivo) { e.preventDefault(); setInmersivo(false); }
   });
-  /* Atrás: history-back cierra cualquier hoja registrada (incluye nav, hub e inicio). En inmersivo, Atrás lo quita. */
-  addEventListener('popstate', () => { if (state.inmersivo && !sheets.anyOpen()) setInmersivo(false); });
+  /* Atrás: tras cerrar la capa superior en history-back, regresa al menú/submenú anterior de la pila. */
+  addEventListener('popstate', () => {
+    if (state.inmersivo && !sheets.anyOpen() && !navStack.length) { setInmersivo(false); return; }
+    if (!navStack.length) return;
+    const stillOpen = sheets.anyOpen() || !!document.querySelector('dialog[open]') || document.body.classList.contains('equipo-abierto');
+    if (stillOpen) return;
+    const prev = navStack.pop();
+    if (prev?.type === 'nav') abrirMenu(fab);
+    else if (prev?.type === 'hub') abrirHub(prev.id);
+    else if (prev?.type === 'inicio') abrirInicio();
+  });
 
   state.modo = modoInicial(); aplicarModo(); renderNav();
   let lastPhone = isPhoneNav();
   addEventListener('resize', () => { const p = isPhoneNav(); if (p !== lastPhone) { lastPhone = p; state.modo = modoInicial(); aplicarModo(); renderNav(); } });
   if (pantallaInicial() === 'inicio' && !new URLSearchParams(location.search).has('abrir')) setTimeout(() => { if (!sheets.anyOpen()) abrirInicio(); }, 400);
-  globalThis.__atelierNav = {irA, setModo, setInmersivo, state};
+  globalThis.__atelierNav = {irA, setModo, setInmersivo, state, navStack, cerrarTodoPorFuera};
 }

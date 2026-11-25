@@ -121,7 +121,7 @@ document.querySelectorAll('[data-ico]').forEach(node=>{
 function openMas(open){
   const panel=$('#mas-panel'); const btn=$('#mas-open');
   if(!panel)return;
-  if(open){panel.hidden=false;requestAnimationFrame(()=>panel.classList.add('open'));btn?.setAttribute('aria-expanded','true');if(typeof historyBack!=='undefined')historyBack.push();}
+  if(open){panel.hidden=false;void panel.offsetWidth;panel.classList.add('open');btn?.setAttribute('aria-expanded','true');if(typeof historyBack!=='undefined')historyBack.push();}
   else{panel.classList.remove('open');btn?.setAttribute('aria-expanded','false');setTimeout(()=>{if(!panel.classList.contains('open'))panel.hidden=true;},380);}
 }
 
@@ -741,7 +741,7 @@ function bindOutsideClose(){
  document.addEventListener('pointerdown',e=>{
   const t=e.target;
   if(!(t instanceof Element))return;
-  if(t.closest('#dock,#mas-open,#mas-panel,#paneles-sheet,#proyectos-sheet,.proy-sheet,#avatar-dropdown,#avatars-toggle,aside.team,#ficha-flotante,#detail,#mando-dialog,.resumen-dialog,.cc-dialog,.avisos-dialog,.pizarron-dialog,#mcpanel,#install-app,#demo-banner,.v17pin'))return;
+  if(t.closest('#dock,#mas-open,#mas-panel,#paneles-sheet,#proyectos-sheet,.proy-sheet,#avatar-dropdown,#avatars-toggle,aside.team,#ficha-flotante,#detail,#mando-dialog,.resumen-dialog,.cc-dialog,.avisos-dialog,.pizarron-dialog,#mcpanel,#install-app,#demo-banner,.v17pin,#ns-root,.ns-fab,.ns-luz'))return;
   if(pizarron.isOpen())return; // non-modal pizarrón: a drag moves the 3D; a tap outside closes it (bindPizarronOutsideTap)
   if(sheets.anyOpen()){if(t.closest('#canvas-container'))globalThis.__atelierSwallowPickAt=performance.now();sheets.closeAll();}
  });

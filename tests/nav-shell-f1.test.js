@@ -20,6 +20,7 @@ test('F1: preferencias guardadas por tipo de dispositivo; valores raros se ignor
   assert.equal(siguienteModo('oculto'), 'compacto');
   assert.equal(siguienteModo('expandido'), 'oculto');
 });
+const css = readFileSync(new URL('../src/nav-shell.css', import.meta.url), 'utf8');
 const src = readFileSync(new URL('../src/nav-shell.js', import.meta.url), 'utf8');
 test('F1: los 11 módulos del plan maestro existen en el menú', () => {
   for (const m of ['Inicio', 'Oficina 3D', 'Agentes', 'Tareas', 'Bandeja de atención', 'Proyectos', 'Agenda', 'Automatizaciones', 'Archivo y memoria', 'Estadísticas', 'Configuración']) assert.ok(src.includes(`'${m}'`), m);
@@ -43,8 +44,35 @@ test('F1: el service worker no guarda tintarosa.enc ni proyectos.enc', () => {
   assert.match(sw, /tintarosa\\\.enc/); assert.match(sw, /proyectos\\\.enc/);
 });
 test('F1: el menú es una capa y no reserva espacio (dock oculto, canvas intacto)', () => {
-  const css = readFileSync(new URL('../src/nav-shell.css', import.meta.url), 'utf8');
   assert.match(css, /body\.ns-on\{--dock-h:0px\}/);
   assert.match(css, /\.ns-drawer\{position:fixed/);
   assert.doesNotMatch(css, /#FFD|#ff0|yellow/i);
+});
+
+test('F1b: el botón ☰ va en .chrome-primary (40 px, vidrio, 4 px) y no se encima con #vista-toolbar', () => {
+  assert.match(src, /\.chrome-primary/);
+  assert.match(css, /\.ns-fab\{[^}]*width:40px;height:40px[^}]*border-radius:4px/);
+  assert.match(css, /\.ns-fab\{[^}]*backdrop-filter:blur/);
+  assert.match(css, /#vista-toolbar\.vista-toolbar\{bottom:calc\(16px/);
+});
+
+test('F1b: pila de historial (navStack) y cierre completo al tocar fuera', () => {
+  assert.match(src, /navStack\.push\(/);
+  assert.match(src, /navStack\.pop\(/);
+  assert.match(src, /cerrarTodoPorFuera/);
+  assert.match(src, /syncScrim/);
+});
+
+test('F1b: sin el letrero oscuro de área en la pared del fondo (se conserva el neón de Piso 04)', () => {
+  const sc = readFileSync(new URL('../src/scene.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(sc, /floors\[n\]\.name\.toUpperCase\(\).*-8\.64/);
+  assert.match(sc, /furnishTintaRosa/);
+});
+
+test('F1b: botón persistente de Día/Noche (luz) con vidrio y 4 px visible incluso en inmersivo', () => {
+  assert.match(src, /ns-luz/);
+  assert.match(src, /dock-noche/);
+  assert.match(css, /\.ns-luz\{[^}]*border-radius:4px/);
+  assert.match(css, /\.ns-luz\{[^}]*backdrop-filter:blur/);
+  assert.match(css, /body\.ns-inmersivo[^}]*\.ns-luz[^}]*visibility:visible/);
 });

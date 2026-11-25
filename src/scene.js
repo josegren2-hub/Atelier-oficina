@@ -152,8 +152,7 @@ const movement=createMovement();
   for(const x of [-12.9,12.9])for(let z=-7.3;z<9;z+=3.6){box(facade,x,2.35,z,.025,4.05,3.54,M.glass);box(facade,x,2.35,z-1.8,.07,4.2,.05,M.steel);}
   // Rear material wall, warm oak ribs, floating wayfinding.
   box(g,-1.7,1.9,-8.75,22.2,3.4,.15,plate.ivory);for(let i=0;i<23;i++)box(g,4.5+i*.2,1.9,-8.62,.075,3.5,.12,plate.oak);
-  label(g,`${String(n).padStart(2,'0')} / ${floors[n].name.toUpperCase()}`,-1,3.35,-8.64,5.2);
-  // Exterior glass elevator, separate from the floor programs, and open side stair.
+   // Exterior glass elevator, separate from the floor programs, and open side stair.
   for(const x of [13.4,15.8])for(const z of [1.2,3.8])box(g,x,2.2,z,.08,4.4,.08,M.steel);
   box(g,14.6,.3,2.5,2.5,.12,2.7,M.oak);box(g,14.6,2.3,3.8,2.4,4.3,.025,M.glass);box(g,15.8,2.3,2.5,.025,4.3,2.6,M.glass);box(g,14.6,4.35,2.5,2.4,.06,2.6,M.gold);box(g,13.15,.2,2.5,.8,.12,2.1,M.stone);label(g,String(n).padStart(2,'0'),14.6,3.7,3.85,.7);
   for(let s=0;s<17;s++){box(g,11.15,.39+s*.26,-7.5+s*.45,2.5,.12,.47,M.oak);box(g,12.46,1.07+s*.26,-7.5+s*.45,.04,1.4,.04,M.gold);box(g,11.15,.45+s*.26,-7.28+s*.45,2.35,.025,.03,M.glow);}const rail=box(g,12.46,3.15,-3.9,.055,.055,8.32,M.gold);rail.rotation.x=-.524;

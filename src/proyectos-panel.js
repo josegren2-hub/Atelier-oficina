@@ -109,7 +109,8 @@ export function mountProyectosPanel({getKey = () => null, onClose = () => {}, ge
 
   function open() {
     el.hidden = false;
-    requestAnimationFrame(() => el.classList.add('open'));
+    void el.offsetWidth;
+    el.classList.add('open');
     render();
   }
   function close() {
