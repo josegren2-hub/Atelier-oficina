@@ -130,28 +130,16 @@ function navItems(lista, {chev = false} = {}) {
   const n = waitCount();
   return lista.map(([id, label]) => `<button type="button" class="ns-item${state.activo === id ? ' on' : ''}" data-mod="${id}" title="${esc(label)}" aria-label="${esc(label)}${id === 'bandeja' && n ? ` · ${n} te esperan` : ''}">${svg(id)}<span class="ns-lbl">${esc(label)}</span>${id === 'bandeja' ? `<em class="ns-badge wait-badge"${n ? '' : ' hidden'}>${n || ''}</em>` : ''}${chev ? `<span class="ns-chev" aria-hidden="true">${svg('chev')}</span>` : ''}</button>`).join('');
 }
-const MAS_BLURB = {
-  proyectos: ['Proyectos', 'Metas grandes'],
-  agenda: ['Agenda', 'Ted y Julián'],
-  automatizaciones: ['Automatizaciones', 'Solo lectura'],
-  archivo: ['Archivo', 'Archiveros'],
-  estadisticas: ['Estadísticas', 'Racha y TR'],
-  configuracion: ['Configuración', 'Mando y avisos'],
-};
-function masCarrusel() {
+/* f1g (OK de Rob t496s2245): «Más módulos» deja de ser carrusel; mismas filas que arriba, debajo de Bandeja.
+   «MÁS MÓDULOS» queda solo como separador y la lista hace scroll vertical dentro del menú. */
+function masFilas() {
   const extras = MODULOS.filter(([id]) => !MOVIL.includes(id));
-  return `<div class="ns-mas">
-    <div class="ns-mas-top"><span class="ns-eyebrow">Más módulos</span><span class="ns-mas-hint">Desliza ${svg('slide')}</span></div>
-    <div class="ns-mas-wrap"><div class="ns-mas-rail" role="list" aria-label="Más módulos">${extras.map(([id, label]) => {
-    const [t, d] = MAS_BLURB[id] || [label, ''];
-    return `<button type="button" class="ns-mas-card${state.activo === id ? ' on' : ''}" data-mod="${id}" role="listitem" title="${esc(label)}" aria-label="${esc(label)}"><span class="ns-mas-ic">${svg(id)}</span><b>${esc(t)}</b><small>${esc(d)}</small></button>`;
-  }).join('')}</div></div>
-  </div>`;
+  return `<div class="ns-mas-sep" role="presentation"><span class="ns-eyebrow">Más módulos</span></div>${navItems(extras, {chev: true})}`;
 }
 function renderNav() {
   const phone = isPhoneNav();
   const lista = phone ? MODULOS.filter(([id]) => MOVIL.includes(id)) : MODULOS;
-  drawer.querySelector('.ns-list').innerHTML = navItems(lista, {chev: true}) + (phone ? masCarrusel() : '');
+  drawer.querySelector('.ns-list').innerHTML = navItems(lista, {chev: true}) + (phone ? masFilas() : '');
   rail.querySelector('.ns-list').innerHTML = navItems(MODULOS);
   drawer.querySelector('[data-act=fijar]')?.setAttribute('aria-pressed', String(ls.get(LS.fijo, '0') === '1'));
   const n = waitCount();
@@ -180,7 +168,10 @@ function abrirMenu(opener) {
   state.opener = opener || document.activeElement; state.abierto = true;
   renderNav(); root.classList.add('ns-open'); playEnter(drawer); syncScrim();
   fab.setAttribute('aria-expanded', 'true'); pushBack();
-  drawer.querySelector('.ns-item.on, .ns-item')?.focus({preventScroll: true});
+  const lst = drawer.querySelector('.ns-list'); if (lst) lst.scrollTop = 0;
+  const foco = drawer.querySelector('.ns-item.on, .ns-item');
+  foco?.focus({preventScroll: true});
+  if (foco && lst && foco.offsetTop + foco.offsetHeight > lst.clientHeight) foco.scrollIntoView({block: 'nearest'});
 }
 function cerrarMenu() {
   if (!state.abierto) return;

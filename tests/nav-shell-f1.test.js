@@ -77,15 +77,17 @@ test('F1b: botón persistente de Día/Noche (luz) con vidrio y 4 px visible incl
   assert.match(css, /body\.ns-inmersivo[^}]*\.ns-luz[^}]*visibility:visible/);
 });
 
-test('F1c: Más es un carrusel horizontal de tarjetas (no la fila desplegable anterior)', () => {
-  assert.match(src, /ns-mas-rail/);
-  assert.match(src, /ns-mas-card/);
-  assert.match(src, /Desliza/);
-  assert.match(src, /MAS_BLURB/);
+test('F1g: Más módulos en filas verticales (ya no carrusel), separador sin «Desliza» y scroll solo en la lista', () => {
+  assert.match(src, /function masFilas\(\)/);
+  assert.match(src, /ns-mas-sep[^`]*Más módulos[^`]*\$\{navItems\(extras, \{chev: true\}\)\}/);
+  assert.doesNotMatch(src, /ns-mas-rail|ns-mas-card|MAS_BLURB|Desliza/);
+  assert.doesNotMatch(css, /ns-mas-rail|ns-mas-card|ns-mas-hint|scroll-snap-type:x mandatory/);
+  assert.match(css, /\.ns-root nav\.ns-drawer\{display:flex;flex-direction:column;gap:0\}/);
+  assert.doesNotMatch(css, /nav\.ns-drawer\{display:block\}/);
+  assert.match(css, /\.ns-drawer \.ns-list\{[^}]*overflow-y:auto/);
+  assert.match(css, /\.ns-drawer \.ns-dh,\.ns-drawer \.ns-dfoot\{flex:none\}/);
+  assert.match(css, /max-height:min\(calc\(100dvh - 24px\),521px\)/);
   assert.doesNotMatch(src, /Más: Proyectos, Agenda, Archivo/);
-  assert.match(css, /scroll-snap-type:x mandatory/);
-  assert.match(css, /\.ns-mas-wrap::after/);
-  assert.match(css, /Desliza|ns-mas-hint/);
 });
 
 test('F1c: apertura ~200ms con prefers-reduced-motion, 4 px y acento (el vidrio 28px lo sustituye F1e)', () => {

@@ -98,7 +98,7 @@ header .ns-fab,.ns-fab{position:relative;z-index:2;width:40px;height:40px;min-wi
 body.ns-inmersivo header,body.ns-inmersivo .chrome-top,body.ns-inmersivo #vista-toolbar,body.ns-inmersivo aside.team,body.ns-inmersivo aside.navigation,body.ns-inmersivo .scene-title,body.ns-inmersivo #spread-picker,body.ns-inmersivo #floors,body.ns-inmersivo .floor-tabs,body.ns-inmersivo .gesture,body.ns-inmersivo .tr-registro-btn,body.ns-inmersivo .stale-banner{visibility:hidden!important;pointer-events:none!important}
 .ns-salir{position:fixed;z-index:64;right:max(14px,env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom,0px));display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:0 14px;background:rgba(18,24,38,.62);font-weight:600;font-size:14px}
 /* Aislar de estilos globales (nav{display:flex}, h2 serif, form) */
-.ns-root nav.ns-drawer{display:block}
+.ns-root nav.ns-drawer{display:flex;flex-direction:column;gap:0}
 .ns-root nav.ns-rail{display:flex;flex-direction:column}
 .ns-root .ns-list{display:flex;flex-direction:column;gap:4px}
 .ns-root h2,.ns-root h3,.ns-root p{font-family:Inter,ui-sans-serif,system-ui,sans-serif}
@@ -108,7 +108,7 @@ body.ns-on #app{padding-bottom:env(safe-area-inset-bottom,0px)!important}
 /* f1d (Rob t489u): 16px recortaba la fila de cámara bajo las vistas. El dock está oculto y el ☰ ya no vive abajo; se conserva el aire de s15 (39px + safe-area) para que ambas filas queden enteras. */
 @media(max-width:760px){body.ns-on #canvas-container #vista-toolbar.vista-toolbar{bottom:calc(39px + env(safe-area-inset-bottom,0px))!important}}
 @media(orientation:landscape) and (max-height:500px){body.ns-on .chrome-primary .mando-status{display:none}}
-@media (orientation:landscape) and (max-height:500px){.ns-drawer{padding:calc(4px + env(safe-area-inset-top,0px)) 8px 4px max(8px,env(safe-area-inset-left))}.ns-drawer .ns-item{min-height:30px;padding:4px 10px;font-size:13.5px}.ns-dh{margin-bottom:4px;padding-bottom:4px}.ns-dh .ns-s{display:none}.ns-dh-acts .ns-btn.sm,.ns-dh-acts .ns-x{height:30px;min-height:30px}.ns-dh-acts .ns-x{width:30px}.ns-list{gap:1px}.ns-mas{margin-top:4px;padding-top:4px}.ns-mas-top{margin-bottom:4px}.ns-mas-card{flex-basis:100px;padding:6px;gap:3px}.ns-mas-ic{width:22px;height:22px}.ns-mas-ic svg{width:13px;height:13px}.ns-mas-card b{font-size:12px}.ns-mas-card small{font-size:9.5px}.ns-dfoot{margin-top:2px;padding-top:2px}.ns-dfoot .ns-btn{height:30px;min-height:30px;padding:0 8px;font-size:12px}}
+@media (orientation:landscape) and (max-height:500px){.ns-drawer{padding:calc(4px + env(safe-area-inset-top,0px)) 8px 4px max(8px,env(safe-area-inset-left))}.ns-drawer .ns-item{min-height:30px;padding:4px 10px;font-size:13.5px}.ns-dh{margin-bottom:4px;padding-bottom:4px}.ns-dh .ns-s{display:none}.ns-dh-acts .ns-btn.sm,.ns-dh-acts .ns-x{height:30px;min-height:30px}.ns-dh-acts .ns-x{width:30px}.ns-list{gap:1px}.ns-dfoot{margin-top:2px;padding-top:2px}.ns-dfoot .ns-btn{height:30px;min-height:30px;padding:0 8px;font-size:12px}}
 
 /* Botón persistente de luz (Día/Noche/Auto), estilo vidrio pequeño en esquina superior derecha de #viewport, visible también en modo inmersivo */
 #viewport .ns-luz,.ns-luz{position:absolute;z-index:35;top:42px;right:12px;height:32px;min-height:32px;padding:0 9px;display:inline-flex;align-items:center;gap:6px;border-radius:4px;font:600 12px/1 Inter,system-ui,sans-serif;color:#eef3f8;background:rgba(16,26,39,.74);backdrop-filter:blur(18px) saturate(1.35);-webkit-backdrop-filter:blur(18px) saturate(1.35);border:1px solid rgba(188,217,236,.36);border-top-color:rgba(255,255,255,.3);box-shadow:0 4px 14px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.14);cursor:pointer;pointer-events:auto}
@@ -121,21 +121,14 @@ body.ns-inmersivo #viewport .ns-luz,body.ns-inmersivo .ns-luz{top:calc(14px + en
 .ns-drawer.ns-enter,.ns-hub.ns-enter{transform:translateY(14px);opacity:0}
 @media (min-width:761px) and (min-height:501px){.ns-hub.ns-enter{transform:translate(-50%,14px);opacity:0}}
 @media (orientation:landscape) and (max-height:500px){.ns-drawer.ns-enter{transform:translateX(-14px);opacity:0}.ns-hub.ns-enter{transform:translateY(14px);opacity:0}}
-@media (prefers-reduced-motion:reduce){.ns-drawer,.ns-hub,.ns-item,.ns-mas-card,.ns-btn,.ns-x,.ns-hub-item,.ns-scrim{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+@media (prefers-reduced-motion:reduce){.ns-drawer,.ns-hub,.ns-item,.ns-btn,.ns-x,.ns-hub-item,.ns-scrim{transition-duration:.01ms!important;animation-duration:.01ms!important}}
 
-/* Carrusel horizontal «Más módulos» (boceto Parte B, OK de Rob t486s2157) */
-.ns-mas{margin-top:10px;padding-top:10px;border-top:1px solid #485a6b}
-.ns-mas-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:0 2px}
-.ns-mas-top .ns-eyebrow{font-size:10px;color:rgba(188,217,236,.85)}
-.ns-mas-hint{display:inline-flex;align-items:center;gap:4px;font:600 10.5px/1 Inter,system-ui,sans-serif;color:var(--acc);opacity:.9}
-.ns-mas-hint svg{width:13px;height:13px}
-.ns-mas-wrap{position:relative;margin:0 -4px;padding:0 4px}
-.ns-mas-wrap::after{content:"";position:absolute;top:0;right:0;bottom:0;width:28px;pointer-events:none;background:linear-gradient(90deg,rgba(14,17,24,0),rgba(14,17,24,.86))}
-.ns-mas-rail{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-x;overscroll-behavior-x:contain}
-.ns-mas-rail::-webkit-scrollbar{display:none}
-.ns-mas-card{flex:0 0 118px;scroll-snap-align:start;display:flex;flex-direction:column;align-items:flex-start;gap:7px;padding:10px;border-radius:4px;background:rgba(0,0,0,.2);border:1px solid #344250;color:#eef4fa;text-align:left;cursor:pointer;transition:border-color 160ms ease,background 160ms ease}
-.ns-mas-card.on,.ns-mas-card:hover{border-color:#90a9bd;background:rgba(49,76,98,.35)}
-.ns-mas-ic{width:28px;height:28px;border-radius:4px;display:grid;place-items:center;background:rgba(0,0,0,.2);border:1px solid #344250;color:#dbe7f1}
-.ns-mas-ic svg{width:15px;height:15px}
-.ns-mas-card b{font:600 12.5px/1.15 Inter,system-ui,sans-serif;color:#f4f8fc;display:block}
-.ns-mas-card small{font:400 10.5px/1.2 Inter,system-ui,sans-serif;color:#b4c9d9;display:block}
+/* f1g (OK de Rob t496s2245): «Más módulos» en filas verticales; solo la lista hace scroll y el menú conserva su altura */
+.ns-drawer .ns-dh,.ns-drawer .ns-dfoot{flex:none}
+.ns-drawer .ns-list{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin:0 -2px;padding:0 2px}
+.ns-drawer .ns-list::-webkit-scrollbar{display:none}
+.ns-drawer .ns-list>*{flex:none}
+@media (max-width:760px) and (min-height:501px){.ns-drawer{max-height:min(calc(100dvh - 24px),521px)}}
+.ns-mas-sep{margin-top:6px;padding:10px 2px 4px;border-top:1px solid #485a6b}
+.ns-mas-sep .ns-eyebrow{font-size:10px;color:rgba(188,217,236,.85)}
+@media (orientation:landscape) and (max-height:500px){.ns-mas-sep{margin-top:2px;padding:4px 2px 2px}}
