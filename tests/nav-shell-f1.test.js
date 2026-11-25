@@ -96,8 +96,8 @@ test('F1c: apertura ~200ms con prefers-reduced-motion, 4 px y acento (el vidrio 
   assert.match(css, /#bcd9ec/);
 });
 
-test('F1e: menú con fondo de El equipo (navy casi sólido, sin blur 28px), líneas, texto secundario y botones', () => {
-  assert.match(css, /\.ns-drawer\{[^}]*background:rgba\(14,17,24,\.86\)/);
+test('F1e: menú con fondo de El equipo (navy, sin blur 28px), líneas, texto secundario y botones', () => {
+  assert.match(css, /\.ns-drawer\{[^}]*background:rgba\(14,17,24,/);
   assert.match(css, /\.ns-drawer\{[^}]*backdrop-filter:blur\(20px\) saturate\(1\.3\)/);
   assert.doesNotMatch(css, /\.ns-drawer\{[^}]*blur\(28px\)/);
   assert.match(css, /#485a6b/);
@@ -106,6 +106,14 @@ test('F1e: menú con fondo de El equipo (navy casi sólido, sin blur 28px), lín
   assert.match(css, /\.ns-drawer \.ns-btn:not\(\.p\):not\(\.tr\)[^}]*#314c62/);
   assert.match(css, /#90a9bd/);
   assert.match(css, /transition:transform 200ms/);
+});
+
+test('F1f: fondo del menú y de .ns-hub un poco más transparente, mismo tono navy', () => {
+  assert.match(css, /\.ns-drawer\{[^}]*background:rgba\(14,17,24,\.74\)/);
+  assert.match(css, /\.ns-hub\{[^}]*background:rgba\(14,17,24,\.74\)/);
+  assert.doesNotMatch(css, /\.ns-drawer\{[^}]*background:rgba\(14,17,24,\.86\)/);
+  assert.match(css, /\.ns-drawer\{[^}]*backdrop-filter:blur\(20px\) saturate\(1\.3\)/);
+  assert.match(css, /\.ns-hub\{[^}]*backdrop-filter:blur\(20px\) saturate\(1\.3\)/);
 });
 
 test('F1d: la barra inferior (vistas + cámara) no se recorta: 39px + safe-area, no 16px', () => {
