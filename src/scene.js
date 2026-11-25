@@ -10,6 +10,7 @@ import {mountFloorLabels} from './floor-labels.js';
 import {createMovement,segmentClear,planRoute,BODY_RADIUS,PERSONAL_SPACE} from './movement.js';
 import {attachDeskProps} from './desk-props.js';
 import {createEntorno} from './entorno2.js';
+import {tintaRosaPlate,furnishTintaRosa,LUZ_SALA} from './tinta-rosa-piso.js';
 import {ENTORNO_KIND,entornoParam,entornoQualityFor,entornoVisibleFor,shadowBoxFor,fogFor,createFrameWatch} from './entorno-config.js';
 
 export function createOffice(container,onBot,onAssets=()=>{},onAgenda=()=>{},onFloor=()=>{},onArchivero=()=>{}){
@@ -99,8 +100,11 @@ const movement=createMovement();
  const positions={ted:[-5,1.8],ceo:[-7,-3.2],luna:[1,3.5],emiliano:[5,-3.4],julian:[5,-3.3],ines:[3,3],libro:[-8,-3], 'tr-editor':[-4,3],mateo:[-5,-2.4],'tr-cm':[-8,4],vale:[5.5,5.4],director:[-6,-4],apps:[-8,-3.4],luca:[-3,-3.4],tadeo:[-2,5],rulo:[4.6,-4.6]};
  for(let n=0;n<floors.length;n++){
   const g=new THREE.Group();g.userData.floorId=n;g.position.y=n*4.6;scene.add(g);floorGroups.push(g);
-  for(const x of [-6,5]){const warm=new THREE.PointLight(0xffc17c,65,14,2);warm.position.set(x,3.7,-2);g.add(warm);interiorLights.push(warm);}
-  box(g,0,0,0,26,.28,18,M.steel);box(g,-1.5,.19,0,22.5,.1,17.6,M.oak);box(g,11,.19,0,3.6,.1,17.6,M.stone);
+  // Piso 04 Tinta Rosa (remodelación mezcla, t476u): texturas y luces rosas; las pruebas de node quitan el import y usan lo de siempre.
+  const trRosa=n===4&&typeof furnishTintaRosa==='function';const plate=trRosa?tintaRosaPlate(M):{oak:M.oak,ivory:M.ivory,stone:M.stone};
+  for(const x of [-6,5]){const warm=new THREE.PointLight(0xffc17c,65,14,2);if(trRosa)warm.color.set(0xffa8c8);warm.position.set(x,3.7,-2);g.add(warm);interiorLights.push(warm);}
+  if(trRosa){const sala=new THREE.PointLight(LUZ_SALA.color,65,LUZ_SALA.distance,2);sala.position.set(LUZ_SALA.x,LUZ_SALA.y,LUZ_SALA.z);g.add(sala);interiorLights.push(sala);}
+  box(g,0,0,0,26,.28,18,M.steel);box(g,-1.5,.19,0,22.5,.1,17.6,plate.oak);box(g,11,.19,0,3.6,.1,17.6,plate.stone);
   const structure=new THREE.Group();g.add(structure);structures.push(structure);
   // Exterior skeleton: slender charcoal uprights and full-height glass.
   // s19 (Rob t435u/t437u): corner posts + top beams live in their own group so Separación amplia / Plantas can drop them without glass.
@@ -147,7 +151,7 @@ const movement=createMovement();
   }
   for(const x of [-12.9,12.9])for(let z=-7.3;z<9;z+=3.6){box(facade,x,2.35,z,.025,4.05,3.54,M.glass);box(facade,x,2.35,z-1.8,.07,4.2,.05,M.steel);}
   // Rear material wall, warm oak ribs, floating wayfinding.
-  box(g,-1.7,1.9,-8.75,22.2,3.4,.15,M.ivory);for(let i=0;i<23;i++)box(g,4.5+i*.2,1.9,-8.62,.075,3.5,.12,M.oak);
+  box(g,-1.7,1.9,-8.75,22.2,3.4,.15,plate.ivory);for(let i=0;i<23;i++)box(g,4.5+i*.2,1.9,-8.62,.075,3.5,.12,plate.oak);
   label(g,`${String(n).padStart(2,'0')} / ${floors[n].name.toUpperCase()}`,-1,3.35,-8.64,5.2);
   // Exterior glass elevator, separate from the floor programs, and open side stair.
   for(const x of [13.4,15.8])for(const z of [1.2,3.8])box(g,x,2.2,z,.08,4.4,.08,M.steel);
@@ -215,6 +219,8 @@ const movement=createMovement();
    chair(g,-7.2,-4.2,Math.PI*.15);label(g,'SET',-6.2,3.5,-8.26,1.6);
    // Escritorio de redes and sala de edición (existing double desks).
    desk(g,-8.2,5.8,0,true);desk(g,-2.2,5.8,0,true);besideDesk(g,-2.2,5.8,0,1,'vale');archivero(g,8.45,-0.75,0,'rulo');plant(g,-10.4,7.2,.8);
+  }else if(n===4&&trRosa){
+   furnishTintaRosa({g,M,mat,box,cyl,sphere,chair,lamp,desk,besideDesk,partition,sofa,coffeeTable,pendant});
   }else if(n===4){
    // Editorial atelier: pin-up wall, shared creative table, image review and editing stations.
    box(g,-6,2.25,-8.56,10,1.7,.08,M.oak);for(let i=0;i<12;i++){const x=-10.4+(i%6)*1.75,y=1.85+Math.floor(i/6)*.8;box(g,x,y,-8.49,1.5,.65,.02,mat('art'+i,[0x829e9f,0xba9980,0x6c7b72,0xb3b6a0,0xc7b48c,0x8b899c][i%6]));box(g,x-.2,y-.1,-8.47,.8,.05,.01,M.ivory);}

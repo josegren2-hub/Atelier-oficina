@@ -5,7 +5,7 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 /** Procedural, locally generated materials and furniture; no remote models or textures. */
 export function createFurnishings(){
  const sofaSlots=[];let detailedSofa=null;
- function installSofa(slot){if(!detailedSofa)return;slot.clear();const model=detailedSofa.clone(true);model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});slot.add(model);}
+ function installSofa(slot){if(!detailedSofa)return;slot.clear();const model=detailedSofa.clone(true);model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});slot.add(model);if(typeof slot.userData.trTintSofa==='function')slot.userData.trTintSofa();}
  new GLTFLoader().load(`${import.meta.env.BASE_URL}assets/atelier-sofa.glb`,gltf=>{detailedSofa=gltf.scene;sofaSlots.forEach(installSofa);},undefined,()=>console.warn('El modelo detallado local no se pudo cargar; se conserva mobiliario básico.'));
  const materialCache=new Map();
  const mat=(key,color,roughness=.7,metalness=0)=>{if(!materialCache.has(key))materialCache.set(key,new THREE.MeshStandardMaterial({color,roughness,metalness}));return materialCache.get(key);};
