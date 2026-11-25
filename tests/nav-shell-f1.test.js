@@ -53,7 +53,7 @@ test('F1b: el botón ☰ va en .chrome-primary (40 px, vidrio, 4 px) y no se enc
   assert.match(src, /\.chrome-primary/);
   assert.match(css, /\.ns-fab\{[^}]*width:40px;height:40px[^}]*border-radius:4px/);
   assert.match(css, /\.ns-fab\{[^}]*backdrop-filter:blur/);
-  assert.match(css, /#vista-toolbar\.vista-toolbar\{bottom:calc\(16px/);
+  assert.match(css, /#vista-toolbar\.vista-toolbar\{bottom:calc\(39px/);
 });
 
 test('F1b: pila de historial (navStack) y cierre completo al tocar fuera', () => {
@@ -95,4 +95,9 @@ test('F1c: vidrio esmerilado más marcado (28px, 4 px) y apertura ~200ms con pre
   assert.match(src, /playEnter/);
   assert.match(css, /border-radius:4px/);
   assert.match(css, /#bcd9ec/);
+});
+
+test('F1d: la barra inferior (vistas + cámara) no se recorta: 39px + safe-area, no 16px', () => {
+  assert.match(css, /#vista-toolbar\.vista-toolbar\{bottom:calc\(39px \+ env\(safe-area-inset-bottom/);
+  assert.doesNotMatch(css, /body\.ns-on[^}]*#vista-toolbar[^}]*bottom:calc\(16px/);
 });
