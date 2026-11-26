@@ -741,7 +741,7 @@ function bindOutsideClose(){
  document.addEventListener('pointerdown',e=>{
   const t=e.target;
   if(!(t instanceof Element))return;
-  if(t.closest('#dock,#mas-open,#mas-panel,#paneles-sheet,#proyectos-sheet,.proy-sheet,#avatar-dropdown,#avatars-toggle,aside.team,#ficha-flotante,#detail,#mando-dialog,.resumen-dialog,.cc-dialog,.avisos-dialog,.pizarron-dialog,#mcpanel,#install-app,#demo-banner,.v17pin,#ns-root,.ns-fab,.ns-luz'))return;
+  if(t.closest('#dock,#mas-open,#mas-panel,#paneles-sheet,#proyectos-sheet,.proy-sheet,#avatar-dropdown,#avatars-toggle,aside.team,#ficha-flotante,#detail,#mando-dialog,.resumen-dialog,.cc-dialog,.avisos-dialog,.pizarron-dialog,#mcpanel,#install-app,#demo-banner,.v17pin,#ns-root,.ns-fab,.ns-luz,.ns-tabbar'))return;
   if(pizarron.isOpen())return; // non-modal pizarrón: a drag moves the 3D; a tap outside closes it (bindPizarronOutsideTap)
   if(sheets.anyOpen()){if(t.closest('#canvas-container'))globalThis.__atelierSwallowPickAt=performance.now();sheets.closeAll();}
  });

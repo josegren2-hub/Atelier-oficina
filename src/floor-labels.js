@@ -6,7 +6,7 @@ export {FLOOR_LABEL_ANCHOR, floorLabelsShownFor, floorFramesVisible} from './vie
 
 /** Vertical band free of header/floor chips (top) and the view toolbar/dock (bottom). */
 const TOP_CHROME = ['header', '#floors'];
-const BOTTOM_CHROME = ['#vista-toolbar', '#dock'];
+const BOTTOM_CHROME = ['#vista-toolbar', '#dock', '.ns-tabbar'];
 
 export function mountFloorLabels(container) {
   const root = document.createElement('div');

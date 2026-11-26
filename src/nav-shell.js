@@ -11,6 +11,7 @@ import {sheets} from './ui-chrome.js';
 import './nav-shell.css';
 import {modoInicial as modoInicialPuro, pantallaInicial as pantallaInicialPura} from './nav-prefs.js';
 import {mandoEstaAbierto} from './mando-abierto.js';
+import {estadoModoDios, estadoDia} from './tira-estado.js';
 
 const LS = {modo: 'atelierNavModo', inicio: 'atelierNavInicio', ultimo: 'atelierNavUltimo', capt: 'atelierCapturas', fijo: 'atelierNavFijo'};
 const MODOS = ['oculto', 'compacto', 'expandido'];
@@ -34,6 +35,9 @@ const I = {
   dia: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M4.93 4.93l1.77 1.77M17.3 17.3l1.77 1.77M2 12h2.5M19.5 12H22M4.93 19.07l1.77-1.77M17.3 6.7l1.77-1.77"/>',
   noche: '<path d="M20.5 14.5A8.5 8.5 0 019.5 3.5a7 7 0 1011 11z"/>',
   slide: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  candado: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>',
+  candadoAbierto: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 017.5-2"/>',
+  camara: '<path d="M12 4a8 8 0 105.7 2.3M18 3v4h-4"/><circle cx="12" cy="12" r="1.6"/>',
 };
 const svg = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${I[k] || ''}</svg>`;
 export const MODULOS = [
@@ -110,7 +114,7 @@ function hubs() {
 
 const state = {modo: 'oculto', abierto: false, activo: 'oficina', inmersivo: false, opener: null, hub: null};
 const navStack = [];
-let root, drawer, fab, rail, hubEl, inicioEl, scrim, salir, luzBtn;
+let root, drawer, fab, rail, hubEl, inicioEl, scrim, salir, luzBtn, tabbar, tabMenu, tabDios, tabLuz, camBtn;
 
 function aplicarModo() {
   document.body.dataset.navModo = state.modo;
@@ -144,8 +148,10 @@ function renderNav() {
   rail.querySelector('.ns-list').innerHTML = navItems(MODULOS);
   drawer.querySelector('[data-act=fijar]')?.setAttribute('aria-pressed', String(ls.get(LS.fijo, '0') === '1'));
   const n = waitCount();
-  const dot = fab?.querySelector('.ns-dot');
-  if (dot) { dot.textContent = n ? String(n) : ''; dot.hidden = !n; }
+  for (const host of [fab, tabMenu]) {
+    const dot = host?.querySelector('.ns-dot');
+    if (dot) { dot.textContent = n ? String(n) : ''; dot.hidden = !n; }
+  }
 }
 function playEnter(el) {
   if (!el) return;
@@ -168,7 +174,7 @@ function cerrarTodoPorFuera() {
 function abrirMenu(opener) {
   state.opener = opener || document.activeElement; state.abierto = true;
   renderNav(); root.classList.add('ns-open'); playEnter(drawer); syncScrim();
-  fab.setAttribute('aria-expanded', 'true'); pushBack();
+  fab.setAttribute('aria-expanded', 'true'); tabMenu?.setAttribute('aria-expanded', 'true'); pushBack();
   const lst = drawer.querySelector('.ns-list'); if (lst) lst.scrollTop = 0;
   const foco = drawer.querySelector('.ns-item.on, .ns-item');
   foco?.focus({preventScroll: true});
@@ -177,7 +183,7 @@ function abrirMenu(opener) {
 function cerrarMenu() {
   if (!state.abierto) return;
   state.abierto = false; drawer.hidden = true; root.classList.remove('ns-open'); syncScrim();
-  fab.setAttribute('aria-expanded', 'false');
+  fab.setAttribute('aria-expanded', 'false'); tabMenu?.setAttribute('aria-expanded', 'false');
   try { (state.opener && document.contains(state.opener) ? state.opener : fab).focus({preventScroll: true}); } catch {}
 }
 
@@ -291,19 +297,66 @@ export function mountNavShell() {
   luzBtn.type = 'button'; luzBtn.className = 'ns-luz';
   const vp = $('#viewport');
   if (vp) vp.appendChild(luzBtn); else root.appendChild(luzBtn);
+  /* Fase 1i (boceto 79): tira flotante de abajo (solo móvil vertical por CSS): Menú · Modo dios · Día. */
+  tabbar = document.createElement('nav');
+  tabbar.id = 'ns-tabbar'; tabbar.className = 'ns-tabbar'; tabbar.setAttribute('aria-label', 'Accesos rápidos');
+  tabbar.innerHTML = `
+    <button type="button" class="ns-tab ns-tab-menu" data-tab="menu" aria-label="Menú" aria-expanded="false" aria-controls="ns-drawer"><span class="ns-ti">${svg('menu')}</span><span class="ns-tl">Menú</span><em class="ns-dot wait-badge" hidden></em></button>
+    <button type="button" class="ns-tab ns-tab-dios" data-tab="dios" aria-pressed="false"><span class="ns-ti"></span><span class="ns-tl">Modo dios</span></button>
+    <button type="button" class="ns-tab ns-tab-luz" data-tab="luz"><span class="ns-ti"></span><span class="ns-tl">Auto</span></button>`;
+  root.appendChild(tabbar);
+  tabMenu = tabbar.querySelector('[data-tab=menu]'); tabDios = tabbar.querySelector('[data-tab=dios]'); tabLuz = tabbar.querySelector('[data-tab=luz]');
   const paintLuz = () => {
-    const lab = txt('#dock-noche .lbl') || 'Auto';
-    const night = document.documentElement.dataset.theme === 'night' || lab === 'Noche';
-    luzBtn.innerHTML = `${svg(night ? 'noche' : 'dia')}<span>${esc(lab)}</span>`;
-    luzBtn.setAttribute('aria-label', `Luz: ${lab}. Toca para cambiar entre Auto, Noche y Día`);
-    luzBtn.title = $('#dock-noche')?.title || `Luz: ${lab}`;
+    const d = estadoDia(txt('#dock-noche .lbl'), document.documentElement.dataset.theme);
+    luzBtn.innerHTML = `${svg(d.icono)}<span>${esc(d.lab)}</span>`;
+    luzBtn.setAttribute('aria-label', d.aria);
+    luzBtn.title = $('#dock-noche')?.title || `Luz: ${d.lab}`;
+    tabLuz.querySelector('.ns-ti').innerHTML = svg(d.icono);
+    tabLuz.querySelector('.ns-tl').textContent = d.lab;
+    tabLuz.setAttribute('aria-label', d.aria);
+    tabLuz.dataset.luz = d.noche ? 'noche' : 'dia';
   };
   paintLuz();
-  luzBtn.addEventListener('click', () => { click('dock-noche'); setTimeout(paintLuz, 20); });
+  const paintDios = () => {
+    const m = estadoModoDios($('#mando-status'));
+    tabDios.querySelector('.ns-ti').innerHTML = svg(m.icono);
+    tabDios.querySelector('.ns-tl').textContent = m.etiqueta;
+    tabDios.setAttribute('aria-label', m.aria);
+    tabDios.setAttribute('aria-pressed', String(m.abierto));
+    tabDios.dataset.estado = m.estado;
+    tabDios.classList.toggle('unlocked', m.abierto);
+  };
+  paintDios();
+  const cambiarLuz = () => { click('dock-noche'); setTimeout(paintLuz, 20); };
+  luzBtn.addEventListener('click', cambiarLuz);
+  tabLuz.addEventListener('click', cambiarLuz);
+  tabDios.addEventListener('click', () => { sheets.closeAll(); click('mando-unlock'); setTimeout(paintDios, 30); });
   const dn = $('#dock-noche');
   if (dn && typeof MutationObserver !== 'undefined') new MutationObserver(paintLuz).observe(dn, {childList: true, subtree: true, attributes: true});
   if (typeof MutationObserver !== 'undefined') new MutationObserver(paintLuz).observe(document.documentElement, {attributes: true, attributeFilter: ['data-theme']});
-  for (const el of [drawer, rail, hubEl, inicioEl, fab, salir, luzBtn]) stopper(el);
+  const ms = $('#mando-status');
+  if (ms && typeof MutationObserver !== 'undefined') new MutationObserver(paintDios).observe(ms, {childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class']});
+  /* Cámara: los 4 chips de vistas siempre visibles; girar / acercar / alejar / restablecer detrás de un botón chico. */
+  const vt = $('#vista-toolbar'), ctrls = vt?.querySelector('.controls');
+  if (vt && ctrls) {
+    camBtn = document.createElement('button');
+    camBtn.type = 'button'; camBtn.className = 'ns-cams-toggle'; camBtn.id = 'ns-cams-toggle';
+    camBtn.setAttribute('aria-label', 'Cámara: girar, acercar, alejar y restablecer'); camBtn.setAttribute('aria-expanded', 'false');
+    camBtn.innerHTML = svg('camara');
+    vt.insertBefore(camBtn, ctrls);
+    camBtn.addEventListener('click', () => {
+      const abierto = !vt.classList.contains('cams-open');
+      vt.classList.toggle('cams-open', abierto); camBtn.setAttribute('aria-expanded', String(abierto));
+    });
+    document.addEventListener('pointerdown', e => {
+      if (!vt.classList.contains('cams-open')) return;
+      if (e.target instanceof Element && e.target.closest('#vista-toolbar .controls, #ns-cams-toggle')) return;
+      vt.classList.remove('cams-open'); camBtn.setAttribute('aria-expanded', 'false');
+    }, true);
+  }
+  const alternarMenu = opener => { if (state.abierto) { navStack.length = 0; sheets.close('nav'); } else { navStack.length = 0; sheets.closeAll('nav'); abrirMenu(opener); } };
+  tabMenu.addEventListener('click', () => alternarMenu(tabMenu));
+  for (const el of [drawer, rail, hubEl, inicioEl, fab, salir, luzBtn, tabbar]) stopper(el);
   /* Tocar fuera (scrim) cierra todo el menú sin dejar caer el toque al 3D ni al botón. */
   let scrimTap = null;
   for (const ev of ['pointerdown', 'touchstart']) scrim.addEventListener(ev, e => {
@@ -331,7 +384,7 @@ export function mountNavShell() {
   document.addEventListener('pointerdown', e => {
     const t = e.target;
     if (!(t instanceof Element)) return;
-    if (t.closest('.ns-drawer,.ns-hub,.ns-rail,.ns-fab,.ns-inicio,.glass-sheet,aside.team,.cc-dialog,.resumen-dialog,.avisos-dialog,.tr-dialog,.pizarron-dialog,#mando-dialog,#detail,#ficha-flotante,#avatar-dropdown')) return;
+    if (t.closest('.ns-drawer,.ns-hub,.ns-rail,.ns-fab,.ns-tabbar,.ns-inicio,.glass-sheet,aside.team,.cc-dialog,.resumen-dialog,.avisos-dialog,.tr-dialog,.pizarron-dialog,#mando-dialog,#detail,#ficha-flotante,#avatar-dropdown')) return;
     navStack.length = 0;
   }, true);
 
@@ -339,7 +392,7 @@ export function mountNavShell() {
   sheets.register('inicio', {open: abrirInicio, close: cerrarInicio, isOpen: () => !inicioEl.hidden});
   sheets.register('hub', {open: () => {}, close: cerrarHub, isOpen: () => !hubEl.hidden});
 
-  fab.addEventListener('click', () => { if (state.abierto) { navStack.length = 0; sheets.close('nav'); } else { navStack.length = 0; sheets.closeAll('nav'); abrirMenu(fab); } });
+  fab.addEventListener('click', () => alternarMenu(fab));
   salir.addEventListener('click', () => setInmersivo(false));
   root.addEventListener('click', e => {
     const t = e.target.closest('button'); if (!t || !root.contains(t)) return;

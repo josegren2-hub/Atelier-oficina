@@ -47,6 +47,7 @@ export function pinBox(item, size = PIN.size, nameW = PIN.nameW, nameH = PIN.nam
 export const CHROME_SELECTORS = [
   '#vista-toolbar',
   '#dock',
+  '.ns-tabbar',
   '#app > header',
   'header.chrome-top',
   '#floors',
