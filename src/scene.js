@@ -287,7 +287,7 @@ const movement=createMovement();
  // Integrated parapet crown — same outer footprint as facade glass (z=8.9 / x=±12.9).
  // Sits ON the roof slab as the building's own parapet; no floating overhang box.
  const fasciaMat=mat('fascia-black',0x050607,.4,.14);
- const parapetH=1.95; // taller so rooftop gear reads as behind parapet
+ const parapetH=2.28; // f1t: era 1.95 (+0.33, +16.9%) para aire arriba/abajo del letrero, sin destapar equipos
  // Front: outer face EXACTLY at glass plane z=8.9; depth inward only (~0.36)
  box(roof,0,parapetH/2,8.9-0.18,25.8,parapetH,.36,fasciaMat);
  // Coping flush with outer face (very slight top lip, not overhanging mass)
@@ -301,45 +301,144 @@ const movement=createMovement();
  box(roof,12.9-0.22,parapetH+.06,0,.44,.12,17.7,fasciaMat);
  // Vertical mullions continue from facade UP into parapet (column continuity)
  for(let x=-11.3;x<12.8;x+=3.2)box(roof,x-1.6,parapetH/2,8.9-.04,.07,parapetH+.08,.1,M.steel);
- // Strong golden LED under crown (REF halo) — MeshBasic so it reads on phone
- const ledCrown=new THREE.MeshBasicMaterial({color:0xffb040,toneMapped:false});
- box(roof,0,.05,8.9+.04,25.6,.2,.2,ledCrown);
- box(roof,0,.14,8.9-.06,25.2,.08,.1,ledCrown);
- box(roof,-12.9-.05,.05,0,.2,.2,17.2,ledCrown);
- box(roof,12.9+.05,.05,0,.2,.2,17.2,ledCrown);
- // D9 (Rob 13/11, R07): roof crown letters removed; black fascia and gold LED stay. Kept behind a flag for rollback.
- const CROWN_LETTERS=false;
- if(CROWN_LETTERS)(function(){
-  const W=4096,H=1024;
-  const c=document.createElement('canvas');c.width=W;c.height=H;const ctx=c.getContext('2d');
+ // f1t: letrero «SJ | San Junipero» + neón violeta (aprobado en capturas 137–139).
+ // Sustituye el LED dorado. Núcleo casi blanco-lila, halo que se derrama un poco
+ // sobre el vidrio. Sin bloom de postproceso ni luces puntuales.
+ const neonCore=new THREE.MeshBasicMaterial({color:0xfff8ff,toneMapped:false});
+ const neonInner=new THREE.MeshBasicMaterial({color:0xf6e4ff,toneMapped:false,transparent:true,opacity:.96,depthWrite:false});
+ const neonGlow=new THREE.MeshBasicMaterial({color:0xea78ff,toneMapped:false,transparent:true,opacity:.94,depthWrite:false});
+ const neonHalo=new THREE.MeshBasicMaterial({color:0xcc55ff,toneMapped:false,transparent:true,opacity:.58,depthWrite:false});
+ const neonSpill=new THREE.MeshBasicMaterial({color:0xd468ff,toneMapped:false,transparent:true,opacity:.38,depthWrite:false});
+ box(roof,0,-0.12,8.9+.20,25.5,.32,.24,neonSpill);
+ box(roof,0,.07,8.9+.15,25.78,.34,.36,neonHalo);
+ box(roof,0,.055,8.9+.10,25.7,.22,.24,neonGlow);
+ box(roof,0,.05,8.9+.07,25.62,.14,.14,neonInner);
+ box(roof,0,.045,8.9+.05,25.55,.08,.08,neonCore);
+ box(roof,-12.9-.20,-0.12,0,.24,.32,17.25,neonSpill);
+ box(roof,-12.9-.15,.07,0,.36,.34,17.38,neonHalo);
+ box(roof,-12.9-.10,.055,0,.24,.22,17.3,neonGlow);
+ box(roof,-12.9-.07,.05,0,.14,.14,17.2,neonInner);
+ box(roof,-12.9-.05,.045,0,.08,.08,17.16,neonCore);
+ box(roof,12.9+.20,-0.12,0,.24,.32,17.25,neonSpill);
+ box(roof,12.9+.15,.07,0,.36,.34,17.38,neonHalo);
+ box(roof,12.9+.10,.055,0,.24,.22,17.3,neonGlow);
+ box(roof,12.9+.07,.05,0,.14,.14,17.2,neonInner);
+ box(roof,12.9+.05,.045,0,.08,.08,17.16,neonCore);
+ const crownNeon={core:neonCore,inner:neonInner,glow:neonGlow,halo:neonHalo,spill:neonSpill};
+ let crownSignTex=null,crownSignPaint=null,crownIsNight=true;
+ const CROWN_FONT='SJSignSerif, "Playfair Display", Georgia, "Times New Roman", serif';
+ const SIGN_PLANE_W=24.8, SIGN_PLANE_H=parapetH*0.96;
+ const SIGN_TEX_MAX_W=Math.min(4096,renderer.capabilities?.maxTextureSize||4096); // f1u: 4096 cabe en la mayoría de celulares (MAX_TEXTURE_SIZE); se respeta la proporción del plano
+ function paintCrownSign(ctx,W,H,isNight){
   ctx.clearRect(0,0,W,H);
-  ctx.fillStyle='#ffffff';ctx.textBaseline='middle';ctx.textAlign='left';
-  // Soft halo once, then crisp fill (avoid phone bloom mush)
-  const paint=(fn)=>{ctx.shadowColor='rgba(255,255,255,.55)';ctx.shadowBlur=18;fn();ctx.shadowBlur=0;fn();};
-  paint(()=>{ctx.font='900 700px Georgia,"Times New Roman",serif';ctx.fillText('SJ',50,H*0.5);});
-  ctx.fillRect(880,60,20,H-120);
-  paint(()=>{ctx.font='900 360px Inter,system-ui,Arial,sans-serif';ctx.fillText('SAN JUNÍPERO',960,H*0.34);});
-  ctx.font='800 250px Inter,system-ui,Arial,sans-serif';
-  const label='TOWER';
-  const metrics=ctx.measureText?.(label);
-  const tw=(metrics&&Number.isFinite(metrics.width))?metrics.width:820;
-  const tx=960, ty=H*0.72, lineW=280, gap=48;
-  ctx.fillRect(tx,ty-12,lineW,18);
-  paint(()=>{ctx.fillText(label,tx+lineW+gap,ty);});
-  ctx.fillRect(tx+lineW+gap+tw+gap,ty-12,lineW,18);
+  const sj='SJ', name='San Junipero';
+  ctx.textAlign='left';
+  ctx.textBaseline='alphabetic';
+  if(ctx.letterSpacing!==undefined)ctx.letterSpacing='0px';
+  const probe=200;
+  ctx.font='500 '+probe+'px '+CROWN_FONT;
+  const mS=ctx.measureText?.('S')||{}, mJ=ctx.measureText?.('J')||{}, mP=ctx.measureText?.('p')||{};
+  const capRatio=(mS.actualBoundingBoxAscent||probe*0.70)/probe;
+  const descRatio=Math.max(mJ.actualBoundingBoxDescent||0,mP.actualBoundingBoxDescent||0,probe*0.26)/probe;
+  const capWorld=1.95*0.96*0.60*1.12;
+  const capPx=(capWorld/SIGN_PLANE_H)*H;
+  const size=Math.round(capPx/capRatio);
+  ctx.font='500 '+size+'px '+CROWN_FONT;
+  const cap=size*capRatio, desc=size*descRatio, glyph=cap+desc;
+  const left=Math.round(W*0.17);
+  const gap=size*0.40, barW=Math.max(6,size*0.028);
+  const sjW=(ctx.measureText?.(sj)||{}).width||size*1.4;
+  const neonReserve=Math.round(H*0.09);
+  const signTop=parapetH/2+.02+SIGN_PLANE_H/2;
+  const copingTop=parapetH+.06+.06;
+  const extraTop=Math.max(0,copingTop-signTop);
+  const copePx=Math.round(H*(extraTop/SIGN_PLANE_H));
+  const rest=H-glyph-neonReserve;
+  const air=Math.max(0,Math.round((rest-copePx)/2));
+  const glyphTop=air;
+  const baseline=Math.round(glyphTop+cap);
+  const barX=left+sjW+gap;
+  const barTop=baseline-cap*0.98, barH=cap*0.96;
+  const nameX=barX+barW+gap;
+  const blurK=H/1024;
+  const glow=(color,blur,fn)=>{ctx.save();ctx.shadowColor=color;ctx.shadowBlur=blur*blurK;fn();ctx.restore();fn();};
+  ctx.fillStyle=isNight?'#c45cff':'#b080d4';
+  glow(isNight?'rgba(200,40,255,.95)':'rgba(150,60,200,.42)',isNight?42:16,()=>ctx.fillText(sj,left,baseline));
+  ctx.fillStyle=isNight?'#e2a8ff':'#d0b0e8';
+  ctx.fillText(sj,left,baseline);
+  ctx.fillStyle=isNight?'#f7f9ff':'#eef2f8';
+  glow(isNight?'rgba(230,240,255,.55)':'rgba(220,230,245,.28)',isNight?18:8,()=>ctx.fillRect(barX,barTop,barW,barH));
+  ctx.fillRect(barX,barTop,barW,barH);
+  ctx.fillStyle=isNight?'#f3f6ff':'#eef2f8';
+  glow(isNight?'rgba(200,216,255,.62)':'rgba(190,205,230,.32)',isNight?28:12,()=>ctx.fillText(name,nameX,baseline));
+  ctx.fillStyle=isNight?'#f8fbff':'#f5f7fb';
+  ctx.fillText(name,nameX,baseline);
+ }
+ const CROWN_LETTERS=true;
+ if(CROWN_LETTERS)(function(){
+  let H=1024, W=Math.max(2048,Math.round(H*(SIGN_PLANE_W/SIGN_PLANE_H)));
+  if(W>SIGN_TEX_MAX_W){W=SIGN_TEX_MAX_W;H=Math.max(256,Math.round(W*(SIGN_PLANE_H/SIGN_PLANE_W)));}
+  const c=document.createElement('canvas');c.width=W;c.height=H;const ctx=c.getContext('2d');
+  paintCrownSign(ctx,W,H,true);
   const tex=new THREE.CanvasTexture(c);
   tex.colorSpace=THREE.SRGBColorSpace;
-  tex.anisotropy=renderer.capabilities?.getMaxAnisotropy?.()||16;
+  const phone=typeof matchMedia==='function'&&matchMedia('(max-width:760px)').matches;
+  tex.anisotropy=Math.min(phone?4:8,renderer.capabilities?.getMaxAnisotropy?.()||1);
   tex.generateMipmaps=true;
   tex.minFilter=THREE.LinearMipmapLinearFilter;
   tex.magFilter=THREE.LinearFilter;
   tex.needsUpdate=true;
   const sign=new THREE.Mesh(
-    new THREE.PlaneGeometry(24.8,parapetH*0.96),
+    new THREE.PlaneGeometry(SIGN_PLANE_W,SIGN_PLANE_H),
     new THREE.MeshBasicMaterial({map:tex,transparent:true,toneMapped:false,depthWrite:false,color:0xffffff})
   );
+  // Solo la cara frontal de la fascia (no techo ni costados).
   sign.position.set(0,parapetH/2+.02,8.9+.06);roof.add(sign);
+  crownSignTex=tex;
+  crownSignPaint=(isNight)=>{paintCrownSign(ctx,W,H,!!isNight);tex.needsUpdate=true;};
+  let fontPaintTo=0;
+  const applyFont=()=>{ // varios avisos de FontFace; un solo repintado
+   if(typeof crownSignPaint!=='function')return;
+   if(fontPaintTo)clearTimeout(fontPaintTo);
+   fontPaintTo=setTimeout(()=>{fontPaintTo=0;crownSignPaint(crownIsNight);},0);
+  };
+  try{
+   if(typeof FontFace!=='undefined'){
+    const face=new FontFace('SJSignSerif','url(./fonts/PlayfairDisplay-VariableFont_wght.ttf)',{weight:'100 900',style:'normal',display:'swap'});
+    face.load().then(f=>{document.fonts.add(f);applyFont();}).catch(()=>{});
+   }
+   document.fonts?.ready?.then?.(applyFont);
+   document.fonts?.load?.('500 512px '+CROWN_FONT)?.then?.(applyFont);
+  }catch{}
  })();
+ function applyCrownLighting(isNight){
+  const night=!!isNight;
+  neonCore.color.set(night?0xfff8ff:0xf0e8f6);
+  neonInner.color.set(night?0xf6e4ff:0xe4cef2);
+  neonInner.opacity=night?.96:.40;
+  neonGlow.color.set(night?0xea78ff:0xb068d8);
+  neonGlow.opacity=night?.94:.36;
+  neonHalo.color.set(night?0xcc55ff:0x8a50c0);
+  neonHalo.opacity=night?.58:.22;
+  neonSpill.color.set(night?0xd468ff:0xa060c8);
+  neonSpill.opacity=night?.38:.10;
+  // Solo se repinta el lienzo al cambiar día/noche. El tween de luz llama esto cada frame.
+  if(night!==crownIsNight && typeof crownSignPaint==='function')crownSignPaint(night);
+  crownIsNight=night;
+ }
+ // Si el celular pierde el contexto WebGL (memoria), pedimos restauración y reenviamos la textura.
+ try{
+  const glCanvas=renderer.domElement;
+  glCanvas.addEventListener('webglcontextlost',ev=>{ev.preventDefault();try{console.warn('[atelier] WebGL context lost');}catch{}});
+  glCanvas.addEventListener('webglcontextrestored',()=>{
+   try{
+    if(crownSignTex)crownSignTex.needsUpdate=true;
+    if(typeof crownSignPaint==='function')crownSignPaint(crownIsNight);
+    if(typeof applyCrownLighting==='function')applyCrownLighting(crownIsNight);
+    renderer.resetGLState?.();
+   }catch(err){try{console.warn('[atelier] WebGL restore failed',err);}catch{}}
+  });
+ }catch{}
 batch(site);const skipBatch=new Set([...facades,...structures]);frames.forEach(f=>skipBatch.add(f));floorGroups.forEach(g=>batch(g,skipBatch));facades.forEach(g=>batch(g));structures.forEach(g=>batch(g));frames.forEach(g=>batch(g));batch(roof);
  let walls=true;let floor=-1,mode='exterior',selected=null,animateBots=false;const target=new THREE.Vector3(0,7,0),desired=camera.position.clone();let moving=false;const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
  const VIEW_ANIM_MS=1050;
@@ -445,6 +544,7 @@ function setView(f=-1,{animate=true}={}){floor=f;structures.forEach(g=>g.visible
   interiorLights.forEach(l=>l.intensity=ii);
   try{if(globalThis.document?.documentElement)document.documentElement.dataset.theme=p.isNight?'night':'day';}catch{}
   try{entorno?.setNight?.(!!p.isNight);}catch{}
+  try{applyCrownLighting?.(!!p.isNight);}catch{}
  }
  function setLighting(p){
   const dest=p||LIGHTING.day;
