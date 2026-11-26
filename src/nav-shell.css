@@ -246,3 +246,25 @@ body.ns-inmersivo #viewport .ns-luz,body.ns-inmersivo .ns-luz{top:calc(14px + en
 .ns-inicio .ns-tr{border-left:3px solid rgba(201,54,144,.70);background:linear-gradient(145deg,rgba(201,54,144,.16),rgba(230,188,207,.08)),linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.03)),rgba(14,17,24,.68)}
 .ns-inicio .ns-emo{flex:none;display:inline-flex;align-items:center;justify-content:center;width:auto;height:auto;margin:0;padding:0;background:none;border:0;box-shadow:none;border-radius:0;font-family:"Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji","Android Emoji",sans-serif;font-size:18px;line-height:1;font-style:normal;font-weight:400;color:inherit;pointer-events:none;user-select:none;-webkit-user-select:none}
 .ns-inicio img.ns-tr-logo{width:20px;height:20px;object-fit:contain;display:block;flex:none;padding:0;margin:0;background:none;border:0;border-radius:0;box-shadow:none;pointer-events:none}
+
+/* f1o (Rob t516u): en inmersivo la tira de arriba no puede dejar un hueco.
+   visibility:hidden conservaba el alto de la franja f1i (36+37 px). Se oculta
+   con display:none y el lienzo pasa a 100dvh. Al salir, estas reglas dejan de aplicar. */
+body.ns-on.ns-inmersivo #app > header.chrome-top,
+body.ns-on.ns-inmersivo #app aside.navigation{
+  display:none!important;
+  height:0!important;min-height:0!important;max-height:0!important;
+  overflow:hidden!important;margin:0!important;padding:0!important;border:0!important;
+  visibility:hidden!important;pointer-events:none!important;
+}
+body.ns-on.ns-inmersivo #app,
+body.ns-on.ns-inmersivo #app > main,
+body.ns-on.ns-inmersivo #viewport,
+body.ns-on.ns-inmersivo #viewport.spread-view{
+  height:100dvh!important;min-height:100dvh!important;max-height:none!important;
+  padding-top:0!important;margin-top:0!important;
+}
+body.ns-on.ns-inmersivo #viewport #canvas-container,
+body.ns-on.ns-inmersivo #viewport.spread-view #canvas-container{
+  top:0!important;inset:0!important;height:100%!important;min-height:0!important;
+}
