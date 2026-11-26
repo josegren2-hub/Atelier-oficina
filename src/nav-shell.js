@@ -10,7 +10,7 @@
 import {sheets} from './ui-chrome.js';
 import './nav-shell.css';
 import {modoInicial as modoInicialPuro, pantallaInicial as pantallaInicialPura} from './nav-prefs.js';
-import {mandoEstaAbierto} from './mando-abierto.js';
+import {mandoEstaAbierto, debeVolverAInicioTrasMando} from './mando-abierto.js';
 import {estadoModoDios, estadoDia} from './tira-estado.js';
 
 const LS = {modo: 'atelierNavModo', inicio: 'atelierNavInicio', ultimo: 'atelierNavUltimo', capt: 'atelierCapturas', fijo: 'atelierNavFijo'};
@@ -224,32 +224,42 @@ function fechaLarga(d = new Date()) {
 }
 function card(ic, t, body, extra = '') { return `<section class="ns-card"><div class="ns-ch"><span class="ns-ic">${svg(ic)}</span><h3>${t}</h3>${extra}</div>${body}</section>`; }
 const chip = (cls, t) => `<span class="ns-chip ns-c-${cls}">${esc(t)}</span>`;
+let avisoNota = false;
+let volverInicioTrasMando = false;
 export function renderInicio() {
-  const n = waitCount(); const u = ultimo(); const caps = capturas().slice(-3).reverse();
+  const n = waitCount(); const u = ultimo(); const caps = capturas().slice().reverse();
   const nombre = Object.fromEntries(MODULOS);
   const src = txt('#source-label') || 'Sin datos'; const sig = txt('#last-signal') || 'ninguna';
   const conectado = /vivo/i.test(src) && !/sin conexi/i.test(src);
   const mandoAbierto = mandoEstaAbierto($('#mando-status'));
+  const showAviso = avisoNota; avisoNota = false;
+  const listaNotas = caps.length
+    ? `<ul class="ns-caps">${caps.map(c => `<li><span>${esc(c.t)}</span><small>${hace(c.ts)}</small></li>`).join('')}</ul><div class="ns-row-btns"><button type="button" class="ns-btn" data-act="borrar-capturas">Borrar notas de este celular</button></div>`
+    : '';
+  const aviso = showAviso
+    ? '<div class="ns-aviso on" role="status"><b>Guardada en este celular.</b> Nadie más la ve. Tus notas están aquí abajo.</div>'
+    : '';
+  const quede = u && nombre[u.mod] && u.mod !== 'inicio'
+    ? `<p class="ns-para">Recuerda el último módulo que abriste en este teléfono, para retomarlo. No guarda tus notas.</p><p class="ns-t">${esc(nombre[u.mod])}</p><p class="ns-s">Lo abriste ${hace(u.ts)} en este dispositivo</p><div class="ns-row-btns"><button type="button" class="ns-btn p" data-go="${esc(u.mod)}">Retomar</button></div>`
+    : '<p class="ns-para">Recuerda el último módulo que abriste en este teléfono, para retomarlo. No guarda tus notas.</p><p class="ns-t">Aún no has abierto otro módulo</p><p class="ns-s">Cuando abras Agenda, Tareas u otro módulo, aquí aparecerá un botón para volver a él.</p>';
+  const espera = n
+    ? `<p class="ns-para">Lo que un agente te deja pendiente de aprobación, según el estado en vivo de la oficina. Si hay algo, el botón abre la Bandeja.</p><p class="ns-t">${n} ${n === 1 ? 'agente te espera' : 'agentes te esperan'}</p><p class="ns-s">Según el estado en vivo de la oficina</p><div class="ns-row-btns"><button type="button" class="ns-btn p" data-go="bandeja">Abrir Bandeja</button></div>`
+    : '<p class="ns-para">Lo que un agente te deja pendiente de aprobación, según el estado en vivo de la oficina. Si hay algo, el botón abre la Bandeja.</p><p class="ns-t">Nadie te espera ahora</p><p class="ns-s">Puedes abrir la Bandeja de todas formas para revisarla.</p><div class="ns-row-btns"><button type="button" class="ns-btn" data-go="bandeja">Abrir Bandeja</button></div>';
+  const agenda = mandoAbierto
+    ? '<p class="ns-para">Tu agenda del día está en el Pizarrón de Ted. El botón abre la Agenda.</p><p class="ns-s">El mando ya está abierto en este teléfono.</p><div class="ns-row-btns"><button type="button" class="ns-btn" data-go="agenda">Abrir Agenda</button></div>'
+    : '<p class="ns-para">Tu agenda del día está protegida. Para verla, desbloquéala con tu clave de mando.</p><p class="ns-t">Bloqueada: toca para desbloquear con tu clave</p><p class="ns-s">Al desbloquear, se abre el mando y luego regresas aquí para ver el Pizarrón.</p><div class="ns-row-btns"><button type="button" class="ns-btn p" data-act="mando">Desbloquear con tu clave</button></div>';
   inicioEl.innerHTML = `<div class="ns-ini">
   <div class="ns-ini-top"><div><h2 class="ns-hello">${saludo()}</h2><p class="ns-sub">${esc(fechaLarga())}${n ? ` · <span class="ns-pink">${n} ${n === 1 ? 'asunto espera' : 'asuntos esperan'} tu OK</span>` : ''}</p></div>
    <div class="ns-ini-acts">${state.modo === 'oculto' ? `<button type="button" class="ns-x ns-ini-menu" data-act="menu-desde-inicio" aria-label="Abrir menú">${svg('menu')}</button>` : ''}<button type="button" class="ns-x" data-act="cerrar-inicio" aria-label="Cerrar Inicio">${svg('x')}</button></div></div>
-  <form class="ns-qc" data-act="captura"><label class="ns-in">${svg('plus')}<input name="t" maxlength="280" autocomplete="off" placeholder="Captura rápida: idea, pendiente o instrucción…" aria-label="Captura rápida"></label><button class="ns-btn p" type="submit">Guardar</button></form>
-  <p class="ns-note">La captura rápida se guarda solo en este dispositivo; no se envía a nadie.</p>
   <div class="ns-grid">
-  ${card('back', '¿En qué me quedé?', u && nombre[u.mod] && u.mod !== 'inicio'
-    ? `<p class="ns-t">${esc(nombre[u.mod])}</p><p class="ns-s">Lo abriste ${hace(u.ts)} en este dispositivo</p><div class="ns-row-btns"><button type="button" class="ns-btn p" data-go="${esc(u.mod)}">Retomar</button></div>`
-    : '<p class="ns-s">Todavía no hay nada guardado en este dispositivo.</p>')}
-  ${card('bandeja', 'Espera tu OK', n
-    ? `<p class="ns-t">${n} ${n === 1 ? 'agente te espera' : 'agentes te esperan'}</p><p class="ns-s">Según el estado en vivo de la oficina</p><div class="ns-row-btns"><button type="button" class="ns-btn p" data-go="bandeja">Abrir Bandeja</button></div>`
-    : `<p class="ns-t">Nadie te espera ahora</p><p class="ns-s">Según el estado en vivo de la oficina</p>`, n ? chip('wait', 'Te espera') : chip('ok', 'Al día'))}
-  ${card('star', 'Prioridades de hoy', '<p class="ns-s">No disponible todavía: no hay una fuente de prioridades. Llega con Tareas y Bandeja (Fase 2).</p>', chip('mut', 'No disponible'))}
-  ${card('agenda', 'Agenda inmediata', mandoAbierto
-    ? '<p class="ns-s">Tu agenda está en el Pizarrón de Ted.</p><div class="ns-row-btns"><button type="button" class="ns-btn" data-go="agenda">Abrir Agenda</button></div>'
-    : '<p class="ns-s">Protegida: abre el mando para verla.</p><div class="ns-row-btns"><button type="button" class="ns-btn" data-act="mando">Abrir mando</button></div>', mandoAbierto ? '' : chip('mut', 'Bloqueada'))}
-  ${caps.length ? card('plus', 'Tus capturas', `<ul class="ns-caps">${caps.map(c => `<li><span>${esc(c.t)}</span><small>${hace(c.ts)}</small></li>`).join('')}</ul><div class="ns-row-btns"><button type="button" class="ns-btn" data-act="borrar-capturas">Borrar capturas</button></div>`, chip('mut', 'Solo aquí')) : ''}
-  ${card('signal', 'Conexión', `<p class="ns-t">${esc(src)}</p><p class="ns-s">Última señal: ${esc(sig)}</p>`, conectado ? chip('ok', 'Conectado') : chip('wait', 'Revisar'))}
-  <section class="ns-card ns-tr"><div class="ns-ch"><span class="ns-ic">${svg('agenda')}</span><h3>Tinta Rosa</h3></div><p class="ns-s">Semana, historial, pendientes y estadísticas</p><div class="ns-row-btns"><button type="button" class="ns-btn tr" data-act="tinta">Abrir Registro</button></div></section>
-  <section class="ns-card ns-of"><div class="ns-ch"><span class="ns-ic">${svg('cube')}</span><h3>Oficina 3D</h3></div><p class="ns-s">${esc(txt('#bot-count') || '16 bots')}</p><div class="ns-row-btns"><button type="button" class="ns-btn p" data-act="cerrar-inicio">Ver la oficina</button><button type="button" class="ns-btn" data-act="resumen">Resumen completo</button></div></section>
+  ${card('plus', 'Notas rápidas', `<p class="ns-para">Para apuntar una idea o un pendiente. Al guardar, aparece aquí abajo. No se envía a nadie ni sale de este teléfono.</p><form class="ns-qc" data-act="captura"><label class="ns-in">${svg('plus')}<input name="t" maxlength="280" autocomplete="off" placeholder="Escribe una nota y toca Guardar" aria-label="Nota rápida"></label><button class="ns-btn p" type="submit">Guardar</button></form>${aviso}${listaNotas}`, chip('mut', 'Solo en este celular'))}
+  ${card('back', '¿En qué me quedé?', quede)}
+  ${card('bandeja', 'Espera tu OK', espera, n ? chip('wait', 'Te espera') : chip('ok', 'Al día'))}
+  ${card('agenda', 'Agenda inmediata', agenda, mandoAbierto ? '' : chip('mut', 'Bloqueada'))}
+  ${card('signal', 'Conexión', `<p class="ns-para">Solo informa el estado de la oficina. No abre ningún menú.</p><p class="ns-t">${esc(src)}</p><p class="ns-s">Última señal: ${esc(sig)}</p>`, conectado ? chip('ok', 'Conectado') : chip('wait', 'Revisar'))}
+  <section class="ns-card ns-tr"><div class="ns-ch"><span class="ns-ic">${svg('agenda')}</span><h3>Tinta Rosa</h3></div><p class="ns-para">Semana, historial, pendientes y estadísticas de la revista. El botón abre el Registro.</p><div class="ns-row-btns"><button type="button" class="ns-btn tr" data-act="tinta">Abrir Registro</button></div></section>
+  <section class="ns-card ns-of"><div class="ns-ch"><span class="ns-ic">${svg('cube')}</span><h3>Oficina 3D</h3></div><p class="ns-para">Vuelve al edificio o abre el resumen completo de la oficina.</p><p class="ns-s">${esc(txt('#bot-count') || '16 bots')}</p><div class="ns-row-btns"><button type="button" class="ns-btn p" data-act="cerrar-inicio">Ver la oficina</button><button type="button" class="ns-btn" data-act="resumen">Resumen completo</button></div></section>
+  <details class="ns-card ns-later"><summary>Más adelante · Fase 2</summary><p><b>Prioridades de hoy</b> no aparece como tarjeta porque todavía no hay una fuente de prioridades. Llega con Tareas y Bandeja en la Fase 2.</p></details>
   </div></div>`;
 }
 function abrirInicio() { renderInicio(); sheets.closeAll('inicio'); inicioEl.hidden = false; inicioEl.classList.add('open'); state.activo = 'inicio'; pushBack(); }
@@ -423,7 +433,7 @@ export function mountNavShell() {
       case 'modo': ciclarModo(); break;
       case 'cerrar-hub': navStack.length = 0; cerrarHub(); break;
       case 'cerrar-inicio': navStack.length = 0; cerrarInicio(); break;
-      case 'mando': navStack.push({type: 'inicio'}); cerrarInicio(); click('mando-unlock'); break;
+      case 'mando': navStack.push({type: 'inicio'}); volverInicioTrasMando = true; cerrarInicio(); click('mando-unlock'); break;
       case 'tinta': navStack.push({type: 'inicio'}); cerrarInicio(); sheets.open('tinta'); break;
       case 'resumen': navStack.push({type: 'inicio'}); cerrarInicio(); sheets.open('resumen'); break;
       case 'borrar-capturas': ls.set(LS.capt, '[]'); renderInicio(); break;
@@ -431,7 +441,7 @@ export function mountNavShell() {
   });
   root.addEventListener('submit', e => {
     e.preventDefault(); const inp = e.target.querySelector('input'); const v = (inp?.value || '').trim(); if (!v) return;
-    const a = capturas(); a.push({t: v.slice(0, 280), ts: Date.now()}); ls.set(LS.capt, JSON.stringify(a.slice(-30))); renderInicio();
+    const a = capturas(); a.push({t: v.slice(0, 280), ts: Date.now()}); ls.set(LS.capt, JSON.stringify(a.slice(-30))); avisoNota = true; renderInicio(); inicioEl.querySelector('.ns-aviso')?.scrollIntoView({block: 'nearest', behavior: 'smooth'});
   });
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
@@ -452,6 +462,11 @@ export function mountNavShell() {
     else if (prev?.type === 'inicio') abrirInicio();
   });
 
+  document.querySelector('#mando-dialog')?.addEventListener('close', () => {
+    const volver = debeVolverAInicioTrasMando({solicitadoDesdeInicio: volverInicioTrasMando, desbloqueado: mandoEstaAbierto($('#mando-status'))});
+    volverInicioTrasMando = false;
+    if (volver) abrirInicio();
+  });
   state.modo = modoInicial(); aplicarModo(); renderNav();
   let lastPhone = isPhoneNav();
   addEventListener('resize', () => { const p = isPhoneNav(); if (p !== lastPhone) { lastPhone = p; state.modo = modoInicial(); aplicarModo(); renderNav(); } });

@@ -10,3 +10,9 @@ export function mandoEstaAbierto(el) {
   const s = String(el.textContent || '').trim();
   return /desbloqueado/i.test(s) || /mando abierto/i.test(s);
 }
+
+/** After the mando dialog closes, go back to Inicio only if the user opened it
+ *  from Inicio and the mando actually unlocked (bug 2, f1k). */
+export function debeVolverAInicioTrasMando({solicitadoDesdeInicio, desbloqueado} = {}) {
+  return !!(solicitadoDesdeInicio && desbloqueado);
+}

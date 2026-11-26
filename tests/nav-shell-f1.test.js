@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {modoInicial, pantallaInicial, siguienteModo} from '../src/nav-prefs.js';
-import {mandoEstaAbierto} from '../src/mando-abierto.js';
+import {mandoEstaAbierto, debeVolverAInicioTrasMando} from '../src/mando-abierto.js';
 
 const store = (o = {}) => ({get: (k, d) => (k in o ? o[k] : d)});
 
@@ -30,7 +30,7 @@ test('F1: las funciones del dock siguen accesibles desde el nuevo menú', () => 
   for (const s of ["sheets.open('equipo')", "sheets.open('proyectos')", "sheets.open('pizarron')", "sheets.open('avisos')", "sheets.open('consulta')", "click('refresh-office')", "click('dock-lista')", "click('mando-unlock')", "click('dock-noche')", "sheets.open('resumen')", "trTab(", "sheets.open('mas')"]) assert.ok(src.includes(s), s);
 });
 test('F1: Inicio no inventa datos: sin fuente dice No disponible', () => {
-  assert.match(src, /No disponible todavía/);
+  assert.match(src, /no hay una fuente de prioridades/);
   assert.doesNotMatch(src, /\b\d{1,3}\s?%/);
 });
 test('F1: no se guardan claves ni contenido del mando en localStorage desde la navegación', () => {
@@ -139,4 +139,44 @@ test('F1h: Inicio detecta el mando abierto por .unlocked y no confunde desbloque
   assert.match(src, /mandoEstaAbierto\(\$\('#mando-status'\)\)/);
   assert.doesNotMatch(src, /!\/bloqueado\/i/);
   assert.doesNotMatch(src, /\/abierto\|desbloq\/i/);
+});
+
+test('F1k: Notas rápidas junta el formulario y la lista en una tarjeta, con aviso local y atelierCapturas', () => {
+  assert.match(src, /Notas rápidas/);
+  assert.match(src, /atelierCapturas/);
+  assert.match(src, /Guardada en este celular/);
+  assert.match(src, /aparece aquí abajo/);
+  assert.match(src, /Borrar notas de este celular/);
+  const render = src.slice(src.indexOf('export function renderInicio'), src.indexOf('function abrirInicio'));
+  const formAt = render.indexOf('<form class="ns-qc"');
+  const cardPlus = render.indexOf("card('plus', 'Notas rápidas'");
+  const afterCard = render.indexOf('¿En qué me quedé?');
+  assert.ok(cardPlus >= 0 && formAt > cardPlus && formAt < afterCard, 'el formulario vive dentro de Notas rápidas');
+  assert.ok(!/card\('plus', 'Tus capturas'/.test(render));
+  assert.doesNotMatch(render, /card\('star', 'Prioridades de hoy'/);
+  assert.match(render, /Más adelante · Fase 2/);
+  assert.match(render, /no hay una fuente de prioridades/);
+  assert.match(css, /\.ns-inicio \.ns-aviso/);
+});
+
+test('F1k: cada tarjeta de Inicio explica qué hace; Agenda bloqueada usa .unlocked y el rosa de Tinta Rosa es el tenue', () => {
+  const render = src.slice(src.indexOf('export function renderInicio'), src.indexOf('function abrirInicio'));
+  assert.match(render, /ns-para/);
+  assert.match(render, /Bloqueada: toca para desbloquear con tu clave/);
+  assert.match(render, /Desbloquear con tu clave/);
+  assert.match(render, /mandoEstaAbierto\(\$\('#mando-status'\)\)/);
+  assert.match(render, /Solo informa el estado de la oficina/);
+  assert.match(css, /\.ns-inicio \.ns-btn\.tr\{[^}]*rgba\(201,54,144,\.78\)/);
+  assert.match(css, /\.ns-inicio \.ns-tr\{[^}]*rgba\(201,54,144,\.70\)/);
+  assert.match(css, /\.ns-inicio \.ns-tr \.ns-ic\{[^}]*rgba\(201,54,144,\.12\)/);
+});
+
+test('F1k: al desbloquear el mando desde Inicio se vuelve a Inicio (bug 2)', () => {
+  assert.equal(debeVolverAInicioTrasMando({solicitadoDesdeInicio: true, desbloqueado: true}), true);
+  assert.equal(debeVolverAInicioTrasMando({solicitadoDesdeInicio: true, desbloqueado: false}), false);
+  assert.equal(debeVolverAInicioTrasMando({solicitadoDesdeInicio: false, desbloqueado: true}), false);
+  assert.equal(debeVolverAInicioTrasMando({}), false);
+  assert.match(src, /volverInicioTrasMando = true/);
+  assert.match(src, /#mando-dialog'\)\?\.addEventListener\('close'/);
+  assert.match(src, /if \(volver\) abrirInicio\(\)/);
 });

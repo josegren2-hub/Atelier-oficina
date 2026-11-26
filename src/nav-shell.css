@@ -198,3 +198,25 @@ body.ns-inmersivo #viewport .ns-luz,body.ns-inmersivo .ns-luz{top:calc(14px + en
   body.ns-inmersivo .ns-tabbar,body.ns-inmersivo #canvas-container #vista-toolbar.vista-toolbar{display:none!important}
   body.ns-on #viewport #demo-banner{bottom:calc(120px + var(--f1i-safe))!important}
 }
+
+/* f1k (OK de Rob t506u/t507u + Inicio claro): Inicio como el boceto. Navy en tarjetas,
+   Notas rápidas, una línea por tarjeta, Más adelante · Fase 2, rosas tenues solo aquí.
+   No cambia el menú, la píldora f1i/f1j ni el resto de Tinta Rosa. */
+.ns-inicio{background:radial-gradient(120% 80% at 15% 0%,rgba(188,217,236,.10),transparent 55%),rgba(8,12,24,.45)}
+.ns-inicio .ns-card{background:rgba(14,17,24,.86);backdrop-filter:blur(20px) saturate(1.3);-webkit-backdrop-filter:blur(20px) saturate(1.3);border:1px solid rgba(255,255,255,.1);box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.ns-inicio .ns-ch{margin-bottom:8px}
+.ns-inicio .ns-para{margin:0 0 8px;font-size:12.5px;line-height:1.4;color:#93a4b6}
+.ns-inicio .ns-qc{display:flex;gap:8px;margin:0;padding:0;background:none;border:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+.ns-inicio .ns-aviso{display:none;margin:10px 0 0;padding:10px 12px;border-radius:4px;background:rgba(90,180,130,.18);border:1px solid rgba(130,210,165,.4);color:#d7f0e0;font-size:13px;line-height:1.4}
+.ns-inicio .ns-aviso.on{display:block}
+.ns-inicio .ns-aviso b{font-weight:700}
+.ns-inicio .ns-caps{margin:12px 0 0}
+.ns-inicio .ns-later{padding:12px 16px}
+.ns-inicio .ns-later summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;font:700 11px/1 Inter,system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#93a4b6}
+.ns-inicio .ns-later summary::-webkit-details-marker{display:none}
+.ns-inicio .ns-later summary:after{content:"▸";margin-left:auto;color:#7f8fa0}
+.ns-inicio .ns-later[open] summary:after{content:"▾"}
+.ns-inicio .ns-later p{margin:10px 0 0;font-size:13px;line-height:1.45;color:#a9b8c8}
+.ns-inicio .ns-tr{border-left:3px solid rgba(201,54,144,.70);background:rgba(14,17,24,.86)}
+.ns-inicio .ns-tr .ns-ic{background:rgba(201,54,144,.12);border-color:rgba(230,188,207,.50);color:#E3BFD0}
+.ns-inicio .ns-btn.tr{background:linear-gradient(90deg,rgba(201,54,144,.78),rgba(181,48,130,.78));border-color:rgba(230,188,207,.55);color:#fff}
