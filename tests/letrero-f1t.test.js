@@ -43,14 +43,14 @@ test('F1t: tipografía Playfair en el HTML y en public/fonts', () => {
   assert.match(scene, /SJSignSerif/);
 });
 
-test('F1t: el lienzo del letrero respeta la proporción del plano y no pasa de 8192 px de ancho', () => {
-  assert.match(scene, /const SIGN_TEX_MAX_W=8192/);
+test('F1t/F1u: el lienzo del letrero respeta la proporción del plano y no pasa de 4096 px de ancho', () => {
+  assert.match(scene, /const SIGN_TEX_MAX_W=Math\.min\(4096,renderer\.capabilities\?\.maxTextureSize\|\|4096\)/);
   assert.match(scene, /const SIGN_PLANE_W=24\.8, SIGN_PLANE_H=parapetH\*0\.96/);
   assert.match(scene, /if\(W>SIGN_TEX_MAX_W\)\{W=SIGN_TEX_MAX_W;H=Math\.max\(256,Math\.round\(W\*\(SIGN_PLANE_H\/SIGN_PLANE_W\)\)\);\}/);
-  const parapetH=2.28, planeW=24.8, planeH=parapetH*0.96, maxW=8192;
+  const parapetH=2.28, planeW=24.8, planeH=parapetH*0.96, maxW=4096;
   let H=1024, W=Math.max(2048, Math.round(H*(planeW/planeH)));
   if(W>maxW){W=maxW;H=Math.max(256,Math.round(W*(planeH/planeW)));}
-  assert.equal(W, 8192);
-  assert.equal(H, 723);
-  assert.ok(Math.abs((W/H) - (planeW/planeH)) < 0.01);
+  assert.equal(W, 4096);
+  assert.equal(H, 362);
+  assert.ok(Math.abs((W/H) - (planeW/planeH)) < 0.02);
 });

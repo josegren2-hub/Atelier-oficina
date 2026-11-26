@@ -328,7 +328,7 @@ const movement=createMovement();
  let crownSignTex=null,crownSignPaint=null,crownIsNight=true;
  const CROWN_FONT='SJSignSerif, "Playfair Display", Georgia, "Times New Roman", serif';
  const SIGN_PLANE_W=24.8, SIGN_PLANE_H=parapetH*0.96;
- const SIGN_TEX_MAX_W=8192; // tope de memoria en el celular; se respeta la proporción del plano
+ const SIGN_TEX_MAX_W=Math.min(4096,renderer.capabilities?.maxTextureSize||4096); // f1u: 4096 cabe en la mayoría de celulares (MAX_TEXTURE_SIZE); se respeta la proporción del plano
  function paintCrownSign(ctx,W,H,isNight){
   ctx.clearRect(0,0,W,H);
   const sj='SJ', name='San Junipero';
@@ -382,7 +382,8 @@ const movement=createMovement();
   paintCrownSign(ctx,W,H,true);
   const tex=new THREE.CanvasTexture(c);
   tex.colorSpace=THREE.SRGBColorSpace;
-  tex.anisotropy=renderer.capabilities?.getMaxAnisotropy?.()||16;
+  const phone=typeof matchMedia==='function'&&matchMedia('(max-width:760px)').matches;
+  tex.anisotropy=Math.min(phone?4:8,renderer.capabilities?.getMaxAnisotropy?.()||1);
   tex.generateMipmaps=true;
   tex.minFilter=THREE.LinearMipmapLinearFilter;
   tex.magFilter=THREE.LinearFilter;
@@ -395,7 +396,12 @@ const movement=createMovement();
   sign.position.set(0,parapetH/2+.02,8.9+.06);roof.add(sign);
   crownSignTex=tex;
   crownSignPaint=(isNight)=>{paintCrownSign(ctx,W,H,!!isNight);tex.needsUpdate=true;};
-  const applyFont=()=>{if(typeof crownSignPaint==='function')crownSignPaint(crownIsNight);};
+  let fontPaintTo=0;
+  const applyFont=()=>{ // varios avisos de FontFace; un solo repintado
+   if(typeof crownSignPaint!=='function')return;
+   if(fontPaintTo)clearTimeout(fontPaintTo);
+   fontPaintTo=setTimeout(()=>{fontPaintTo=0;crownSignPaint(crownIsNight);},0);
+  };
   try{
    if(typeof FontFace!=='undefined'){
     const face=new FontFace('SJSignSerif','url(./fonts/PlayfairDisplay-VariableFont_wght.ttf)',{weight:'100 900',style:'normal',display:'swap'});
@@ -406,18 +412,33 @@ const movement=createMovement();
   }catch{}
  })();
  function applyCrownLighting(isNight){
-  crownIsNight=!!isNight;
-  neonCore.color.set(isNight?0xfff8ff:0xf0e8f6);
-  neonInner.color.set(isNight?0xf6e4ff:0xe4cef2);
-  neonInner.opacity=isNight?.96:.40;
-  neonGlow.color.set(isNight?0xea78ff:0xb068d8);
-  neonGlow.opacity=isNight?.94:.36;
-  neonHalo.color.set(isNight?0xcc55ff:0x8a50c0);
-  neonHalo.opacity=isNight?.58:.22;
-  neonSpill.color.set(isNight?0xd468ff:0xa060c8);
-  neonSpill.opacity=isNight?.38:.10;
-  if(typeof crownSignPaint==='function')crownSignPaint(crownIsNight);
+  const night=!!isNight;
+  neonCore.color.set(night?0xfff8ff:0xf0e8f6);
+  neonInner.color.set(night?0xf6e4ff:0xe4cef2);
+  neonInner.opacity=night?.96:.40;
+  neonGlow.color.set(night?0xea78ff:0xb068d8);
+  neonGlow.opacity=night?.94:.36;
+  neonHalo.color.set(night?0xcc55ff:0x8a50c0);
+  neonHalo.opacity=night?.58:.22;
+  neonSpill.color.set(night?0xd468ff:0xa060c8);
+  neonSpill.opacity=night?.38:.10;
+  // Solo se repinta el lienzo al cambiar día/noche. El tween de luz llama esto cada frame.
+  if(night!==crownIsNight && typeof crownSignPaint==='function')crownSignPaint(night);
+  crownIsNight=night;
  }
+ // Si el celular pierde el contexto WebGL (memoria), pedimos restauración y reenviamos la textura.
+ try{
+  const glCanvas=renderer.domElement;
+  glCanvas.addEventListener('webglcontextlost',ev=>{ev.preventDefault();try{console.warn('[atelier] WebGL context lost');}catch{}});
+  glCanvas.addEventListener('webglcontextrestored',()=>{
+   try{
+    if(crownSignTex)crownSignTex.needsUpdate=true;
+    if(typeof crownSignPaint==='function')crownSignPaint(crownIsNight);
+    if(typeof applyCrownLighting==='function')applyCrownLighting(crownIsNight);
+    renderer.resetGLState?.();
+   }catch(err){try{console.warn('[atelier] WebGL restore failed',err);}catch{}}
+  });
+ }catch{}
 batch(site);const skipBatch=new Set([...facades,...structures]);frames.forEach(f=>skipBatch.add(f));floorGroups.forEach(g=>batch(g,skipBatch));facades.forEach(g=>batch(g));structures.forEach(g=>batch(g));frames.forEach(g=>batch(g));batch(roof);
  let walls=true;let floor=-1,mode='exterior',selected=null,animateBots=false;const target=new THREE.Vector3(0,7,0),desired=camera.position.clone();let moving=false;const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
  const VIEW_ANIM_MS=1050;
