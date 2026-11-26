@@ -1,0 +1,83 @@
+/* Fase 1p (OK explícito de Rob, 25/11 23:57): paleta D por defecto.
+   Base = el azul actual (f1e/f1f). No sustituye fondos, tira, líneas ni botones base.
+   Solo añade: ícono a color y franja de 3 px por módulo, color en el chip de cada piso,
+   títulos pequeños en durazno #f3b99f. Tinta Rosa no se toca.
+   Conserva f1m (fondo noche en Separación/Plantas), f1n (velo .68, emojis sin marco, logo)
+   y f1o (inmersivo sin tira). No define temas A/B/C ni variables --k-*. */
+
+:root{
+  --d-inicio:#c9d4e6;
+  --d-oficina:#b8c86e;
+  --d-agentes:#b9a6e3;
+  --d-tareas:#6ec9a0;
+  --d-bandeja:#e8c56a;
+  --d-proyectos:#e09886;
+  --d-agenda:#e0b07a;
+  --d-automatizaciones:#7ec8d4;
+  --d-archivo:#d2c4a0;
+  --d-estadisticas:#e09070;
+  --d-configuracion:#a8b0bc;
+  --d-notas:#d2c4a0;
+  --d-conexion:#7ec8d4;
+  --a-0:#8fc9a0;
+  --a-1:#d4a56a;
+  --a-2:#e09886;
+  --a-3:#b9a6e3;
+  --a-4:#e6a9c6;
+  --d-peach:#f3b99f;
+  --d-peach-ink:#2a1408;
+}
+
+/* Menú: ícono a color y franja de 3 px. Los botones Fijar / Inmersivo siguen azules. */
+.ns-item[data-mod]{--mc:var(--d-inicio)}
+.ns-item[data-mod=inicio]{--mc:var(--d-inicio)}
+.ns-item[data-mod=oficina]{--mc:var(--d-oficina)}
+.ns-item[data-mod=agentes]{--mc:var(--d-agentes)}
+.ns-item[data-mod=tareas]{--mc:var(--d-tareas)}
+.ns-item[data-mod=bandeja]{--mc:var(--d-bandeja)}
+.ns-item[data-mod=proyectos]{--mc:var(--d-proyectos)}
+.ns-item[data-mod=agenda]{--mc:var(--d-agenda)}
+.ns-item[data-mod=automatizaciones]{--mc:var(--d-automatizaciones)}
+.ns-item[data-mod=archivo]{--mc:var(--d-archivo)}
+.ns-item[data-mod=estadisticas]{--mc:var(--d-estadisticas)}
+.ns-item[data-mod=configuracion]{--mc:var(--d-configuracion)}
+.ns-item[data-mod]{box-shadow:inset 3px 0 0 var(--mc)}
+.ns-item[data-mod]>svg:first-child{color:var(--mc)}
+.ns-item[data-mod].on{box-shadow:inset 3px 0 0 var(--mc)}
+
+/* Inicio: franja de 3 px por tarjeta. No se remarca el emoji (f1n, sin marco) ni se toca el velo .68. */
+.ns-inicio .ns-grid>.ns-card{--mc:var(--d-inicio);border-left:3px solid var(--mc)}
+.ns-inicio .ns-grid>.ns-card:nth-child(1){--mc:var(--d-notas)}
+.ns-inicio .ns-grid>.ns-card:nth-child(2){--mc:var(--d-archivo)}
+.ns-inicio .ns-grid>.ns-card:nth-child(3){--mc:var(--d-bandeja)}
+.ns-inicio .ns-grid>.ns-card:nth-child(4){--mc:var(--d-agenda)}
+.ns-inicio .ns-grid>.ns-card:nth-child(5){--mc:var(--d-conexion)}
+.ns-inicio .ns-grid>.ns-card:nth-child(7){--mc:var(--d-oficina)}
+/* Tinta Rosa: franja, fondo, logo y botón se conservan */
+.ns-inicio .ns-grid>.ns-card.ns-tr{border-left:3px solid rgba(201,54,144,.70)}
+.ns-inicio .ns-grid>.ns-card.ns-tr .ns-ch h3{color:#E3BFD0}
+.ns-inicio .ns-grid>.ns-card.ns-later{border-left:1px solid rgba(255,255,255,.18);--mc:transparent}
+
+/* Títulos pequeños e insignias en durazno, salvo Tinta Rosa */
+.ns-eyebrow,.ns-ch h3{color:var(--d-peach)}
+.ns-item .ns-chev{color:color-mix(in srgb,var(--d-peach) 75%,transparent)}
+.ns-badge{background:var(--d-peach);color:var(--d-peach-ink)}
+
+/* Chips de piso: franja de 3 px, tinte suave y la sigla (PB, 01) en el color del área */
+#floors>button[data-floor]{--fc:transparent}
+#floors>button[data-floor="0"]{--fc:var(--a-0)}
+#floors>button[data-floor="1"]{--fc:var(--a-1)}
+#floors>button[data-floor="2"]{--fc:var(--a-2)}
+#floors>button[data-floor="3"]{--fc:var(--a-3)}
+#floors>button[data-floor="4"]{--fc:var(--a-4)}
+body.ns-on #app aside.navigation #floors>button[data-floor]:not([data-floor="-1"]),
+#floors>button[data-floor]:not([data-floor="-1"]){
+  box-shadow:inset 3px 0 0 var(--fc);
+  background:color-mix(in srgb,var(--fc) 20%,transparent)!important;
+}
+body.ns-on #app aside.navigation #floors>button[data-floor]:not([data-floor="-1"]):not([aria-pressed=true]) b,
+#floors>button[data-floor]:not([data-floor="-1"]):not([aria-pressed=true]) b{color:var(--fc)}
+body.ns-on #app aside.navigation #floors>button[data-floor][aria-pressed=true]:not([data-floor="-1"]),
+#floors>button[data-floor][aria-pressed=true]:not([data-floor="-1"]){
+  box-shadow:inset 3px 0 0 var(--fc);
+}

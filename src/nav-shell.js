@@ -9,6 +9,7 @@
  */
 import {sheets} from './ui-chrome.js';
 import './nav-shell.css';
+import './paleta-d.css';
 import {modoInicial as modoInicialPuro, pantallaInicial as pantallaInicialPura} from './nav-prefs.js';
 import {mandoEstaAbierto, debeVolverAInicioTrasMando} from './mando-abierto.js';
 import {estadoModoDios, estadoDia} from './tira-estado.js';
