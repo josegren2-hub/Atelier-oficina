@@ -13,9 +13,9 @@ const sceneSrc = readFileSync(new URL('../src/scene.js', import.meta.url), 'utf8
 const swSrc = readFileSync(new URL('../public/sw.js', import.meta.url), 'utf8');
 const bootSrc = readFileSync(new URL('../src/bootstrap.js', import.meta.url), 'utf8');
 
-test('F1v: en celular, Separación amplia baja el pixelRatio y apaga las sombras', () => {
+test('F1v: en celular, Separación amplia baja el pixelRatio (1.0 desde f1w) y apaga las sombras', () => {
   assert.match(sceneSrc, /function pixelRatioFor\(viewMode\)/);
-  assert.match(sceneSrc, /viewMode==='stacked'\|\|viewMode==='spread'\)\?1\.25:1\.5/);
+  assert.match(sceneSrc, /viewMode==='stacked'\|\|viewMode==='spread'\)\?1\.0:1\.5/);
   const setView = sceneSrc.slice(sceneSrc.indexOf('function setView('), sceneSrc.indexOf('function setMode('));
   assert.match(setView, /renderer\.setPixelRatio\(pixelRatioFor\(mode\)\)/);
   assert.match(setView, /if\(phone&&\(st\|\|sp\)\)\{sun\.castShadow=false;renderer\.shadowMap\.enabled=false;\}/);
@@ -91,13 +91,13 @@ test('F1v: al entrar a Separación amplia en un perfil de 390 px se baja el DPR 
     const prBack=renderer.getPixelRatio();
     const shBack=renderer.shadowMap.enabled;
     assert.equal(prExt, 1.5, `edificio cerrado en celular queda en 1.5, era ${prExt}`);
-    assert.equal(prSt, 1.25, `separación amplia en celular baja a 1.25, era ${prSt}`);
+    assert.equal(prSt, 1.0, `separación amplia en celular baja a 1.0, era ${prSt}`);
     assert.equal(shExt, true, 'sombras encendidas en edificio cerrado');
     assert.equal(shSt, false, 'sombras apagadas en separación amplia en celular');
     assert.equal(prBack, 1.5);
     assert.equal(shBack, true, 'al volver a edificio cerrado las sombras se reencendieron');
     office.setMode('spread');
-    assert.equal(renderer.getPixelRatio(), 1.25);
+    assert.equal(renderer.getPixelRatio(), 1.0);
     assert.equal(renderer.shadowMap.enabled, false);
   } finally { restore(); }
 });
