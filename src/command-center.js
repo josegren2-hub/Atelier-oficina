@@ -1,5 +1,6 @@
 import {buildPizarronModel} from './pizarron.js';
 import {isPostponed} from './local-waiting.js';
+import {avatarPhotoUrl} from './avatar-photo.js';
 /** Read-only command center. Import command-center.css in the application entry. */
 export const taskStates = Object.freeze({pending:'Pendientes',in_progress:'En curso',authorization:'Autorización',urgent:'Urgentes',postponed:'Pospuestas',completed:'Completadas'});
 const aliases = {working:'in_progress',review:'authorization',done:'completed',deferred:'postponed',awaiting_approval:'authorization'};
@@ -45,6 +46,29 @@ export function mountCommandCenter({getSnapshot=()=>({}),onChoose=()=>{},getMand
   const content=dialog.querySelector('.cc-content'),source=dialog.querySelector('.cc-source');
   let section='tasks',status='all',query='',botId='',agendaId='ted',returnFocus=null,model=commandCenterModel(),readError=false,filtersOpen=false;
   function el(tag,text,cls) {const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;}
+  /** Retrato chico en la línea del responsable (mismos /avatares/*.webp). Si falta el archivo, inicial. */
+  function cardAvatar(bot,status){
+    const wrap=el('span',undefined,'cc-av');
+    wrap.dataset.st=status==='in_progress'?'in_progress':status==='completed'?'completed':'other';
+    wrap.setAttribute('aria-hidden','true');
+    const label=String(bot?.name||bot?.id||'?').trim();
+    const ini=(label.charAt(0)||'?').toLocaleUpperCase('es-MX');
+    if(bot?.id){
+      const img=document.createElement('img');
+      img.src=avatarPhotoUrl(bot.id);
+      img.alt='';
+      img.width=20;img.height=20;
+      img.loading='lazy';
+      img.addEventListener('error',()=>{
+        const fallback=el('span',ini,'cc-av-ini');
+        if(img.isConnected)img.replaceWith(fallback);
+      });
+      wrap.append(img);
+    }else{
+      wrap.append(el('span',ini,'cc-av-ini'));
+    }
+    return wrap;
+  }
   function button(text,action,cls){const node=el('button',text,cls);node.type='button';node.addEventListener('click',action);return node;}
   function empty(title,description,parent=content){const block=el('div',undefined,'cc-empty');block.append(el('h3',title),el('p',description));parent.append(block);}
   function heading(title,description){const block=el('div',undefined,'cc-section-heading');block.append(el('h3',title));if(description)block.append(el('p',description,'cc-explainer'));content.append(block);}
@@ -75,7 +99,7 @@ export function mountCommandCenter({getSnapshot=()=>({}),onChoose=()=>{},getMand
       if(reset)reset.disabled=!hasFilters();
       for(const b of filterButtons)b.setAttribute('aria-pressed',String(status===b.dataset.filter));
       if(!tasks.length)empty(model.hasTasks?(model.tasks.length?'Sin coincidencias':'Sin tareas recibidas'):'Fuente de tareas no conectada',model.hasTasks?(model.tasks.length?'No hay tareas que coincidan con esta búsqueda o estos filtros.':'La fuente no ha entregado tareas en esta vista.'):'Las actividades aparecerán aquí cuando exista una fuente validada. Los estados de los asistentes no se convierten en tareas.',results);
-      for(const task of tasks){const card=el('article',undefined,'cc-card');const bot=model.bots.find(b=>b.id===task.botId);card.append(el('span',taskStates[task.status]+(task.urgent&&task.status!=='urgent'?' · Urgente':''),'cc-badge'),el('h3',task.title));if(task.description)card.append(el('p',task.description));card.append(el('small',`${bot?.name||task.botId||'Sin asistente asignado'} · ${task.dueAt?dateText(task.dueAt):'Sin fecha prevista'}`));if(bot)card.append(button(`Ver a ${bot.name}`,()=>{close();onChoose(bot.id);}));results.append(card);}
+      for(const task of tasks){const card=el('article',undefined,'cc-card');const bot=model.bots.find(b=>b.id===task.botId);card.append(el('span',taskStates[task.status]+(task.urgent&&task.status!=='urgent'?' · Urgente':''),'cc-badge'),el('h3',task.title));if(task.description)card.append(el('p',task.description));const meta=el('small');meta.append(cardAvatar(bot,task.status),document.createTextNode(`${bot?.name||task.botId||'Sin asistente asignado'} · ${task.dueAt?dateText(task.dueAt):'Sin fecha prevista'}`));card.append(meta);if(bot)card.append(button(`Ver a ${bot.name}`,()=>{close();onChoose(bot.id);}));results.append(card);}
     }
     // Filtering only changes the local view; it never creates or edits records.
     // No search controls are offered when there is no information to filter.
