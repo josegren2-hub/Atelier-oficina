@@ -28,7 +28,7 @@ if ('serviceWorker' in navigator) {
   addEventListener('load', () => {
     const scope = swScope();
     const swUrl = new URL('sw.js', document.baseURI || location.href);
-    navigator.serviceWorker.register(swUrl.href, {scope}).then((reg) => {
+    navigator.serviceWorker.register(swUrl.href, {scope, updateViaCache: 'none'}).then((reg) => {
       // s9e: if a previous SW was controlling this page, reload when the new one activates.
       if (navigator.serviceWorker.controller) {
         let refreshing = false;
@@ -48,5 +48,18 @@ if ('serviceWorker' in navigator) {
     }).catch(() => {});
   });
 }
+
+
+// f1v: if the badge/HTML is stale vs live version.json, force a reload (SW or HTTP cache).
+try {
+  const verUrl = new URL('version.json', document.baseURI || location.href);
+  fetch(verUrl.href, {cache: 'no-store'}).then((r) => r.ok ? r.json() : null).then((v) => {
+    if (!v || !v.build) return;
+    const badge = document.querySelector('.prueba-badge')?.textContent || '';
+    const meta = document.querySelector('meta[name="atelier-build"]')?.getAttribute('content') || '';
+    const seen = badge + ' ' + meta;
+    if (seen.trim() && !seen.includes(v.build)) location.reload();
+  }).catch(() => {});
+} catch {}
 
 import('./pwa-install.js').then(m => m.mountPwaInstall?.()).catch(() => {});

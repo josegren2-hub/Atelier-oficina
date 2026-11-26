@@ -1,4 +1,4 @@
-// Atelier SW: network-first for app shell; NEVER cache estado.json / mando.enc / tareas.enc / archivero.enc / uso.enc / tintarosa.enc / proyectos.enc / sw.js.
+// Atelier SW: network-first for app shell; NEVER cache estado.json / mando.enc / tareas.enc / archivero.enc / uso.enc / tintarosa.enc / proyectos.enc / version.json / sw.js.
 const CACHE = 'atelier-v0.22.9';
 self.addEventListener('install', (e) => { self.skipWaiting(); });
 self.addEventListener('message', (e) => {
@@ -14,7 +14,7 @@ self.addEventListener('fetch', (e) => {
   const u = new URL(e.request.url);
   if (e.request.method !== 'GET') return;
   // Live data from Oficina-bots or local — never cache
-  if (/(estado\.json|mando\.enc|tareas\.enc|archivero\.enc|uso\.enc|tintarosa\.enc|proyectos\.enc)(\?|$)/.test(u.pathname + u.search) || /\/sw\.js$/.test(u.pathname)) {
+  if (/(estado\.json|mando\.enc|tareas\.enc|archivero\.enc|uso\.enc|tintarosa\.enc|proyectos\.enc|version\.json)(\?|$)/.test(u.pathname + u.search) || /\/sw\.js$/.test(u.pathname)) {
     e.respondWith(fetch(e.request, {cache: 'no-store'}));
     return;
   }

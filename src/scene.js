@@ -15,7 +15,7 @@ import {ENTORNO_KIND,entornoParam,entornoQualityFor,entornoVisibleFor,shadowBoxF
 
 export function createOffice(container,onBot,onAssets=()=>{},onAgenda=()=>{},onFloor=()=>{},onArchivero=()=>{}){
  const scene=new THREE.Scene();
- const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.22;container.appendChild(renderer.domElement);
+ const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});const phone=typeof matchMedia==='function'&&matchMedia('(max-width:760px)').matches;function pixelRatioFor(viewMode){const cap=phone?((viewMode==='stacked'||viewMode==='spread')?1.25:1.5):1.6;return Math.min((typeof devicePixelRatio==='number'&&devicePixelRatio)||1,cap);}renderer.setPixelRatio(pixelRatioFor('exterior'));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.22;container.appendChild(renderer.domElement);
  const pmrem=new THREE.PMREMGenerator(renderer);const roomEnvironment=new RoomEnvironment();scene.environment=pmrem.fromScene(roomEnvironment,.04).texture;scene.environmentIntensity=.25;roomEnvironment.dispose();pmrem.dispose();
  let camera=new THREE.PerspectiveCamera(35,1,.1,1200);camera.position.set(40,30,43);
  const controls=new OrbitControls(camera,renderer.domElement);controls.target.set(0,7,0);controls.enableDamping=true;controls.minDistance=12;controls.maxDistance=700;controls.maxPolarAngle=Math.PI*.48;
@@ -23,7 +23,7 @@ export function createOffice(container,onBot,onAssets=()=>{},onAgenda=()=>{},onF
  const CAM_MIN_Y=2;
  function clampViewToGround(){if(camera.position.y<CAM_MIN_Y){const lift=CAM_MIN_Y-camera.position.y;camera.position.y+=lift;controls.target.y+=lift;}if(controls.target.y<CAM_MIN_Y)controls.target.y=CAM_MIN_Y;}
  function updateControls(){controls.update();clampViewToGround();}
- const ambient=new THREE.HemisphereLight(0xd7e0e7,0x655746,.65);scene.add(ambient);const sun=new THREE.DirectionalLight(0xffc78e,1.6);sun.position.set(-18,30,23);sun.castShadow=true;const shadowSize=matchMedia('(max-width:760px)').matches?1024:2048;sun.shadow.mapSize.set(shadowSize,shadowSize);Object.assign(sun.shadow.camera,{left:-34,right:34,top:35,bottom:-30,far:100});sun.shadow.normalBias=.035;scene.add(sun);const fill=new THREE.DirectionalLight(0xaecbe3,.4);fill.position.set(20,20,-12);scene.add(fill);
+ const ambient=new THREE.HemisphereLight(0xd7e0e7,0x655746,.65);scene.add(ambient);const sun=new THREE.DirectionalLight(0xffc78e,1.6);sun.position.set(-18,30,23);sun.castShadow=true;const shadowSize=phone?1024:2048;sun.shadow.mapSize.set(shadowSize,shadowSize);Object.assign(sun.shadow.camera,{left:-34,right:34,top:35,bottom:-30,far:100});sun.shadow.normalBias=.035;scene.add(sun);const fill=new THREE.DirectionalLight(0xaecbe3,.4);fill.position.set(20,20,-12);scene.add(fill);
  const {M,mat,box,cyl,sphere,group,plant,tree,chair,screen,lamp,desk,archivero,besideDesk,sofa,rug,coffeeTable,library,roundTable,partition,pendant,mic,label,batch}=createFurnishings();
  // s17: entorno decorativo (fusión distrito + costa San Junipero, sin letrero). Solo en Edificio cerrado; no entra en el picking.
  // Las pruebas de node quitan los imports: sin createEntorno simplemente no hay entorno.
@@ -451,7 +451,7 @@ batch(site);const skipBatch=new Set([...facades,...structures]);frames.forEach(f
  }
  function startFloorTween(){
   const to=floorGroups.map((_,i)=>floorPose(i,mode,floor>=0));
-  if(reduced){floorGroups.forEach((g,i)=>{g.position.set(to[i].x,to[i].y,to[i].z);});floorTween=null;return;}
+  if(reduced||(phone&&(mode==='stacked'||mode==='spread'))){floorGroups.forEach((g,i)=>{g.position.set(to[i].x,to[i].y,to[i].z);});floorTween=null;return;}
   floorTween={t0:performance.now(),dur:VIEW_ANIM_MS,from:floorGroups.map(g=>({x:g.position.x,y:g.position.y,z:g.position.z})),to};
  }
  function hexOf(c){return '#'+c.getHexString();}
@@ -511,7 +511,7 @@ function syncStackControls(){const stacked=isStackOverview();controls.enableRota
  }
 
 function syncFrames(){const on=floorFramesVisible({floor,mode,walls});frames.forEach(g=>g.visible=on);}
-function setView(f=-1,{animate=true}={}){floor=f;structures.forEach(g=>g.visible=f<0);facades.forEach(g=>g.visible=walls&&f<0);syncFrames();floorGroups.forEach((g,i)=>g.visible=f<0||i===f);{const st=f<0&&mode==='stacked',sp=f<0&&mode==='spread',sc=sun.shadow.camera,dy=st?34:0;sun.position.set(-18,30+dy,23);sun.target.position.set(0,dy,0);sun.target.updateMatrixWorld();const envOn=!!entorno&&f<0&&mode==='exterior';Object.assign(sc,st?{left:-60,right:60,top:62,bottom:-56,far:170}:sp?{left:-50,right:50,top:52,bottom:-48,far:140}:envOn?shadowBoxFor({entorno:true}):{left:-34,right:34,top:35,bottom:-30,far:100});sc.updateProjectionMatrix();}roof.visible=f<0&&mode==='exterior';site.visible=f<0&&mode==='exterior';if(entorno)entorno.group.visible=entornoVisibleFor(f,mode);syncCeilingWash();stackVy=0;syncStackControls();startFloorTween();fitCamera({animate});if(scene.background)aplicarFondoEscena(scene.background);if(animate!==false)flushView();}
+function setView(f=-1,{animate=true}={}){floor=f;structures.forEach(g=>g.visible=f<0);facades.forEach(g=>g.visible=walls&&f<0);syncFrames();floorGroups.forEach((g,i)=>g.visible=f<0||i===f);{const st=f<0&&mode==='stacked',sp=f<0&&mode==='spread',sc=sun.shadow.camera,dy=st?34:0;sun.position.set(-18,30+dy,23);sun.target.position.set(0,dy,0);sun.target.updateMatrixWorld();const envOn=!!entorno&&f<0&&mode==='exterior';Object.assign(sc,st?{left:-60,right:60,top:62,bottom:-56,far:170}:sp?{left:-50,right:50,top:52,bottom:-48,far:140}:envOn?shadowBoxFor({entorno:true}):{left:-34,right:34,top:35,bottom:-30,far:100});sc.updateProjectionMatrix();renderer.setPixelRatio(pixelRatioFor(mode));if(phone&&(st||sp)){sun.castShadow=false;renderer.shadowMap.enabled=false;}else{sun.castShadow=true;renderer.shadowMap.enabled=true;}}roof.visible=f<0&&mode==='exterior';site.visible=f<0&&mode==='exterior';if(entorno)entorno.group.visible=entornoVisibleFor(f,mode);syncCeilingWash();stackVy=0;syncStackControls();startFloorTween();fitCamera({animate});if(scene.background)aplicarFondoEscena(scene.background);if(animate!==false)flushView();}
  function setMode(next){if(!VIEW_MODES.includes(next))throw new RangeError('Vista desconocida');mode=next;setView(-1,{animate:true});}
  function setNight(v){
   // Noche = deep night; off = dusk/blue-hour (fachada REF), not bright noon.
