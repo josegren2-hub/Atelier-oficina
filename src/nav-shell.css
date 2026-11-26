@@ -133,6 +133,21 @@ body.ns-inmersivo #viewport .ns-luz,body.ns-inmersivo .ns-luz{top:calc(14px + en
 .ns-mas-sep .ns-eyebrow{font-size:10px;color:rgba(188,217,236,.85)}
 @media (orientation:landscape) and (max-height:500px){.ns-mas-sep{margin-top:2px;padding:4px 2px 2px}}
 
+/* f1l: Inicio no se sale por la derecha. grid 1fr equivale a minmax(auto,1fr),
+   y el min-content de chips y del formulario ensanchaba las tarjetas (~432 px)
+   más que el viewport (390/360/412). Se fuerza minmax(0,1fr) y min-width:0
+   para recuperar el margen de 14 px de f1j a ambos lados. */
+.ns-inicio .ns-ini,.ns-inicio .ns-grid{min-width:0;max-width:100%}
+.ns-inicio .ns-grid{grid-template-columns:minmax(0,1fr)}
+@media (min-width:761px){.ns-inicio .ns-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.ns-inicio .ns-card{min-width:0;max-width:100%}
+.ns-inicio .ns-ch{min-width:0;flex-wrap:wrap;row-gap:6px}
+.ns-inicio .ns-ch h3{min-width:0;flex:1 1 auto}
+.ns-inicio .ns-chip{flex:0 1 auto;min-width:0;max-width:100%}
+.ns-inicio .ns-qc,.ns-inicio .ns-in{min-width:0;max-width:100%}
+.ns-inicio .ns-btn{max-width:100%}
+.ns-inicio .ns-para,.ns-inicio .ns-s,.ns-inicio .ns-t,.ns-inicio .ns-caps li span{overflow-wrap:anywhere}
+
 /* ===== f1i (boceto 79, OK de Rob t504s2301): tira compacta arriba + vistas siempre visibles + píldora flotante abajo =====
    Solo móvil vertical. Escritorio y horizontal no cambian: fuera de este @media la tira nueva está oculta. */
 .ns-tabbar,.ns-cams-toggle{display:none}

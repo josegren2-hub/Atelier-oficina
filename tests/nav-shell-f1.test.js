@@ -180,3 +180,18 @@ test('F1k: al desbloquear el mando desde Inicio se vuelve a Inicio (bug 2)', () 
   assert.match(src, /#mando-dialog'\)\?\.addEventListener\('close'/);
   assert.match(src, /if \(volver\) abrirInicio\(\)/);
 });
+
+test('F1l: Inicio no desborda en horizontal: la retícula puede encoger y el formulario y los badges caben', () => {
+  const start = css.indexOf('/* f1l:');
+  const end = css.indexOf('/* ===== f1i', start);
+  const block = css.slice(start, end > start ? end : undefined);
+  assert.match(block, /\.ns-inicio \.ns-grid\{[^}]*grid-template-columns:minmax\(0,\s*1fr\)/);
+  assert.match(block, /@media \(min-width:761px\)\{\.ns-inicio \.ns-grid\{grid-template-columns:repeat\(3,minmax\(0,\s*1fr\)\)\}\}/);
+  assert.match(block, /\.ns-inicio \.ns-card\{[^}]*min-width:0/);
+  assert.match(block, /\.ns-inicio \.ns-ch\{[^}]*min-width:0/);
+  assert.match(block, /\.ns-inicio \.ns-qc[^{]*\{[^}]*min-width:0/);
+  assert.match(block, /\.ns-inicio \.ns-in[^{]*\{[^}]*min-width:0/);
+  assert.match(block, /\.ns-inicio \.ns-chip\{[^}]*min-width:0/);
+  assert.match(block, /\.ns-inicio \.ns-btn\{[^}]*max-width:100%/);
+  assert.doesNotMatch(block, /grid-template-columns:\s*1fr\s*[;}]/);
+});
