@@ -235,3 +235,14 @@ body.ns-inmersivo #viewport .ns-luz,body.ns-inmersivo .ns-luz{top:calc(14px + en
 .ns-inicio .ns-tr{border-left:3px solid rgba(201,54,144,.70);background:rgba(14,17,24,.86)}
 .ns-inicio .ns-tr .ns-ic{background:rgba(201,54,144,.12);border-color:rgba(230,188,207,.50);color:#E3BFD0}
 .ns-inicio .ns-btn.tr{background:linear-gradient(90deg,rgba(201,54,144,.78),rgba(181,48,130,.78));border-color:rgba(230,188,207,.55);color:#fff}
+
+/* f1n (OK de Rob t514u): vidrio + velo .68, tinte de Tinta Rosa en todo el cuadro,
+   emojis sin marco y logo oficial de la revista en Tinta Rosa. El placeholder
+   corto «Escribe una nota» está en nav-shell.js. No toca la tira f1i/f1j ni f1m. */
+.ns-inicio .ns-card{background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(255,255,255,.04)),rgba(14,17,24,.68);backdrop-filter:blur(22px) saturate(1.4);-webkit-backdrop-filter:blur(22px) saturate(1.4);border:1px solid rgba(255,255,255,.18);border-top-color:rgba(255,255,255,.30);box-shadow:0 10px 30px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.1)}
+.ns-inicio .ns-x{background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(255,255,255,.04)),rgba(14,17,24,.68);backdrop-filter:blur(22px) saturate(1.4);-webkit-backdrop-filter:blur(22px) saturate(1.4);border:1px solid rgba(255,255,255,.18);border-top-color:rgba(255,255,255,.30)}
+.ns-inicio .ns-para,.ns-inicio .ns-s,.ns-inicio .ns-sub,.ns-inicio .ns-later,.ns-inicio .ns-later summary,.ns-inicio .ns-later p{color:#d4dde6}
+.ns-inicio .ns-later summary:after{color:#c8d2dc}
+.ns-inicio .ns-tr{border-left:3px solid rgba(201,54,144,.70);background:linear-gradient(145deg,rgba(201,54,144,.16),rgba(230,188,207,.08)),linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.03)),rgba(14,17,24,.68)}
+.ns-inicio .ns-emo{flex:none;display:inline-flex;align-items:center;justify-content:center;width:auto;height:auto;margin:0;padding:0;background:none;border:0;box-shadow:none;border-radius:0;font-family:"Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji","Android Emoji",sans-serif;font-size:18px;line-height:1;font-style:normal;font-weight:400;color:inherit;pointer-events:none;user-select:none;-webkit-user-select:none}
+.ns-inicio img.ns-tr-logo{width:20px;height:20px;object-fit:contain;display:block;flex:none;padding:0;margin:0;background:none;border:0;border-radius:0;box-shadow:none;pointer-events:none}

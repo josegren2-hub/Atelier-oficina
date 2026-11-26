@@ -222,7 +222,7 @@ function saludo(d = new Date()) { const h = d.getHours(); return h < 5 ? 'Buenas
 function fechaLarga(d = new Date()) {
   try { const s = d.toLocaleDateString('es-MX', {weekday: 'long', day: 'numeric', month: 'long'}); return s.charAt(0).toUpperCase() + s.slice(1); } catch { return ''; }
 }
-function card(ic, t, body, extra = '') { return `<section class="ns-card"><div class="ns-ch"><span class="ns-ic">${svg(ic)}</span><h3>${t}</h3>${extra}</div>${body}</section>`; }
+function card(emo, t, body, extra = '') { return `<section class="ns-card"><div class="ns-ch"><span class="ns-emo" aria-hidden="true">${emo}</span><h3>${t}</h3>${extra}</div>${body}</section>`; }
 const chip = (cls, t) => `<span class="ns-chip ns-c-${cls}">${esc(t)}</span>`;
 let avisoNota = false;
 let volverInicioTrasMando = false;
@@ -252,13 +252,13 @@ export function renderInicio() {
   <div class="ns-ini-top"><div><h2 class="ns-hello">${saludo()}</h2><p class="ns-sub">${esc(fechaLarga())}${n ? ` · <span class="ns-pink">${n} ${n === 1 ? 'asunto espera' : 'asuntos esperan'} tu OK</span>` : ''}</p></div>
    <div class="ns-ini-acts">${state.modo === 'oculto' ? `<button type="button" class="ns-x ns-ini-menu" data-act="menu-desde-inicio" aria-label="Abrir menú">${svg('menu')}</button>` : ''}<button type="button" class="ns-x" data-act="cerrar-inicio" aria-label="Cerrar Inicio">${svg('x')}</button></div></div>
   <div class="ns-grid">
-  ${card('plus', 'Notas rápidas', `<p class="ns-para">Para apuntar una idea o un pendiente. Al guardar, aparece aquí abajo. No se envía a nadie ni sale de este teléfono.</p><form class="ns-qc" data-act="captura"><label class="ns-in">${svg('plus')}<input name="t" maxlength="280" autocomplete="off" placeholder="Escribe una nota y toca Guardar" aria-label="Nota rápida"></label><button class="ns-btn p" type="submit">Guardar</button></form>${aviso}${listaNotas}`, chip('mut', 'Solo en este celular'))}
-  ${card('back', '¿En qué me quedé?', quede)}
-  ${card('bandeja', 'Espera tu OK', espera, n ? chip('wait', 'Te espera') : chip('ok', 'Al día'))}
-  ${card('agenda', 'Agenda inmediata', agenda, mandoAbierto ? '' : chip('mut', 'Bloqueada'))}
-  ${card('signal', 'Conexión', `<p class="ns-para">Solo informa el estado de la oficina. No abre ningún menú.</p><p class="ns-t">${esc(src)}</p><p class="ns-s">Última señal: ${esc(sig)}</p>`, conectado ? chip('ok', 'Conectado') : chip('wait', 'Revisar'))}
-  <section class="ns-card ns-tr"><div class="ns-ch"><span class="ns-ic">${svg('agenda')}</span><h3>Tinta Rosa</h3></div><p class="ns-para">Semana, historial, pendientes y estadísticas de la revista. El botón abre el Registro.</p><div class="ns-row-btns"><button type="button" class="ns-btn tr" data-act="tinta">Abrir Registro</button></div></section>
-  <section class="ns-card ns-of"><div class="ns-ch"><span class="ns-ic">${svg('cube')}</span><h3>Oficina 3D</h3></div><p class="ns-para">Vuelve al edificio o abre el resumen completo de la oficina.</p><p class="ns-s">${esc(txt('#bot-count') || '16 bots')}</p><div class="ns-row-btns"><button type="button" class="ns-btn p" data-act="cerrar-inicio">Ver la oficina</button><button type="button" class="ns-btn" data-act="resumen">Resumen completo</button></div></section>
+  ${card('📝', 'Notas rápidas', `<p class="ns-para">Para apuntar una idea o un pendiente. Al guardar, aparece aquí abajo. No se envía a nadie ni sale de este teléfono.</p><form class="ns-qc" data-act="captura"><label class="ns-in">${svg('plus')}<input name="t" maxlength="280" autocomplete="off" placeholder="Escribe una nota" aria-label="Nota rápida"></label><button class="ns-btn p" type="submit">Guardar</button></form>${aviso}${listaNotas}`, chip('mut', 'Solo en este celular'))}
+  ${card('🔖', '¿En qué me quedé?', quede)}
+  ${card('✅', 'Espera tu OK', espera, n ? chip('wait', 'Te espera') : chip('ok', 'Al día'))}
+  ${card('📅', 'Agenda inmediata', agenda, mandoAbierto ? '' : chip('mut', 'Bloqueada'))}
+  ${card('📶', 'Conexión', `<p class="ns-para">Solo informa el estado de la oficina. No abre ningún menú.</p><p class="ns-t">${esc(src)}</p><p class="ns-s">Última señal: ${esc(sig)}</p>`, conectado ? chip('ok', 'Conectado') : chip('wait', 'Revisar'))}
+  <section class="ns-card ns-tr"><div class="ns-ch"><img class="ns-emo ns-tr-logo" src="${((typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL) || './').replace(/\/?$/, '/')}tinta-rosa-logo-icono-96.png" width="20" height="20" alt="Tinta Rosa"><h3>Tinta Rosa</h3></div><p class="ns-para">Semana, historial, pendientes y estadísticas de la revista. El botón abre el Registro.</p><div class="ns-row-btns"><button type="button" class="ns-btn tr" data-act="tinta">Abrir Registro</button></div></section>
+  <section class="ns-card ns-of"><div class="ns-ch"><span class="ns-emo" aria-hidden="true">🏢</span><h3>Oficina 3D</h3></div><p class="ns-para">Vuelve al edificio o abre el resumen completo de la oficina.</p><p class="ns-s">${esc(txt('#bot-count') || '16 bots')}</p><div class="ns-row-btns"><button type="button" class="ns-btn p" data-act="cerrar-inicio">Ver la oficina</button><button type="button" class="ns-btn" data-act="resumen">Resumen completo</button></div></section>
   <details class="ns-card ns-later"><summary>Más adelante · Fase 2</summary><p><b>Prioridades de hoy</b> no aparece como tarjeta porque todavía no hay una fuente de prioridades. Llega con Tareas y Bandeja en la Fase 2.</p></details>
   </div></div>`;
 }

@@ -149,7 +149,7 @@ test('F1k: Notas rápidas junta el formulario y la lista en una tarjeta, con avi
   assert.match(src, /Borrar notas de este celular/);
   const render = src.slice(src.indexOf('export function renderInicio'), src.indexOf('function abrirInicio'));
   const formAt = render.indexOf('<form class="ns-qc"');
-  const cardPlus = render.indexOf("card('plus', 'Notas rápidas'");
+  const cardPlus = render.indexOf("card('📝', 'Notas rápidas'");
   const afterCard = render.indexOf('¿En qué me quedé?');
   assert.ok(cardPlus >= 0 && formAt > cardPlus && formAt < afterCard, 'el formulario vive dentro de Notas rápidas');
   assert.ok(!/card\('plus', 'Tus capturas'/.test(render));
@@ -168,7 +168,7 @@ test('F1k: cada tarjeta de Inicio explica qué hace; Agenda bloqueada usa .unloc
   assert.match(render, /Solo informa el estado de la oficina/);
   assert.match(css, /\.ns-inicio \.ns-btn\.tr\{[^}]*rgba\(201,54,144,\.78\)/);
   assert.match(css, /\.ns-inicio \.ns-tr\{[^}]*rgba\(201,54,144,\.70\)/);
-  assert.match(css, /\.ns-inicio \.ns-tr \.ns-ic\{[^}]*rgba\(201,54,144,\.12\)/);
+  assert.match(css, /\.ns-inicio \.ns-tr\{[^}]*rgba\(201,54,144,\.16\)/);
 });
 
 test('F1k: al desbloquear el mando desde Inicio se vuelve a Inicio (bug 2)', () => {
@@ -194,4 +194,34 @@ test('F1l: Inicio no desborda en horizontal: la retícula puede encoger y el for
   assert.match(block, /\.ns-inicio \.ns-chip\{[^}]*min-width:0/);
   assert.match(block, /\.ns-inicio \.ns-btn\{[^}]*max-width:100%/);
   assert.doesNotMatch(block, /grid-template-columns:\s*1fr\s*[;}]/);
+});
+
+test('F1n: Inicio usa velo .68 con vidrio, emojis sin marco, logo de Tinta Rosa y placeholder corto', () => {
+  const render = src.slice(src.indexOf('export function renderInicio'), src.indexOf('function abrirInicio'));
+  assert.match(render, /placeholder="Escribe una nota"/);
+  assert.doesNotMatch(render, /Escribe una nota y toca Guardar/);
+  assert.match(render, /card\('📝', 'Notas rápidas'/);
+  assert.match(render, /card\('🔖', '¿En qué me quedé\?'/);
+  assert.match(render, /card\('✅', 'Espera tu OK'/);
+  assert.match(render, /card\('📅', 'Agenda inmediata'/);
+  assert.match(render, /card\('📶', 'Conexión'/);
+  assert.match(render, /aria-hidden="true">🏢<\/span><h3>Oficina 3D/);
+  assert.match(render, /img class="ns-emo ns-tr-logo"/);
+  assert.match(render, /tinta-rosa-logo-icono-96\.png/);
+  assert.match(render, /alt="Tinta Rosa"/);
+  assert.doesNotMatch(render, /ns-ic/);
+  assert.doesNotMatch(render, /svg\('agenda'\)/);
+  const start = css.indexOf('/* f1n ');
+  assert.ok(start >= 0, 'falta el bloque f1n en el CSS');
+  const block = css.slice(start);
+  assert.match(block, /rgba\(14,17,24,\.68\)/);
+  assert.match(block, /blur\(22px\) saturate\(1\.4\)/);
+  assert.match(block, /rgba\(201,54,144,\.16\)/);
+  assert.match(block, /\.ns-inicio \.ns-emo\{[^}]*background:\s*none/);
+  assert.match(block, /\.ns-inicio \.ns-emo\{[^}]*border:\s*0/);
+  assert.match(block, /img\.ns-tr-logo\{[^}]*width:20px/);
+  assert.match(block, /img\.ns-tr-logo\{[^}]*background:\s*none/);
+  const logo = readFileSync(new URL('../public/tinta-rosa-logo-icono-96.png', import.meta.url));
+  assert.ok(logo && logo.length > 100, 'falta el PNG del logo en public/');
+  assert.equal(logo.subarray(0, 8).toString('binary'), '\x89PNG\r\n\x1a\n');
 });
