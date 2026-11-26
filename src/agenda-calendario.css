@@ -1,0 +1,182 @@
+/* F1s: agenda tipo calendario en el Centro de mando. Tipografía normal (sin mayúsculas espaciadas). */
+.cc-dialog.agenda-cal-view,
+.cc-dialog.agenda-antes-view{width:calc(100vw - 16px);max-height:calc(100dvh - 16px)}
+.cc-dialog.agenda-cal-view .cc-content, .cc-dialog.agenda-lista-view .cc-content{padding:14px;min-width:0;overflow-x:hidden;overflow-wrap:anywhere}
+.cc-dialog.agenda-cal-view .cc-source, .cc-dialog.agenda-lista-view .cc-source{margin:0 14px 6px}
+
+/* Riel angosto: ~42 px a 390 px; los eventos ganan el resto. */
+.cc-dialog.agenda-cal-view{--ag-rail:42px}
+
+.ag-toolbar{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center;margin:0 0 10px;min-width:0}
+.ag-days,.ag-views,.ag-legend{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-width:0}
+.ag-days button,.ag-views button{
+  min-height:34px!important;padding:4px 12px!important;border-radius:999px!important;font:600 13px/1.2 system-ui,sans-serif!important;
+  letter-spacing:0!important;text-transform:none!important;
+}
+
+.ag-legend{list-style:none;margin:0 0 12px;padding:0;font:12px/1.3 system-ui,sans-serif;color:var(--cc-muted)}
+.ag-legend li{display:inline-flex;align-items:center;gap:6px;margin:0;padding:0}
+.ag-legend i{width:10px;height:10px;border-radius:3px;display:block;flex:none}
+.ag-leg-cal i{background:#6fb2ff}
+.ag-leg-aud i{background:#ba85ea}
+
+.ag-allday{display:grid;grid-template-columns:var(--ag-rail) minmax(0,1fr);gap:6px;align-items:start;margin:0 0 10px;min-width:0}
+.ag-allday-lab{margin:0;padding-top:2px;font:600 9px/1.15 system-ui,sans-serif;color:var(--cc-muted);letter-spacing:0;max-width:var(--ag-rail);overflow-wrap:anywhere}
+.ag-allday-chips{display:flex;flex-direction:column;gap:6px;min-width:0}
+.ag-allday-empty{margin:0;font:12px/1.3 system-ui,sans-serif;color:var(--cc-muted)}
+.ag-chip{border-radius:8px;padding:7px 10px;min-width:0;border:1px solid transparent}
+.ag-chip-cal{background:rgba(111,178,255,.16);border-color:rgba(111,178,255,.4);border-left:3px solid #6fb2ff}
+.ag-chip-aud{background:rgba(186,133,234,.16);border-color:rgba(186,133,234,.4);border-left:3px solid #ba85ea}
+
+.ag-board{position:relative;display:grid;grid-template-columns:var(--ag-rail) minmax(0,1fr);column-gap:4px;min-width:0;height:var(--ag-h,640px);margin:0 0 8px}
+.ag-rail{position:relative;min-width:0}
+.ag-hour{position:absolute;left:0;right:0}
+.ag-hour-lab{display:block;font:600 10px/1 ui-sans-serif,system-ui,sans-serif;color:var(--cc-muted);font-variant-numeric:tabular-nums;letter-spacing:0;transform:translateY(-0.55em)}
+.ag-grid{position:relative;min-width:0;border-left:1px solid var(--cc-border)}
+.ag-hline{position:absolute;left:0;right:0;height:1px;background:rgba(120,140,158,.35);pointer-events:none;z-index:0}
+
+/* Títulos en texto normal: anulan el 10px uppercase con letter-spacing del estilo de oficina. */
+.cc-dialog.agenda-cal-view :is(.ag-ev-title,.ag-li-title,.ag-chip .ag-ev-title,.ag-plus-row .ag-ev-title,.ag-plus-hd){
+  font:600 14px/1.3 system-ui,sans-serif!important;
+  letter-spacing:0!important;
+  text-transform:none!important;
+  color:var(--cc-ink)!important;
+  margin:0!important;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+.cc-dialog.agenda-cal-view .ag-ev-time,
+.cc-dialog.agenda-cal-view .ag-ev-lugar,
+.cc-dialog.agenda-cal-view .ag-li-hora,
+.cc-dialog.agenda-cal-view .ag-li-lugar{
+  font:12px/1.3 system-ui,sans-serif!important;
+  letter-spacing:0!important;
+  text-transform:none!important;
+  color:var(--cc-muted)!important;
+  margin:2px 0 0!important;
+  display:block;
+  overflow-wrap:anywhere;
+}
+
+.ag-ev{
+  position:absolute;
+  z-index:3;
+  box-sizing:border-box;
+  border-radius:8px;
+  padding:5px 7px 6px;
+  overflow:hidden;
+  min-width:0;
+  border:1px solid transparent;
+}
+/* Fondos opacos: la línea de ahora pasa detrás y no cruza el título. */
+.cc-dialog.agenda-cal-view .ag-ev.ag-ev-cal{
+  background:#2a4158!important;
+  border-color:rgba(111,178,255,.45);
+  border-left:3px solid #6fb2ff;
+}
+.cc-dialog.agenda-cal-view .ag-ev.ag-ev-aud{
+  background:#3a2c4e!important;
+  border-color:rgba(186,133,234,.45);
+  border-left:3px solid #ba85ea;
+}
+
+/* «+N» vive en una mini-columna propia, no encima del título. */
+.ag-plus{
+  position:absolute!important;
+  right:0;left:auto;
+  z-index:3;
+  min-height:26px!important;
+  height:26px!important;
+  min-width:32px!important;
+  width:32px;
+  padding:0!important;
+  border-radius:999px!important;
+  font:700 12px/26px system-ui,sans-serif!important;
+  letter-spacing:0!important;
+  text-transform:none!important;
+  white-space:nowrap!important;
+  overflow:hidden;
+  overflow-wrap:normal!important;
+  word-break:keep-all!important;
+  background:#243548!important;
+  border:1px solid #6fb2ff!important;
+  color:#eef4f8!important;
+}
+.ag-plus-list{
+  position:absolute;
+  left:0;right:0;
+  z-index:4;
+  background:#1d2b39;
+  border:1px solid var(--cc-border);
+  border-radius:10px;
+  padding:8px 10px;
+  box-shadow:0 8px 24px #0008;
+  min-width:0;
+}
+.ag-plus-hd{margin:0 0 6px!important;font:600 12px/1.3 system-ui,sans-serif!important;color:var(--cc-muted)!important;text-transform:none!important;letter-spacing:0!important}
+.ag-plus-row{padding:6px 8px;border-radius:8px;margin:0 0 6px;border-left:3px solid transparent}
+.ag-plus-row.ag-ev-cal{background:rgba(111,178,255,.16);border-left-color:#6fb2ff}
+.ag-plus-row.ag-ev-aud{background:rgba(186,133,234,.16);border-left-color:#ba85ea}
+
+/* Línea de ahora: detrás de los bloques, sin etiqueta grande sobre el riel. */
+.ag-now{
+  position:absolute;left:0;right:0;z-index:0;
+  height:0;border-top:2px solid rgba(241,124,129,.75);
+  pointer-events:none;
+}
+.ag-now-lab{
+  position:absolute;left:0;right:0;z-index:2;
+  display:flex;align-items:center;gap:3px;
+  transform:translateY(-50%);
+  pointer-events:none;
+  background:transparent;color:#f17c81;
+  font:700 9px/1 system-ui,sans-serif;
+  letter-spacing:0;text-transform:none;
+  padding:0;border-radius:0;
+  white-space:nowrap;
+}
+.ag-now-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:#f17c81;flex:none;
+  box-shadow:0 0 0 2px #1d2b39;
+}
+.ag-now-lab em{
+  font:700 9px/1 ui-sans-serif,system-ui,sans-serif;
+  font-style:normal;
+  font-variant-numeric:tabular-nums;
+  color:#f17c81;
+}
+
+.ag-lista{min-width:0}
+.ag-li{border:1px solid var(--cc-border);border-radius:12px;padding:12px 14px;margin:0 0 10px;background:var(--cc-surface);min-width:0}
+.ag-li.cc-ag-cal,.ag-li.ag-li-cal{border-left:3px solid #6fb2ff}
+.ag-li.cc-ag-aud,.ag-li.ag-li-aud{border-left:3px solid #ba85ea}
+.ag-li-kind{font:650 11px/1.2 system-ui,sans-serif;color:var(--cc-accent);letter-spacing:0;text-transform:none}
+
+/* Lista del boceto (no la vista «antes»): títulos normales también en h4 de .ag-li */
+.cc-dialog.agenda-cal-view .ag-li :is(h3,h4){
+  font:600 15px/1.35 system-ui,sans-serif!important;
+  letter-spacing:0!important;
+  text-transform:none!important;
+  color:var(--cc-ink)!important;
+  margin:4px 0!important;
+}
+
+.cc-dialog.agenda-cal-view .cc-agenda-switch, .cc-dialog.agenda-lista-view .cc-agenda-switch{margin:0 0 8px}
+.cc-dialog .ag-kicker{
+  margin:0 0 8px;font:12px/1.3 system-ui,sans-serif;color:var(--cc-muted);
+  letter-spacing:0;text-transform:none;
+}
+
+/* Estado activo: acento hielo. style.css usa :is(#mando-dialog,...) → especificidad de ID. */
+html body.agenda-boceto dialog.cc-dialog.agenda-cal-view .ag-days button.ag-toggle.ag-on[aria-pressed=true],
+html body.agenda-boceto dialog.cc-dialog.agenda-cal-view .ag-views button.ag-toggle.ag-on[aria-pressed=true],
+#mando-dialog.cc-dialog.agenda-cal-view .ag-days button.ag-toggle[aria-pressed=true],
+#mando-dialog.cc-dialog.agenda-cal-view .ag-views button.ag-toggle[aria-pressed=true]{
+  background:#bcd9ec!important;
+  background-color:#bcd9ec!important;
+  border-color:#7aa3bc!important;
+  color:#131c26!important;
+  box-shadow:none!important;
+}
+.ag-hour-lab,.ag-now-lab{overflow-wrap:normal;white-space:nowrap}

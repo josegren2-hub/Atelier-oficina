@@ -1,4 +1,5 @@
 import {buildPizarronModel} from './pizarron.js';
+import {renderAgendaCalendario} from './agenda-calendario.js';
 import {isPostponed} from './local-waiting.js';
 import {avatarPhotoUrl} from './avatar-photo.js';
 /** Read-only command center. Import command-center.css in the application entry. */
@@ -153,11 +154,9 @@ export function mountCommandCenter({getSnapshot=()=>({}),onChoose=()=>{},getMand
     const gen=pm.gen?new Date(pm.gen).toLocaleString('es-MX',{timeZone:'America/Chihuahua',hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'}):'—';
     content.append(el('p',`Fuente: Mando cifrado (Google Calendar) · Solo lectura · datos al ${gen}${jul?' · Solo audiencias':''}`,'cc-explainer'));
     const columns=el('div',undefined,'cc-agenda-columns');
-    const schedule=el('section',undefined,'cc-agenda-events');schedule.setAttribute('aria-label',`Compromisos de ${name}`);schedule.append(el('h3','Compromisos · hoy y mañana'));
-    if(!items.length)empty(jul?'Sin audiencias':'Sin eventos',jul?'No hay audiencias hoy ni mañana.':'No hay eventos hoy ni mañana.',schedule);
-    for(const e of items){const card=el('article',undefined,'cc-card cc-ag-'+(e.tipo==='cal'?'cal':'aud'));
-      const dia=new Date(String(e.fecha).slice(0,10)+'T12:00:00-06:00').toLocaleDateString('es-MX',{timeZone:'America/Chihuahua',weekday:'short',day:'numeric',month:'short'});
-      card.append(el('span',`${e.tipo==='cal'?'Calendario':'Audiencia'} · ${dia}${e.hora?' · '+e.hora+(e.fin?'–'+e.fin:''):''}`,'cc-badge'),el('h4',e.titulo));if(str(e.lugar))card.append(el('p',e.lugar));schedule.append(card);}
+    const schedule=el('section',undefined,'cc-agenda-events');schedule.setAttribute('aria-label',`Compromisos de ${name}`);
+    if(!items.length){schedule.append(el('h3','Compromisos · hoy y mañana'));empty(jul?'Sin audiencias':'Sin eventos',jul?'No hay audiencias hoy ni mañana.':'No hay eventos hoy ni mañana.',schedule);}
+    else renderAgendaCalendario({el,button,content:schedule,dialog,items,name,render});
     const tasks=el('section',undefined,'cc-agenda-tasks');tasks.setAttribute('aria-label',`Pendientes de ${name}`);tasks.append(el('h3','Pendientes y actividades'));
     if(!pending.length)empty(model.hasTasks?'Sin tareas por atender':'Pendientes aún no disponibles',model.hasTasks?`No hay tareas abiertas de ${name} en esta vista.`:'La fuente de tareas no está conectada. No se puede confirmar si hay pendientes.',tasks);
     for(const task of pending){const card=el('article',undefined,'cc-card');card.append(el('span',taskStates[task.status]+(task.urgent&&task.status!=='urgent'?' · Urgente':''),'cc-badge'),el('h4',task.title));if(task.description)card.append(el('p',task.description));card.append(el('small',task.dueAt?dateText(task.dueAt):'Sin fecha prevista'));tasks.append(card);}

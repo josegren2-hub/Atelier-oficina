@@ -1,6 +1,7 @@
 import './style.css';
 import {mountReleaseNotice} from './release-notice.js';
 import './command-center.css';
+import './agenda-calendario.css';
 import {bots,floors,disconnectedSnapshot,demoSnapshot,statusLabels} from './data.js';
 import {readSnapshot} from './adapter.js';
 import {SOURCE_CONTRACT} from './source-contract.js';
