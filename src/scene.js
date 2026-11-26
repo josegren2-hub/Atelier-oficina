@@ -412,7 +412,7 @@ function syncStackControls(){const stacked=isStackOverview();controls.enableRota
  }
 
 function syncFrames(){const on=floorFramesVisible({floor,mode,walls});frames.forEach(g=>g.visible=on);}
-function setView(f=-1,{animate=true}={}){floor=f;structures.forEach(g=>g.visible=f<0);facades.forEach(g=>g.visible=walls&&f<0);syncFrames();floorGroups.forEach((g,i)=>g.visible=f<0||i===f);{const st=f<0&&mode==='stacked',sp=f<0&&mode==='spread',sc=sun.shadow.camera,dy=st?34:0;sun.position.set(-18,30+dy,23);sun.target.position.set(0,dy,0);sun.target.updateMatrixWorld();const envOn=!!entorno&&f<0&&mode==='exterior';Object.assign(sc,st?{left:-60,right:60,top:62,bottom:-56,far:170}:sp?{left:-50,right:50,top:52,bottom:-48,far:140}:envOn?shadowBoxFor({entorno:true}):{left:-34,right:34,top:35,bottom:-30,far:100});sc.updateProjectionMatrix();}roof.visible=f<0&&mode==='exterior';site.visible=f<0&&mode==='exterior';if(entorno)entorno.group.visible=entornoVisibleFor(f,mode);syncCeilingWash();stackVy=0;syncStackControls();startFloorTween();fitCamera({animate});if(animate!==false)flushView();}
+function setView(f=-1,{animate=true}={}){floor=f;structures.forEach(g=>g.visible=f<0);facades.forEach(g=>g.visible=walls&&f<0);syncFrames();floorGroups.forEach((g,i)=>g.visible=f<0||i===f);{const st=f<0&&mode==='stacked',sp=f<0&&mode==='spread',sc=sun.shadow.camera,dy=st?34:0;sun.position.set(-18,30+dy,23);sun.target.position.set(0,dy,0);sun.target.updateMatrixWorld();const envOn=!!entorno&&f<0&&mode==='exterior';Object.assign(sc,st?{left:-60,right:60,top:62,bottom:-56,far:170}:sp?{left:-50,right:50,top:52,bottom:-48,far:140}:envOn?shadowBoxFor({entorno:true}):{left:-34,right:34,top:35,bottom:-30,far:100});sc.updateProjectionMatrix();}roof.visible=f<0&&mode==='exterior';site.visible=f<0&&mode==='exterior';if(entorno)entorno.group.visible=entornoVisibleFor(f,mode);syncCeilingWash();stackVy=0;syncStackControls();startFloorTween();fitCamera({animate});if(scene.background)aplicarFondoEscena(scene.background);if(animate!==false)flushView();}
  function setMode(next){if(!VIEW_MODES.includes(next))throw new RangeError('Vista desconocida');mode=next;setView(-1,{animate:true});}
  function setNight(v){
   // Noche = deep night; off = dusk/blue-hour (fachada REF), not bright noon.
@@ -420,9 +420,19 @@ function setView(f=-1,{animate=true}={}){floor=f;structures.forEach(g=>g.visible
    ?{...LIGHTING.night,sunColor:'#9bb7ff',ambientSky:'#7194c4',isNight:true}
    :{...LIGHTING.dusk,background:0xb8c4d2,sunColor:'#ff9a6a',ambientSky:'#8fa3b8',sun:.22,ambient:.42,fill:.35,environment:.1,exposure:1.05,interior:110,isNight:false});
  }
+ function aplicarFondoEscena(background){
+  /* f1m: el mismo color va al fondo, a la niebla y al clearColor (alpha 1).
+     En algunos Android el canvas es transparente (alpha:true) y, si scene.background
+     no pinta, Separación amplia y Plantas mostraban el lavado claro del CSS. */
+  const color=background&&background.isColor?background.clone():new THREE.Color(background??LIGHTING.day.background);
+  scene.background=color;
+  if(typeof renderer.setClearColor==='function')renderer.setClearColor(color,1);
+  if(scene.fog&&scene.fog.color&&typeof scene.fog.color.copy==='function')scene.fog.color.copy(color);
+  return color;
+ }
  function applyLighting(p={}){
   const bg=p.background;
-  scene.background=new THREE.Color(typeof bg==='string'?bg:bg??LIGHTING.day.background);
+  aplicarFondoEscena(typeof bg==='string'||typeof bg==='number'?bg:bg??LIGHTING.day.background);
   if(p.sunColor)sun.color.set(p.sunColor); else sun.color.set(p.isNight?0x9bb7ff:0xffc78e);
   sun.intensity=p.sun??LIGHTING.day.sun;
   ambient.intensity=p.ambient??LIGHTING.day.ambient;

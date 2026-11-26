@@ -992,6 +992,9 @@ body:has(#night:checked) #viewport{background:radial-gradient(ellipse at 50% 42%
 /* dusk-viewport-wash: cool blue-hour behind WebGL (matches fachada REF) */
 /* C6: Día mode uses a proper light-blue sky (not the pale green-gray #c5d3c8). Auto at night keeps the night wash. Default/dusk CSS remains for first paint. */
 html[data-theme="day"] #viewport{background:radial-gradient(ellipse at 50% 36%,#e7f0f8,#c5d6e8 55%,#8eabc4)!important}
+/* f1m: noche sin depender de :has(#night:checked), para que Separación amplia y Plantas no hereden el lavado claro si el canvas va con alpha. */
+html[data-theme="night"] #viewport,html[data-theme="night"] #canvas-container{background:#080f20!important}
+
 
 #viewport{background:radial-gradient(ellipse at 50% 40%,#c5d0dc,#9aa8b8 55%,#6d7a8c)!important}
 body:has(#night:checked) #viewport{background:radial-gradient(ellipse at 50% 42%,#263551,#101a30 70%,#070d1c)!important}
