@@ -3,6 +3,8 @@ import './style.css';
 import {bindSwipeToClose} from './ui-sheets.js';
 import {mountReleaseNotice} from './release-notice.js';
 import {bots as catalog, floors, disconnectedSnapshot, statusLabels} from './data.js';
+import {botProfile} from './roster.js';
+import {dedupeFactRows} from './text-clip.js';
 import {readSnapshot} from './adapter.js';
 import {SOURCE_CONTRACT} from './source-contract.js';
 import {createMandoSession} from './mando-session.js';
@@ -14,7 +16,7 @@ import {mountResumenPanel, rachaText} from './resumen-panel.js';
 import {mountStaleBanner} from './stale-banner.js';
 import {avatarPhotoUrl} from './avatar-photo.js';
 import {readLightPref, isNightHour, horaChihuahua} from './daylight.js';
-import {loadUsoEnc, getUsoState, setUsoState, displayUsoLine, onUsoChange} from './uso-feed.js';
+import {loadUsoEnc, getUsoState, setUsoState, displayUsoLine, formatActualizado, onUsoChange} from './uso-feed.js';
 
 mountReleaseNotice();
 document.body.classList.add('lista-mode');
@@ -138,6 +140,47 @@ function quickHtml(b) {
     `<a class="mir v16r" href="${chatHref(b.agente)}" data-copia="${t.replace(/"/g, '&quot;')}" data-agente="${b.agente}">${l}</a>`).join('')}</span>`;
 }
 
+
+function escTxt(s) {
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+}
+function fichaDato(label, value) {
+  if (value == null || String(value).trim() === '') return '';
+  return `<div class="ficha-dato"><dt>${escTxt(label)}</dt><dd>${escTxt(String(value))}</dd></div>`;
+}
+function fichaDatosHtml(b) {
+  const profile = botProfile(snapshot, b);
+  const planta = Number.isInteger(b.floor)
+    ? `${b.floor === 0 ? 'PB' : `Piso ${b.floor}`} · ${floors[b.floor]?.name || ''}`
+    : '';
+  const lastSig = (b.lastSignal && formatActualizado(b.lastSignal)) || profile.lastSignal || '';
+  const actividad = b.activity || null;
+  const tarea = b.task || (b.mandoUnlocked ? profile.currentTask : null);
+  const rows = [
+    ['Planta', planta, 'floor'],
+    ['Puesto', [b.role, departmentOf(b.id)].filter(Boolean).join(' · '), 'role'],
+    ['Estado', profile.status, 'status'],
+    ['¿Está activo?', profile.active, 'active'],
+    ['Actividad ahora', actividad, 'activity'],
+    ['Tarea actual', tarea || profile.currentTask, 'current'],
+  ];
+  if (b.resumen && b.resumen !== profile.currentTask) rows.push(['Resumen', b.resumen, 'resumen']);
+  if (profile.waitingNote) rows.push(['Te espera', profile.waitingNote, 'waiting']);
+  if (profile.authorization) rows.push(['Autorización', profile.authorization, 'authorization']);
+  rows.push(['Tarea anterior', profile.previousTask, 'previous']);
+  rows.push(['Última señal real', lastSig, 'signal']);
+  const kept = dedupeFactRows(rows);
+  let html = kept.map(([k, v]) => fichaDato(k, v)).join('');
+  html += fichaDato('Uso', displayUsoLine(getUsoState(), b.id, b.mandoUso));
+  if (b.callado?.dias) {
+    html += fichaDato('Callado', `Callado: ${Math.floor(b.callado.dias)} días sin actividad y con pendientes`);
+  }
+  if (b.id === 'ted' && b.rutina && (b.rutina.fallo || b.rutina.no_corrio)) {
+    html += fichaDato('Rutina', `Rutina ${b.rutina.fallo ? 'con errores' : 'no corrió'}${b.rutina.ultima ? ` · última ${b.rutina.ultima}` : ''}`);
+  }
+  return html;
+}
+
 function closeListaFicha() {
   const card = document.getElementById('lista-ficha');
   const veil = document.getElementById('lista-ficha-veil');
@@ -171,14 +214,12 @@ function openFicha(id) {
   card.hidden = false;
   card.innerHTML = `
     <button type="button" class="icon-btn ficha-x" data-close aria-label="Cerrar"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-    <img class="ficha-av" data-st="${b.status || 'unknown'}" src="${avatarPhotoUrl(b.id)}" alt="" width="48" height="48">
-    <b class="ficha-name">${b.name}</b>
-    <span class="ficha-role">${b.role || ''} · ${departmentOf(b.id)}</span>
-    <span class="ficha-st st-${b.status || 'unknown'}">${st}</span>
-    <p class="uso-line">${displayUsoLine(getUsoState(), b.id, b.mandoUso)}</p>
-    ${b.resumen ? `<p class="ficha-resumen">${b.resumen}</p>` : ''}
-    ${b.task && b.task !== b.resumen ? `<p class="ficha-task">${b.task}</p>` : ''}
-    ${b.agente ? `<p><a class="mir sj-btn gold" href="${chatHref(b.agente)}" id="lista-chat">Abrir chat</a></p>` : '<p class="muted">Chat con mando desbloqueado.</p>'}
+    <img class="ficha-av" data-st="${b.status || 'unknown'}" src="${avatarPhotoUrl(b.id)}" alt="" width="112" height="112">
+    <b class="ficha-name">${escTxt(b.name)}</b>
+    <span class="ficha-role">${escTxt(b.role || '')} · ${escTxt(departmentOf(b.id))}</span>
+    <span class="ficha-st st-${b.status || 'unknown'}">${escTxt(st)}</span>
+    <div class="ficha-datos">${fichaDatosHtml(b)}</div>
+    ${b.agente ? `<p class="ficha-actions"><a class="mir sj-btn gold" href="${chatHref(b.agente)}" id="lista-chat">Abrir chat</a></p>` : '<p class="muted">Chat con mando desbloqueado.</p>'}
     ${waiting && b.agente ? `<p class="v16rr">${QUICK_REPLIES.map(([l]) => `<button type="button" class="btn-slim" data-qr="${l}">${l}</button>`).join('')}</p>` : ''}
     ${waiting ? `<p class="v15pp"><button type="button" class="btn-slim" data-pos="3h">Posponer 3 h</button> <button type="button" class="btn-slim" data-pos="manana">Hasta mañana</button>${isPostponed(b) ? ' <span class="muted">(pospuesto)</span>' : ''}</p>` : ''}
     <details class="v15nota" ${getNote(b.id) ? 'open' : ''}><summary>Nota privada</summary>
