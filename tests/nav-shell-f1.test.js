@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {modoInicial, pantallaInicial, siguienteModo} from '../src/nav-prefs.js';
+import {mandoEstaAbierto} from '../src/mando-abierto.js';
 
 const store = (o = {}) => ({get: (k, d) => (k in o ? o[k] : d)});
 
@@ -121,4 +122,21 @@ test('F1f: fondo del menú y de .ns-hub un poco más transparente, mismo tono na
 test('F1d: la barra inferior (vistas + cámara) no se recorta: 39px + safe-area, no 16px', () => {
   assert.match(css, /#vista-toolbar\.vista-toolbar\{bottom:calc\(39px \+ env\(safe-area-inset-bottom/);
   assert.doesNotMatch(css, /body\.ns-on[^}]*#vista-toolbar[^}]*bottom:calc\(16px/);
+});
+
+test('F1h: Inicio detecta el mando abierto por .unlocked y no confunde desbloqueado con bloqueado', () => {
+  const el = (text, unlocked = false) => ({
+    classList: {contains: (c) => unlocked && c === 'unlocked'},
+    textContent: text,
+  });
+  assert.equal(mandoEstaAbierto(el('Mando bloqueado')), false);
+  assert.equal(mandoEstaAbierto(el('Mando desbloqueado · cifrado local')), true);
+  assert.equal(mandoEstaAbierto(el('Mando desbloqueado · cifrado local', true)), true);
+  assert.equal(mandoEstaAbierto(el('Mando bloqueado', true)), true);
+  assert.equal(mandoEstaAbierto(el('Mando abierto', false)), true);
+  assert.equal(mandoEstaAbierto(null), false);
+  assert.equal(mandoEstaAbierto(undefined), false);
+  assert.match(src, /mandoEstaAbierto\(\$\('#mando-status'\)\)/);
+  assert.doesNotMatch(src, /!\/bloqueado\/i/);
+  assert.doesNotMatch(src, /\/abierto\|desbloq\/i/);
 });

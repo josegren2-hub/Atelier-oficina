@@ -10,6 +10,7 @@
 import {sheets} from './ui-chrome.js';
 import './nav-shell.css';
 import {modoInicial as modoInicialPuro, pantallaInicial as pantallaInicialPura} from './nav-prefs.js';
+import {mandoEstaAbierto} from './mando-abierto.js';
 
 const LS = {modo: 'atelierNavModo', inicio: 'atelierNavInicio', ultimo: 'atelierNavUltimo', capt: 'atelierCapturas', fijo: 'atelierNavFijo'};
 const MODOS = ['oculto', 'compacto', 'expandido'];
@@ -222,7 +223,7 @@ export function renderInicio() {
   const nombre = Object.fromEntries(MODULOS);
   const src = txt('#source-label') || 'Sin datos'; const sig = txt('#last-signal') || 'ninguna';
   const conectado = /vivo/i.test(src) && !/sin conexi/i.test(src);
-  const mando = txt('#mando-status'); const mandoAbierto = /abierto|desbloq/i.test(mando) && !/bloqueado/i.test(mando);
+  const mandoAbierto = mandoEstaAbierto($('#mando-status'));
   inicioEl.innerHTML = `<div class="ns-ini">
   <div class="ns-ini-top"><div><h2 class="ns-hello">${saludo()}</h2><p class="ns-sub">${esc(fechaLarga())}${n ? ` · <span class="ns-pink">${n} ${n === 1 ? 'asunto espera' : 'asuntos esperan'} tu OK</span>` : ''}</p></div>
    <div class="ns-ini-acts">${state.modo === 'oculto' ? `<button type="button" class="ns-x ns-ini-menu" data-act="menu-desde-inicio" aria-label="Abrir menú">${svg('menu')}</button>` : ''}<button type="button" class="ns-x" data-act="cerrar-inicio" aria-label="Cerrar Inicio">${svg('x')}</button></div></div>
