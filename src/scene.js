@@ -15,7 +15,7 @@ import {ENTORNO_KIND,entornoParam,entornoQualityFor,entornoVisibleFor,shadowBoxF
 
 export function createOffice(container,onBot,onAssets=()=>{},onAgenda=()=>{},onFloor=()=>{},onArchivero=()=>{}){
  const scene=new THREE.Scene();
- const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});const phone=typeof matchMedia==='function'&&matchMedia('(max-width:760px)').matches;function pixelRatioFor(viewMode){const cap=phone?((viewMode==='stacked'||viewMode==='spread')?1.0:1.5):1.6;return Math.min((typeof devicePixelRatio==='number'&&devicePixelRatio)||1,cap);}renderer.setPixelRatio(pixelRatioFor('exterior'));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.22;container.appendChild(renderer.domElement);
+ const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.22;container.appendChild(renderer.domElement);
  const pmrem=new THREE.PMREMGenerator(renderer);const roomEnvironment=new RoomEnvironment();scene.environment=pmrem.fromScene(roomEnvironment,.04).texture;scene.environmentIntensity=.25;roomEnvironment.dispose();pmrem.dispose();
  let camera=new THREE.PerspectiveCamera(35,1,.1,1200);camera.position.set(40,30,43);
  const controls=new OrbitControls(camera,renderer.domElement);controls.target.set(0,7,0);controls.enableDamping=true;controls.minDistance=12;controls.maxDistance=700;controls.maxPolarAngle=Math.PI*.48;
@@ -23,7 +23,7 @@ export function createOffice(container,onBot,onAssets=()=>{},onAgenda=()=>{},onF
  const CAM_MIN_Y=2;
  function clampViewToGround(){if(camera.position.y<CAM_MIN_Y){const lift=CAM_MIN_Y-camera.position.y;camera.position.y+=lift;controls.target.y+=lift;}if(controls.target.y<CAM_MIN_Y)controls.target.y=CAM_MIN_Y;}
  function updateControls(){controls.update();clampViewToGround();}
- const ambient=new THREE.HemisphereLight(0xd7e0e7,0x655746,.65);scene.add(ambient);const sun=new THREE.DirectionalLight(0xffc78e,1.6);sun.position.set(-18,30,23);sun.castShadow=true;const shadowSize=phone?1024:2048;sun.shadow.mapSize.set(shadowSize,shadowSize);Object.assign(sun.shadow.camera,{left:-34,right:34,top:35,bottom:-30,far:100});sun.shadow.normalBias=.035;scene.add(sun);const fill=new THREE.DirectionalLight(0xaecbe3,.4);fill.position.set(20,20,-12);scene.add(fill);
+ const ambient=new THREE.HemisphereLight(0xd7e0e7,0x655746,.65);scene.add(ambient);const sun=new THREE.DirectionalLight(0xffc78e,1.6);sun.position.set(-18,30,23);sun.castShadow=true;const shadowSize=matchMedia('(max-width:760px)').matches?1024:2048;sun.shadow.mapSize.set(shadowSize,shadowSize);Object.assign(sun.shadow.camera,{left:-34,right:34,top:35,bottom:-30,far:100});sun.shadow.normalBias=.035;scene.add(sun);const fill=new THREE.DirectionalLight(0xaecbe3,.4);fill.position.set(20,20,-12);scene.add(fill);
  const {M,mat,box,cyl,sphere,group,plant,tree,chair,screen,lamp,desk,archivero,besideDesk,sofa,rug,coffeeTable,library,roundTable,partition,pendant,mic,label,batch}=createFurnishings();
  // s17: entorno decorativo (fusión distrito + costa San Junipero, sin letrero). Solo en Edificio cerrado; no entra en el picking.
  // Las pruebas de node quitan los imports: sin createEntorno simplemente no hay entorno.
@@ -287,7 +287,7 @@ const movement=createMovement();
  // Integrated parapet crown — same outer footprint as facade glass (z=8.9 / x=±12.9).
  // Sits ON the roof slab as the building's own parapet; no floating overhang box.
  const fasciaMat=mat('fascia-black',0x050607,.4,.14);
- const parapetH=2.28; // f1t: era 1.95 (+0.33, +16.9%) para aire arriba/abajo del letrero, sin destapar equipos
+ const parapetH=1.95; // taller so rooftop gear reads as behind parapet
  // Front: outer face EXACTLY at glass plane z=8.9; depth inward only (~0.36)
  box(roof,0,parapetH/2,8.9-0.18,25.8,parapetH,.36,fasciaMat);
  // Coping flush with outer face (very slight top lip, not overhanging mass)
@@ -301,152 +301,50 @@ const movement=createMovement();
  box(roof,12.9-0.22,parapetH+.06,0,.44,.12,17.7,fasciaMat);
  // Vertical mullions continue from facade UP into parapet (column continuity)
  for(let x=-11.3;x<12.8;x+=3.2)box(roof,x-1.6,parapetH/2,8.9-.04,.07,parapetH+.08,.1,M.steel);
- // f1t: letrero «SJ | San Junipero» + neón violeta (aprobado en capturas 137–139).
- // Sustituye el LED dorado. Núcleo casi blanco-lila, halo que se derrama un poco
- // sobre el vidrio. Sin bloom de postproceso ni luces puntuales.
- const neonCore=new THREE.MeshBasicMaterial({color:0xfff8ff,toneMapped:false});
- const neonInner=new THREE.MeshBasicMaterial({color:0xf6e4ff,toneMapped:false,transparent:true,opacity:.96,depthWrite:false});
- const neonGlow=new THREE.MeshBasicMaterial({color:0xea78ff,toneMapped:false,transparent:true,opacity:.94,depthWrite:false});
- const neonHalo=new THREE.MeshBasicMaterial({color:0xcc55ff,toneMapped:false,transparent:true,opacity:.58,depthWrite:false});
- const neonSpill=new THREE.MeshBasicMaterial({color:0xd468ff,toneMapped:false,transparent:true,opacity:.38,depthWrite:false});
- box(roof,0,-0.12,8.9+.20,25.5,.32,.24,neonSpill);
- box(roof,0,.07,8.9+.15,25.78,.34,.36,neonHalo);
- box(roof,0,.055,8.9+.10,25.7,.22,.24,neonGlow);
- box(roof,0,.05,8.9+.07,25.62,.14,.14,neonInner);
- box(roof,0,.045,8.9+.05,25.55,.08,.08,neonCore);
- box(roof,-12.9-.20,-0.12,0,.24,.32,17.25,neonSpill);
- box(roof,-12.9-.15,.07,0,.36,.34,17.38,neonHalo);
- box(roof,-12.9-.10,.055,0,.24,.22,17.3,neonGlow);
- box(roof,-12.9-.07,.05,0,.14,.14,17.2,neonInner);
- box(roof,-12.9-.05,.045,0,.08,.08,17.16,neonCore);
- box(roof,12.9+.20,-0.12,0,.24,.32,17.25,neonSpill);
- box(roof,12.9+.15,.07,0,.36,.34,17.38,neonHalo);
- box(roof,12.9+.10,.055,0,.24,.22,17.3,neonGlow);
- box(roof,12.9+.07,.05,0,.14,.14,17.2,neonInner);
- box(roof,12.9+.05,.045,0,.08,.08,17.16,neonCore);
- const crownNeon={core:neonCore,inner:neonInner,glow:neonGlow,halo:neonHalo,spill:neonSpill};
- let crownSignTex=null,crownSignPaint=null,crownIsNight=true;
- const CROWN_FONT='SJSignSerif, "Playfair Display", Georgia, "Times New Roman", serif';
- const SIGN_PLANE_W=24.8, SIGN_PLANE_H=parapetH*0.96;
- const SIGN_TEX_MAX_W=Math.min(4096,renderer.capabilities?.maxTextureSize||4096); // f1u: 4096 cabe en la mayoría de celulares (MAX_TEXTURE_SIZE); se respeta la proporción del plano
- function paintCrownSign(ctx,W,H,isNight){
-  ctx.clearRect(0,0,W,H);
-  const sj='SJ', name='San Junipero';
-  ctx.textAlign='left';
-  ctx.textBaseline='alphabetic';
-  if(ctx.letterSpacing!==undefined)ctx.letterSpacing='0px';
-  const probe=200;
-  ctx.font='500 '+probe+'px '+CROWN_FONT;
-  const mS=ctx.measureText?.('S')||{}, mJ=ctx.measureText?.('J')||{}, mP=ctx.measureText?.('p')||{};
-  const capRatio=(mS.actualBoundingBoxAscent||probe*0.70)/probe;
-  const descRatio=Math.max(mJ.actualBoundingBoxDescent||0,mP.actualBoundingBoxDescent||0,probe*0.26)/probe;
-  const capWorld=1.95*0.96*0.60*1.12;
-  const capPx=(capWorld/SIGN_PLANE_H)*H;
-  const size=Math.round(capPx/capRatio);
-  ctx.font='500 '+size+'px '+CROWN_FONT;
-  const cap=size*capRatio, desc=size*descRatio, glyph=cap+desc;
-  const left=Math.round(W*0.17);
-  const gap=size*0.40, barW=Math.max(6,size*0.028);
-  const sjW=(ctx.measureText?.(sj)||{}).width||size*1.4;
-  const neonReserve=Math.round(H*0.09);
-  const signTop=parapetH/2+.02+SIGN_PLANE_H/2;
-  const copingTop=parapetH+.06+.06;
-  const extraTop=Math.max(0,copingTop-signTop);
-  const copePx=Math.round(H*(extraTop/SIGN_PLANE_H));
-  const rest=H-glyph-neonReserve;
-  const air=Math.max(0,Math.round((rest-copePx)/2));
-  const glyphTop=air;
-  const baseline=Math.round(glyphTop+cap);
-  const barX=left+sjW+gap;
-  const barTop=baseline-cap*0.98, barH=cap*0.96;
-  const nameX=barX+barW+gap;
-  const blurK=H/1024;
-  const glow=(color,blur,fn)=>{ctx.save();ctx.shadowColor=color;ctx.shadowBlur=blur*blurK;fn();ctx.restore();fn();};
-  ctx.fillStyle=isNight?'#c45cff':'#b080d4';
-  glow(isNight?'rgba(200,40,255,.95)':'rgba(150,60,200,.42)',isNight?42:16,()=>ctx.fillText(sj,left,baseline));
-  ctx.fillStyle=isNight?'#e2a8ff':'#d0b0e8';
-  ctx.fillText(sj,left,baseline);
-  ctx.fillStyle=isNight?'#f7f9ff':'#eef2f8';
-  glow(isNight?'rgba(230,240,255,.55)':'rgba(220,230,245,.28)',isNight?18:8,()=>ctx.fillRect(barX,barTop,barW,barH));
-  ctx.fillRect(barX,barTop,barW,barH);
-  ctx.fillStyle=isNight?'#f3f6ff':'#eef2f8';
-  glow(isNight?'rgba(200,216,255,.62)':'rgba(190,205,230,.32)',isNight?28:12,()=>ctx.fillText(name,nameX,baseline));
-  ctx.fillStyle=isNight?'#f8fbff':'#f5f7fb';
-  ctx.fillText(name,nameX,baseline);
- }
- const CROWN_LETTERS=true;
+ // Strong golden LED under crown (REF halo) — MeshBasic so it reads on phone
+ const ledCrown=new THREE.MeshBasicMaterial({color:0xffb040,toneMapped:false});
+ box(roof,0,.05,8.9+.04,25.6,.2,.2,ledCrown);
+ box(roof,0,.14,8.9-.06,25.2,.08,.1,ledCrown);
+ box(roof,-12.9-.05,.05,0,.2,.2,17.2,ledCrown);
+ box(roof,12.9+.05,.05,0,.2,.2,17.2,ledCrown);
+ // D9 (Rob 13/11, R07): roof crown letters removed; black fascia and gold LED stay. Kept behind a flag for rollback.
+ const CROWN_LETTERS=false;
  if(CROWN_LETTERS)(function(){
-  let H=1024, W=Math.max(2048,Math.round(H*(SIGN_PLANE_W/SIGN_PLANE_H)));
-  if(W>SIGN_TEX_MAX_W){W=SIGN_TEX_MAX_W;H=Math.max(256,Math.round(W*(SIGN_PLANE_H/SIGN_PLANE_W)));}
+  const W=4096,H=1024;
   const c=document.createElement('canvas');c.width=W;c.height=H;const ctx=c.getContext('2d');
-  paintCrownSign(ctx,W,H,true);
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#ffffff';ctx.textBaseline='middle';ctx.textAlign='left';
+  // Soft halo once, then crisp fill (avoid phone bloom mush)
+  const paint=(fn)=>{ctx.shadowColor='rgba(255,255,255,.55)';ctx.shadowBlur=18;fn();ctx.shadowBlur=0;fn();};
+  paint(()=>{ctx.font='900 700px Georgia,"Times New Roman",serif';ctx.fillText('SJ',50,H*0.5);});
+  ctx.fillRect(880,60,20,H-120);
+  paint(()=>{ctx.font='900 360px Inter,system-ui,Arial,sans-serif';ctx.fillText('SAN JUNÍPERO',960,H*0.34);});
+  ctx.font='800 250px Inter,system-ui,Arial,sans-serif';
+  const label='TOWER';
+  const metrics=ctx.measureText?.(label);
+  const tw=(metrics&&Number.isFinite(metrics.width))?metrics.width:820;
+  const tx=960, ty=H*0.72, lineW=280, gap=48;
+  ctx.fillRect(tx,ty-12,lineW,18);
+  paint(()=>{ctx.fillText(label,tx+lineW+gap,ty);});
+  ctx.fillRect(tx+lineW+gap+tw+gap,ty-12,lineW,18);
   const tex=new THREE.CanvasTexture(c);
   tex.colorSpace=THREE.SRGBColorSpace;
-  const phone=typeof matchMedia==='function'&&matchMedia('(max-width:760px)').matches;
-  tex.anisotropy=Math.min(phone?4:8,renderer.capabilities?.getMaxAnisotropy?.()||1);
+  tex.anisotropy=renderer.capabilities?.getMaxAnisotropy?.()||16;
   tex.generateMipmaps=true;
   tex.minFilter=THREE.LinearMipmapLinearFilter;
   tex.magFilter=THREE.LinearFilter;
   tex.needsUpdate=true;
   const sign=new THREE.Mesh(
-    new THREE.PlaneGeometry(SIGN_PLANE_W,SIGN_PLANE_H),
+    new THREE.PlaneGeometry(24.8,parapetH*0.96),
     new THREE.MeshBasicMaterial({map:tex,transparent:true,toneMapped:false,depthWrite:false,color:0xffffff})
   );
-  // Solo la cara frontal de la fascia (no techo ni costados).
   sign.position.set(0,parapetH/2+.02,8.9+.06);roof.add(sign);
-  crownSignTex=tex;
-  crownSignPaint=(isNight)=>{paintCrownSign(ctx,W,H,!!isNight);tex.needsUpdate=true;};
-  let fontPaintTo=0;
-  const applyFont=()=>{ // varios avisos de FontFace; un solo repintado
-   if(typeof crownSignPaint!=='function')return;
-   if(fontPaintTo)clearTimeout(fontPaintTo);
-   fontPaintTo=setTimeout(()=>{fontPaintTo=0;crownSignPaint(crownIsNight);},0);
-  };
-  try{
-   if(typeof FontFace!=='undefined'){
-    const face=new FontFace('SJSignSerif','url(./fonts/PlayfairDisplay-VariableFont_wght.ttf)',{weight:'100 900',style:'normal',display:'swap'});
-    face.load().then(f=>{document.fonts.add(f);applyFont();}).catch(()=>{});
-   }
-   document.fonts?.ready?.then?.(applyFont);
-   document.fonts?.load?.('500 512px '+CROWN_FONT)?.then?.(applyFont);
-  }catch{}
  })();
- function applyCrownLighting(isNight){
-  const night=!!isNight;
-  neonCore.color.set(night?0xfff8ff:0xf0e8f6);
-  neonInner.color.set(night?0xf6e4ff:0xe4cef2);
-  neonInner.opacity=night?.96:.40;
-  neonGlow.color.set(night?0xea78ff:0xb068d8);
-  neonGlow.opacity=night?.94:.36;
-  neonHalo.color.set(night?0xcc55ff:0x8a50c0);
-  neonHalo.opacity=night?.58:.22;
-  neonSpill.color.set(night?0xd468ff:0xa060c8);
-  neonSpill.opacity=night?.38:.10;
-  // Solo se repinta el lienzo al cambiar día/noche. El tween de luz llama esto cada frame.
-  if(night!==crownIsNight && typeof crownSignPaint==='function')crownSignPaint(night);
-  crownIsNight=night;
- }
- // Si el celular pierde el contexto WebGL (memoria), pedimos restauración y reenviamos la textura.
- try{
-  const glCanvas=renderer.domElement;
-  glCanvas.addEventListener('webglcontextlost',ev=>{ev.preventDefault();try{console.warn('[atelier] WebGL context lost');}catch{}});
-  glCanvas.addEventListener('webglcontextrestored',()=>{
-   try{
-    if(crownSignTex)crownSignTex.needsUpdate=true;
-    if(typeof crownSignPaint==='function')crownSignPaint(crownIsNight);
-    if(typeof applyCrownLighting==='function')applyCrownLighting(crownIsNight);
-    renderer.resetGLState?.();
-   }catch(err){try{console.warn('[atelier] WebGL restore failed',err);}catch{}}
-  });
- }catch{}
 batch(site);const skipBatch=new Set([...facades,...structures]);frames.forEach(f=>skipBatch.add(f));floorGroups.forEach(g=>batch(g,skipBatch));facades.forEach(g=>batch(g));structures.forEach(g=>batch(g));frames.forEach(g=>batch(g));batch(roof);
  let walls=true;let floor=-1,mode='exterior',selected=null,animateBots=false;const target=new THREE.Vector3(0,7,0),desired=camera.position.clone();let moving=false;const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
  const VIEW_ANIM_MS=1050;
  function easeInOutCubic(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}
  let camTween=null,floorTween=null,lightTween=null;
-  // f1w: en celular, Separación amplia y Plantas dibujan a ≤30 fps y solo cuando algo cambia (cámara, tween, luz, selección) o cada 700 ms; los avatares no caminan ahí.
-  let liteDirty=true,liteSig='',liteLast=0,liteBeat=0,liteWasOn=false;
-  const lite=()=>phone&&floor<0&&(mode==='stacked'||mode==='spread');
  function startCamTween(toPos,toTarget,dur=VIEW_ANIM_MS){
   if(reduced){camera.position.copy(toPos);controls.target.copy(toTarget);camera.lookAt(toTarget);updateControls();camTween=null;moving=false;return;}
   camTween={t0:performance.now(),dur,fromPos:camera.position.clone(),toPos:toPos.clone(),fromTarget:controls.target.clone(),toTarget:toTarget.clone()};
@@ -454,7 +352,7 @@ batch(site);const skipBatch=new Set([...facades,...structures]);frames.forEach(f
  }
  function startFloorTween(){
   const to=floorGroups.map((_,i)=>floorPose(i,mode,floor>=0));
-  if(reduced||(phone&&(mode==='stacked'||mode==='spread'))){floorGroups.forEach((g,i)=>{g.position.set(to[i].x,to[i].y,to[i].z);});floorTween=null;return;}
+  if(reduced){floorGroups.forEach((g,i)=>{g.position.set(to[i].x,to[i].y,to[i].z);});floorTween=null;return;}
   floorTween={t0:performance.now(),dur:VIEW_ANIM_MS,from:floorGroups.map(g=>({x:g.position.x,y:g.position.y,z:g.position.z})),to};
  }
  function hexOf(c){return '#'+c.getHexString();}
@@ -514,7 +412,7 @@ function syncStackControls(){const stacked=isStackOverview();controls.enableRota
  }
 
 function syncFrames(){const on=floorFramesVisible({floor,mode,walls});frames.forEach(g=>g.visible=on);}
-function setView(f=-1,{animate=true}={}){floor=f;liteDirty=true;structures.forEach(g=>g.visible=f<0);facades.forEach(g=>g.visible=walls&&f<0);syncFrames();floorGroups.forEach((g,i)=>g.visible=f<0||i===f);{const st=f<0&&mode==='stacked',sp=f<0&&mode==='spread',sc=sun.shadow.camera,dy=st?34:0;sun.position.set(-18,30+dy,23);sun.target.position.set(0,dy,0);sun.target.updateMatrixWorld();const envOn=!!entorno&&f<0&&mode==='exterior';Object.assign(sc,st?{left:-60,right:60,top:62,bottom:-56,far:170}:sp?{left:-50,right:50,top:52,bottom:-48,far:140}:envOn?shadowBoxFor({entorno:true}):{left:-34,right:34,top:35,bottom:-30,far:100});sc.updateProjectionMatrix();renderer.setPixelRatio(pixelRatioFor(mode));if(phone&&(st||sp)){sun.castShadow=false;renderer.shadowMap.enabled=false;}else{sun.castShadow=true;renderer.shadowMap.enabled=true;}}roof.visible=f<0&&mode==='exterior';site.visible=f<0&&mode==='exterior';if(entorno)entorno.group.visible=entornoVisibleFor(f,mode);syncCeilingWash();stackVy=0;syncStackControls();startFloorTween();fitCamera({animate});if(scene.background)aplicarFondoEscena(scene.background);if(animate!==false)flushView();}
+function setView(f=-1,{animate=true}={}){floor=f;structures.forEach(g=>g.visible=f<0);facades.forEach(g=>g.visible=walls&&f<0);syncFrames();floorGroups.forEach((g,i)=>g.visible=f<0||i===f);{const st=f<0&&mode==='stacked',sp=f<0&&mode==='spread',sc=sun.shadow.camera,dy=st?34:0;sun.position.set(-18,30+dy,23);sun.target.position.set(0,dy,0);sun.target.updateMatrixWorld();const envOn=!!entorno&&f<0&&mode==='exterior';Object.assign(sc,st?{left:-60,right:60,top:62,bottom:-56,far:170}:sp?{left:-50,right:50,top:52,bottom:-48,far:140}:envOn?shadowBoxFor({entorno:true}):{left:-34,right:34,top:35,bottom:-30,far:100});sc.updateProjectionMatrix();}roof.visible=f<0&&mode==='exterior';site.visible=f<0&&mode==='exterior';if(entorno)entorno.group.visible=entornoVisibleFor(f,mode);syncCeilingWash();stackVy=0;syncStackControls();startFloorTween();fitCamera({animate});if(scene.background)aplicarFondoEscena(scene.background);if(animate!==false)flushView();}
  function setMode(next){if(!VIEW_MODES.includes(next))throw new RangeError('Vista desconocida');mode=next;setView(-1,{animate:true});}
  function setNight(v){
   // Noche = deep night; off = dusk/blue-hour (fachada REF), not bright noon.
@@ -532,7 +430,7 @@ function setView(f=-1,{animate=true}={}){floor=f;liteDirty=true;structures.forEa
   if(scene.fog&&scene.fog.color&&typeof scene.fog.color.copy==='function')scene.fog.color.copy(color);
   return color;
  }
- function applyLighting(p={}){liteDirty=true;
+ function applyLighting(p={}){
   const bg=p.background;
   aplicarFondoEscena(typeof bg==='string'||typeof bg==='number'?bg:bg??LIGHTING.day.background);
   if(p.sunColor)sun.color.set(p.sunColor); else sun.color.set(p.isNight?0x9bb7ff:0xffc78e);
@@ -547,7 +445,6 @@ function setView(f=-1,{animate=true}={}){floor=f;liteDirty=true;structures.forEa
   interiorLights.forEach(l=>l.intensity=ii);
   try{if(globalThis.document?.documentElement)document.documentElement.dataset.theme=p.isNight?'night':'day';}catch{}
   try{entorno?.setNight?.(!!p.isNight);}catch{}
-  try{applyCrownLighting?.(!!p.isNight);}catch{}
  }
  function setLighting(p){
   const dest=p||LIGHTING.day;
@@ -561,7 +458,7 @@ function setView(f=-1,{animate=true}={}){floor=f;liteDirty=true;structures.forEa
   lightTween={t0:performance.now(),dur:900,from,to};
  }
 
- function setStatuses(records=[]){liteDirty=true;
+ function setStatuses(records=[]){
   const entries=Array.isArray(records)?records:(records.bots??[]);
   const mode=Array.isArray(records)?undefined:records.mode;
   if(mode==='demo'){animateBots=true;if(!movement.isDemo)movement.setDemo(true);movement.setLive(false);movement.setStatuses(entries);}
@@ -641,9 +538,6 @@ function setView(f=-1,{animate=true}={}){floor=f;liteDirty=true;structures.forEa
  function tick(){
   requestAnimationFrame(tick);
   const nowMsTick=performance.now();
-  const liteNow=lite();
-  if(liteNow&&nowMsTick-liteLast<30)return;
-  if(liteNow)liteLast=nowMsTick;
   const t=nowMsTick/1000,dt=t-lastFrame;lastFrame=t;
   if(document.hidden)return;
   if(entornoWatch&&entorno?.group.visible&&entornoWatch(dt*1000)){entorno.setLowPower();}
@@ -656,18 +550,6 @@ function setView(f=-1,{animate=true}={}){floor=f;liteDirty=true;structures.forEa
   if(camTween){const u=Math.min(1,(nowMsTick-camTween.t0)/camTween.dur),k=reduced?1:easeInOutCubic(u);camera.position.lerpVectors(camTween.fromPos,camTween.toPos,k);controls.target.lerpVectors(camTween.fromTarget,camTween.toTarget,k);camera.lookAt(controls.target);if(u>=1){camTween=null;moving=false;}}
   else if(moving){camera.position.lerp(desired,reduced?1:.12);controls.target.lerp(target,reduced?1:.12);if(camera.position.distanceTo(desired)<.05)moving=false;}
   if(lightTween){const u=Math.min(1,(nowMsTick-lightTween.t0)/lightTween.dur),k=reduced?1:easeInOutCubic(u);const a=lightTween.from,b=lightTween.to;applyLighting({background:lerpHex(a.background,b.background,k),sunColor:lerpHex(a.sunColor,b.sunColor,k),ambientSky:lerpHex(a.ambientSky,b.ambientSky,k),sun:a.sun+(b.sun-a.sun)*k,ambient:a.ambient+(b.ambient-a.ambient)*k,fill:a.fill+(b.fill-a.fill)*k,environment:a.environment+(b.environment-a.environment)*k,exposure:a.exposure+(b.exposure-a.exposure)*k,interior:a.interior+(b.interior-a.interior)*k,isNight:k>.5?b.isNight:a.isNight});if(u>=1)lightTween=null;}
-  if(liteNow&&!busy){
-   // f1w: sin caminatas ni poses animadas; se repinta solo si la cámara o la escena cambiaron.
-   if(!liteWasOn){liteWasOn=true;liteDirty=true;try{avatars.update(t,false,true);}catch{}}
-   updateControls();
-   const sig=[camera.position.x,camera.position.y,camera.position.z,controls.target.x,controls.target.y,controls.target.z,camera.zoom||0,camera.aspect||0,renderer.domElement.width,selected||'',floor,mode,walls].map(v=>typeof v==='number'?v.toFixed(3):v).join('|');
-   const active=floorTween||camTween||moving||lightTween||userDragging||stackDrag||Math.abs(stackVy)>=0.02;
-   if(!active&&!liteDirty&&sig===liteSig&&nowMsTick-liteBeat<700)return;
-   liteSig=sig;liteBeat=nowMsTick;liteDirty=false;
-   paintNow();fpsFrames++;const nowMsL=performance.now();if(nowMsL-fpsLast>1000){fpsValue=fpsFrames*1000/(nowMsL-fpsLast);fpsFrames=0;fpsLast=nowMsL;}
-   return;
-  }
-  if(!liteNow)liteWasOn=false;
   floorLabels?.update(projectFloorLabels(),labelPins());
   if(busy){
    if(nowMsTick-lastUiRender>120){
@@ -687,7 +569,7 @@ function setView(f=-1,{animate=true}={}){floor=f;liteDirty=true;structures.forEa
   const phoneFar=reduced||(!animateBots)||(container.clientWidth<760&&floor<0&&mode==='exterior'&&camera.position.distanceTo(controls.target)>40);deskProps.setVisible(!phoneFar);avatars.update(t,animateBots?'idle':false,phoneFar);updateControls();paintNow();fpsFrames++;const nowMs=performance.now();if(nowMs-fpsLast>1000){fpsValue=fpsFrames*1000/(nowMs-fpsLast);fpsFrames=0;fpsLast=nowMs;}
  }
 
- const resize=()=>{liteDirty=true;camera.aspect=container.clientWidth/container.clientHeight;camera.updateProjectionMatrix();renderer.setSize(container.clientWidth,container.clientHeight);fitCamera({animate:false});};new ResizeObserver(resize).observe(container);resize();const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();let down=null;
+ const resize=()=>{camera.aspect=container.clientWidth/container.clientHeight;camera.updateProjectionMatrix();renderer.setSize(container.clientWidth,container.clientHeight);fitCamera({animate:false});};new ResizeObserver(resize).observe(container);resize();const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();let down=null;
  renderer.domElement.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY];moving=false;camTween=null;stackTouches+=1;if(isStackOverview()&&e.isPrimary&&stackTouches===1){stackDrag={id:e.pointerId,y:e.clientY,t:performance.now(),vy:0};stackVy=0;try{e.target.setPointerCapture?.(e.pointerId);}catch{}}});
  renderer.domElement.addEventListener('pointermove',e=>{if(!stackDrag||e.pointerId!==stackDrag.id||!isStackOverview())return;if(stackTouches>1){stackDrag=null;stackVy=0;return;}const dy=e.clientY-stackDrag.y;const now=performance.now();const dt=Math.max(0.008,(now-stackDrag.t)/1000);const world=stackWorldFromDy(dy);applyStackDeltaY(world);stackDrag.vy=world/dt;stackDrag.y=e.clientY;stackDrag.t=now;e.preventDefault();},{passive:false});
 renderer.domElement.addEventListener('pointerup',e=>{stackTouches=Math.max(0,stackTouches-1);if(stackDrag&&e.pointerId===stackDrag.id){stackVy=stackDrag.vy||0;stackDrag=null;}const start=down;down=null;if(!start||Math.hypot(e.clientX-start[0],e.clientY-start[1])>6)return;if(performance.now()-(globalThis.__atelierSwallowPickAt||-1e9)<700)return;const rect=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);ray.setFromCamera(pointer,camera);const roots=floorGroups.filter(g=>g.visible);if(roof.visible)roots.push(roof);const hits=ray.intersectObjects(roots,true);const first=hits.find(hit=>{let visible=true,node=hit.object;while(node){if(!node.visible){visible=false;break;}node=node.parent;}return visible&&(!hit.object.material?.transparent||hit.object.isSprite&&hit.object.userData.bot);});if(first){const targetOf=object=>{let node=object;while(node&&!node.userData.bot&&!node.userData.agenda&&!node.userData.archivero&&!Number.isInteger(node.userData.floorId))node=node.parent;return node;};let node=targetOf(first.object);
@@ -743,5 +625,5 @@ renderer.domElement.addEventListener('pointerup',e=>{stackTouches=Math.max(0,sta
  }
  function getViewState(){return {floor,mode,selected};}
  function debugBots(){const v=new THREE.Vector3();return botModels.map(b=>{b.group.getWorldPosition(v);return {id:b.id,x:+v.x.toFixed(3),y:+v.y.toFixed(3),z:+v.z.toFixed(3)};});}
- return {setView,setMode,setExploded(v){setMode(v?'stacked':'exterior');},setWalls(v){walls=Boolean(v);facades.forEach(g=>g.visible=walls&&floor<0);syncFrames();},getOcclusionState(){return entorno?.occlusion?.state?.()||null;},getFrameInfo(){return {walls,mode,floor,frames:frames.length,framesVisible:frames.filter(g=>g.visible).length,facadesVisible:facades.filter(g=>g.visible).length,structuresVisible:structures.filter(g=>g.visible).length};},setNight,setLighting,setStatuses,select(id){selected=id;liteDirty=true;},focusBot,projectBots,getViewState,debugBots,setDemo(v){movement.setDemo(v);animateBots=Boolean(v)||movement.isLive;},getActivity(id){return movement.getActivity(id);},getMovementStats(){return movement.getStats();},getFps(){return fpsValue;},getCameraInfo(){const d=camera.position.distanceTo(controls.target);return {distance:+d.toFixed(3),min:controls.minDistance,max:controls.maxDistance,zoom:camera.zoom,ortho:!!camera.isOrthographicCamera,azimuth:+controls.getAzimuthalAngle().toFixed(3),polar:+controls.getPolarAngle().toFixed(3),camY:+camera.position.y.toFixed(3),targetY:+controls.target.y.toFixed(3),minY:CAM_MIN_Y,maxPolar:controls.maxPolarAngle};},setPolar(phi){moving=false;camTween=null;const off=camera.position.clone().sub(controls.target);const sph=new THREE.Spherical().setFromVector3(off);sph.phi=THREE.MathUtils.clamp(Number(phi),0.05,controls.maxPolarAngle);camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(sph));flushView();},nudgeTargetY(dy){moving=false;camTween=null;camera.position.y+=Number(dy)||0;controls.target.y+=Number(dy)||0;flushView();},rotate(d){moving=false;const o=camera.position.clone().sub(controls.target);const before=o.clone();o.applyAxisAngle(new THREE.Vector3(0,1,0),d);if(isStackOverview()){/* C43: back off so the rotated floors fit the phone width (footprint 29×18) */const f=desired.clone().sub(target);const k=v=>{const a=Math.atan2(v.x,v.z)-Math.atan2(f.x,f.z);return Math.max(1,(Math.abs(14.5*Math.cos(a))+Math.abs(9*Math.sin(a)))/14.5);};o.setLength(o.length()/k(before)*k(o));}camera.position.copy(controls.target).add(o);flushView();},zoom(s){moving=false;if(camera.isOrthographicCamera){camera.zoom=THREE.MathUtils.clamp(camera.zoom/s,.35,8);camera.updateProjectionMatrix();flushView();return;}const o=camera.position.clone().sub(controls.target);o.setLength(THREE.MathUtils.clamp(o.length()*s,12,700));camera.position.copy(controls.target).add(o);flushView();},reset(){setView(floor);},get renderer(){return renderer;}};
+ return {setView,setMode,setExploded(v){setMode(v?'stacked':'exterior');},setWalls(v){walls=Boolean(v);facades.forEach(g=>g.visible=walls&&floor<0);syncFrames();},getOcclusionState(){return entorno?.occlusion?.state?.()||null;},getFrameInfo(){return {walls,mode,floor,frames:frames.length,framesVisible:frames.filter(g=>g.visible).length,facadesVisible:facades.filter(g=>g.visible).length,structuresVisible:structures.filter(g=>g.visible).length};},setNight,setLighting,setStatuses,select(id){selected=id;},focusBot,projectBots,getViewState,debugBots,setDemo(v){movement.setDemo(v);animateBots=Boolean(v)||movement.isLive;},getActivity(id){return movement.getActivity(id);},getMovementStats(){return movement.getStats();},getFps(){return fpsValue;},getCameraInfo(){const d=camera.position.distanceTo(controls.target);return {distance:+d.toFixed(3),min:controls.minDistance,max:controls.maxDistance,zoom:camera.zoom,ortho:!!camera.isOrthographicCamera,azimuth:+controls.getAzimuthalAngle().toFixed(3),polar:+controls.getPolarAngle().toFixed(3),camY:+camera.position.y.toFixed(3),targetY:+controls.target.y.toFixed(3),minY:CAM_MIN_Y,maxPolar:controls.maxPolarAngle};},setPolar(phi){moving=false;camTween=null;const off=camera.position.clone().sub(controls.target);const sph=new THREE.Spherical().setFromVector3(off);sph.phi=THREE.MathUtils.clamp(Number(phi),0.05,controls.maxPolarAngle);camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(sph));flushView();},nudgeTargetY(dy){moving=false;camTween=null;camera.position.y+=Number(dy)||0;controls.target.y+=Number(dy)||0;flushView();},rotate(d){moving=false;const o=camera.position.clone().sub(controls.target);const before=o.clone();o.applyAxisAngle(new THREE.Vector3(0,1,0),d);if(isStackOverview()){/* C43: back off so the rotated floors fit the phone width (footprint 29×18) */const f=desired.clone().sub(target);const k=v=>{const a=Math.atan2(v.x,v.z)-Math.atan2(f.x,f.z);return Math.max(1,(Math.abs(14.5*Math.cos(a))+Math.abs(9*Math.sin(a)))/14.5);};o.setLength(o.length()/k(before)*k(o));}camera.position.copy(controls.target).add(o);flushView();},zoom(s){moving=false;if(camera.isOrthographicCamera){camera.zoom=THREE.MathUtils.clamp(camera.zoom/s,.35,8);camera.updateProjectionMatrix();flushView();return;}const o=camera.position.clone().sub(controls.target);o.setLength(THREE.MathUtils.clamp(o.length()*s,12,700));camera.position.copy(controls.target).add(o);flushView();},reset(){setView(floor);},get renderer(){return renderer;}};
 }
