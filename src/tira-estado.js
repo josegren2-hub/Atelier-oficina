@@ -12,10 +12,8 @@ export function estadoModoDios(statusEl) {
     abierto,
     estado: abierto ? 'abierto' : 'cerrado',
     icono: abierto ? 'candadoAbierto' : 'candado',
-    etiqueta: abierto ? 'Modo dios abierto' : 'Modo dios',
-    aria: abierto
-      ? 'Modo dios: mando abierto. Toca para ver o cerrar el mando'
-      : 'Modo dios: mando bloqueado. Toca para desbloquearlo',
+    etiqueta: 'Modo dios',
+    aria: abierto ? 'Modo dios: abierto' : 'Modo dios: cerrado',
   };
 }
 

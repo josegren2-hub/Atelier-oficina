@@ -322,6 +322,7 @@ export function mountNavShell() {
     tabDios.querySelector('.ns-ti').innerHTML = svg(m.icono);
     tabDios.querySelector('.ns-tl').textContent = m.etiqueta;
     tabDios.setAttribute('aria-label', m.aria);
+    tabDios.title = m.aria;
     tabDios.setAttribute('aria-pressed', String(m.abierto));
     tabDios.dataset.estado = m.estado;
     tabDios.classList.toggle('unlocked', m.abierto);
